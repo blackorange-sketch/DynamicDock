@@ -248,6 +248,9 @@ class SettingsActivity : Activity() {
                         horizontalPaddingLabel.text =
                             "Горизонтальний відступ: " +
                             "$progress dp"
+
+                        DockService.instance
+                            ?.updatePadding()
                     }
 
                     override fun onStartTrackingTouch(
@@ -289,6 +292,9 @@ class SettingsActivity : Activity() {
                         verticalPaddingLabel.text =
                             "Вертикальний відступ: " +
                             "$progress dp"
+
+                        DockService.instance
+                            ?.updatePadding()
                     }
 
                     override fun onStartTrackingTouch(

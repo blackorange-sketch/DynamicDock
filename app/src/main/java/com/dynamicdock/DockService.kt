@@ -145,6 +145,12 @@ class DockService : Service() {
         }
     }
 
+    fun updatePadding() {
+        appContainer.post {
+            rebuildDock()
+        }
+    }
+
     fun updateDockHeight(heightDp: Int) {
         val params = appContainer.layoutParams
             as? WindowManager.LayoutParams
@@ -428,7 +434,14 @@ class DockService : Service() {
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setPadding(dp(6), 0, dp(6), 0)
+                val dockSettings = DockSettings(this)
+
+                setPadding(
+                    dp(dockSettings.horizontalPaddingDp),
+                    dp(dockSettings.verticalPaddingDp),
+                    dp(dockSettings.horizontalPaddingDp),
+                    dp(dockSettings.verticalPaddingDp)
+                )
 
                 setOnClickListener {
 
