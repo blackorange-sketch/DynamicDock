@@ -133,6 +133,12 @@ class DockService : Service() {
         )
     }
 
+    fun refreshDock() {
+        appContainer.post {
+            rebuildDock()
+        }
+    }
+
     fun updateDockHeight(heightDp: Int) {
         val params = appContainer.layoutParams
             as? WindowManager.LayoutParams

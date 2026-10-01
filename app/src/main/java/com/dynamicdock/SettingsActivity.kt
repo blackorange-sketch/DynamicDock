@@ -216,6 +216,7 @@ class SettingsActivity : Activity() {
 
         labelsSwitch.setOnCheckedChangeListener { _, checked ->
             settings.showAppLabels = checked
+            DockService.instance?.refreshDock()
         }
 
         val autoHideSwitch = Switch(this).apply {
