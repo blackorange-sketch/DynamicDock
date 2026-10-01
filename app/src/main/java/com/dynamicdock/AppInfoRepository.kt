@@ -13,45 +13,45 @@ class AppInfoRepository(
 
     fun getAppInfo(
         packageName: String
-    ): AppInfo? {
+    ): AppInfo {
 
-        return try {
+        var appName = packageName
 
+        try {
             val applicationInfo =
                 packageManager.getApplicationInfo(
                     packageName,
                     0
                 )
 
-            val appName =
-                try {
-                    packageManager
-                        .getApplicationLabel(
-                            applicationInfo
-                        )
-                        .toString()
-                } catch (e: Exception) {
-                    packageName
-                }
+            appName =
+                packageManager
+                    .getApplicationLabel(
+                        applicationInfo
+                    )
+                    .toString()
 
             val icon =
                 try {
-                    packageManager
-                        .getApplicationIcon(
-                            applicationInfo
-                        )
+                    packageManager.getApplicationIcon(
+                        applicationInfo
+                    )
                 } catch (e: Exception) {
                     ColorDrawable(Color.DKGRAY)
                 }
 
-            AppInfo(
+            return AppInfo(
                 packageName = packageName,
                 appName = appName,
                 icon = icon
             )
 
         } catch (e: Exception) {
-            null
+            return AppInfo(
+                packageName = packageName,
+                appName = packageName,
+                icon = ColorDrawable(Color.DKGRAY)
+            )
         }
     }
 }
