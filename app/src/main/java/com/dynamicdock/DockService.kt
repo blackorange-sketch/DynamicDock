@@ -59,6 +59,12 @@ class DockService : Service() {
                 as? WindowManager.LayoutParams
                 ?: return
 
+        val settings =
+            DockSettings(this)
+
+        dockHeightDp =
+            settings.dockHeightDp
+
         val isVertical =
             position == "left" ||
             position == "right"
@@ -71,15 +77,15 @@ class DockService : Service() {
 
         params.width =
             if (isVertical)
-                dp(dockHeightDp)
+                dp(settings.dockHeightDp)
             else
-                WindowManager.LayoutParams.MATCH_PARENT
+                dp(settings.dockLengthDp)
 
         params.height =
             if (isVertical)
-                WindowManager.LayoutParams.MATCH_PARENT
+                dp(settings.dockLengthDp)
             else
-                dp(dockHeightDp)
+                dp(settings.dockHeightDp)
 
         params.gravity =
             when (position) {
@@ -336,17 +342,35 @@ class DockService : Service() {
                     )
                 }
 
+                val isVertical =
+                    DockSettings(this).dockPosition == "left" ||
+                    DockSettings(this).dockPosition == "right"
+
                 val separatorParams =
-                    LinearLayout.LayoutParams(
-                        dp(1),
-                        dp(28)
-                    ).apply {
-                        setMargins(
-                            dp(4),
-                            0,
-                            dp(4),
-                            0
-                        )
+                    if (isVertical) {
+                        LinearLayout.LayoutParams(
+                            dp(28),
+                            dp(1)
+                        ).apply {
+                            setMargins(
+                                0,
+                                dp(4),
+                                0,
+                                dp(4)
+                            )
+                        }
+                    } else {
+                        LinearLayout.LayoutParams(
+                            dp(1),
+                            dp(28)
+                        ).apply {
+                            setMargins(
+                                dp(4),
+                                0,
+                                dp(4),
+                                0
+                            )
+                        }
                     }
 
                 appContainer.addView(
