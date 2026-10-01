@@ -1,26 +1,9 @@
 package com.dynamicdock
 
 import android.accessibilityservice.AccessibilityService
-import android.accessibilityservice.AccessibilityServiceInfo
-import android.graphics.Rect
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
 class DockAccessibilityService : AccessibilityService() {
-
-    override fun onServiceConnected() {
-        super.onServiceConnected()
-
-        serviceInfo = serviceInfo.apply {
-            flags = flags or
-                    AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-        }
-
-        Log.d(
-            "DynamicDock",
-            "Accessibility connected: interactive windows enabled"
-        )
-    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
@@ -38,46 +21,6 @@ class DockAccessibilityService : AccessibilityService() {
         DockService.updateActivePackage(
             packageName
         )
-
-        val source = event.source
-
-        if (source != null) {
-            val bounds = Rect()
-
-            source.getBoundsInScreen(bounds)
-
-            Log.d(
-                "DynamicDock",
-                "EVENT SOURCE: package=${source.packageName} " +
-                "bounds=$bounds"
-            )
-        } else {
-            Log.d(
-                "DynamicDock",
-                "EVENT SOURCE: null"
-            )
-        }
-
-        val windows = windows
-
-        Log.d(
-            "DynamicDock",
-            "WINDOWS: count=${windows.size}"
-        )
-
-        windows.forEach { window ->
-
-            val bounds = Rect()
-
-            window.getBoundsInScreen(bounds)
-
-            Log.d(
-                "DynamicDock",
-                "WINDOW: type=${window.type} " +
-                "package=${window.root?.packageName} " +
-                "bounds=$bounds"
-            )
-        }
     }
 
     override fun onInterrupt() {
