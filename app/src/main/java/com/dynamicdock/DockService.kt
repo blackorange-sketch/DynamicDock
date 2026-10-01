@@ -106,6 +106,18 @@ class DockService : Service() {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
                 setPadding(8, 0, 8, 0)
+
+                setOnClickListener {
+                    val launchIntent =
+                        packageManager.getLaunchIntentForPackage(
+                            app.packageName
+                        )
+
+                    launchIntent?.let { intent ->
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                    }
+                }
             }
 
             val icon = ImageView(this).apply {
