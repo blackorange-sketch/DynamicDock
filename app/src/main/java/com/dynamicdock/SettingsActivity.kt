@@ -167,6 +167,57 @@ class SettingsActivity : Activity() {
             )
         }
 
+        val labelsSwitch = Switch(this).apply {
+            text = "Показувати назви програм"
+            textSize = 16f
+            isChecked = settings.showAppLabels
+        }
+
+        val iconSizeLabel = TextView(this).apply {
+            text =
+                "Розмір іконок: " +
+                "${settings.iconSizeDp} dp"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val iconSizeSeekBar = SeekBar(this).apply {
+            min = 24
+            max = 48
+            progress = settings.iconSizeDp
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        settings.iconSizeDp = progress
+
+                        iconSizeLabel.text =
+                            "Розмір іконок: " +
+                            "$progress dp"
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
+        labelsSwitch.setOnCheckedChangeListener { _, checked ->
+            settings.showAppLabels = checked
+        }
+
         val autoHideSwitch = Switch(this).apply {
             text = "Автоматично ховати док"
             textSize = 16f
@@ -225,6 +276,9 @@ class SettingsActivity : Activity() {
         layout.addView(positionSpinner)
         layout.addView(lengthLabel)
         layout.addView(lengthSeekBar)
+        layout.addView(labelsSwitch)
+        layout.addView(iconSizeLabel)
+        layout.addView(iconSizeSeekBar)
         layout.addView(autoHideSwitch)
         layout.addView(autoHideLabel)
         layout.addView(autoHideSeekBar)

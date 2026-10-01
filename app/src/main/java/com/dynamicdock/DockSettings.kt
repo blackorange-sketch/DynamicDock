@@ -58,6 +58,28 @@ class DockSettings(
                 .apply()
         }
 
+    var showAppLabels: Boolean
+        get() = preferences.getBoolean(
+            "show_app_labels",
+            true
+        )
+        set(value) {
+            preferences.edit()
+                .putBoolean("show_app_labels", value)
+                .apply()
+        }
+
+    var iconSizeDp: Int
+        get() = preferences.getInt(
+            "icon_size_dp",
+            30
+        )
+        set(value) {
+            preferences.edit()
+                .putInt("icon_size_dp", value)
+                .apply()
+        }
+
     var reservedSpace: Boolean
         get() = preferences.getBoolean(
             "reserved_space",
