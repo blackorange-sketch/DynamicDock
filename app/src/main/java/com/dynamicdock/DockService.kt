@@ -63,6 +63,12 @@ class DockService : Service() {
             position == "left" ||
             position == "right"
 
+        appContainer.orientation =
+            if (isVertical)
+                LinearLayout.VERTICAL
+            else
+                LinearLayout.HORIZONTAL
+
         params.width =
             if (isVertical)
                 dp(dockHeightDp)
@@ -91,6 +97,8 @@ class DockService : Service() {
             appContainer,
             params
         )
+
+        rebuildDock()
     }
 
     fun updateDockHeight(heightDp: Int) {
