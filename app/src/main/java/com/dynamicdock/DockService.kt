@@ -40,6 +40,8 @@ class DockService : Service() {
 
     private var isDockHidden = false
 
+    private var activePackageName: String? = null
+
     private var dockHeightDp = 40
 
     private val hiddenHeightDp = 6
@@ -412,6 +414,8 @@ class DockService : Service() {
             return
         }
 
+        activePackageName = packageName
+
         val appInfo =
             appInfoRepository.getAppInfo(packageName)
 
@@ -436,6 +440,13 @@ class DockService : Service() {
         appContainer.removeAllViews()
 
         val apps = registry.getApps()
+
+        val paddingSettings =
+            DockSettings(this)
+
+        val isVerticalDock =
+            paddingSettings.dockPosition == "left" ||
+            paddingSettings.dockPosition == "right"
 
         apps.forEachIndexed { index, app ->
 
@@ -549,6 +560,32 @@ class DockService : Service() {
 
             item.addView(icon, iconParams)
 
+            if (app.packageName == activePackageName) {
+                val indicator = View(this).apply {
+                    setBackgroundColor(Color.WHITE)
+                }
+
+                val indicatorParams =
+                    if (isVerticalDock) {
+                        LinearLayout.LayoutParams(
+                            dp(3),
+                            dp(18)
+                        )
+                    } else {
+                        LinearLayout.LayoutParams(
+                            dp(18),
+                            dp(3)
+                        )
+                    }
+
+                indicatorParams.gravity = Gravity.CENTER
+
+                item.addView(
+                    indicator,
+                    indicatorParams
+                )
+            }
+
             if (DockSettings(this).showAppLabels) {
                 val name = TextView(this).apply {
                     text = app.appName
@@ -565,13 +602,6 @@ class DockService : Service() {
 
                 item.addView(name, nameParams)
             }
-
-            val paddingSettings =
-                DockSettings(this)
-
-            val isVerticalDock =
-                paddingSettings.dockPosition == "left" ||
-                paddingSettings.dockPosition == "right"
 
             val itemParams =
                 LinearLayout.LayoutParams(
