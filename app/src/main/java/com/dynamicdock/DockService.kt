@@ -60,8 +60,6 @@ class DockService : Service() {
         registry = RunningAppRegistry(this)
         registry.restorePinned(this)
 
-        instance = this
-
         if (!Settings.canDrawOverlays(this)) {
             stopSelf()
             return
