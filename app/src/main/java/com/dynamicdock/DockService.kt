@@ -52,6 +52,47 @@ class DockService : Service() {
         return (value * resources.displayMetrics.density).toInt()
     }
 
+    fun updateDockPosition(position: String) {
+
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return
+
+        val isVertical =
+            position == "left" ||
+            position == "right"
+
+        params.width =
+            if (isVertical)
+                dp(dockHeightDp)
+            else
+                WindowManager.LayoutParams.MATCH_PARENT
+
+        params.height =
+            if (isVertical)
+                WindowManager.LayoutParams.MATCH_PARENT
+            else
+                dp(dockHeightDp)
+
+        params.gravity =
+            when (position) {
+                "left" ->
+                    Gravity.CENTER_VERTICAL or Gravity.LEFT
+
+                "right" ->
+                    Gravity.CENTER_VERTICAL or Gravity.RIGHT
+
+                else ->
+                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            }
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
+    }
+
     fun updateDockHeight(heightDp: Int) {
         val params = appContainer.layoutParams
             as? WindowManager.LayoutParams

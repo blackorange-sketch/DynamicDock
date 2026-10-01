@@ -103,12 +103,17 @@ class SettingsActivity : Activity() {
                         position: Int,
                         id: Long
                     ) {
-                        settings.dockPosition =
+                        val dockPosition =
                             when (position) {
                                 1 -> "left"
                                 2 -> "right"
                                 else -> "bottom"
                             }
+
+                        settings.dockPosition = dockPosition
+
+                        DockService.instance
+                            ?.updateDockPosition(dockPosition)
                     }
 
                     override fun onNothingSelected(
