@@ -3,13 +3,10 @@
 
     <style
         name="Theme.DynamicDock"
-        parent="android:style/Theme.Material.NoActionBar">
+        parent="android:style/Theme.DeviceDefault.NoActionBar">
 
         <item name="android:fontFamily">sans</item>
         <item name="android:windowActionModeOverlay">true</item>
-
-        <!-- Автоматично слідувати системній темі -->
-        <item name="android:forceDarkAllowed">true</item>
 
     </style>
 
