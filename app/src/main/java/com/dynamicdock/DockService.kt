@@ -65,7 +65,7 @@ class DockService : Service() {
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            dp(80),
+            dp(110),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -158,8 +158,8 @@ class DockService : Service() {
             }
 
             val iconParams = LinearLayout.LayoutParams(
-                dp(48),
-                dp(48)
+                dp(44),
+                dp(44)
             )
 
             val name = TextView(this).apply {
@@ -171,7 +171,7 @@ class DockService : Service() {
             }
 
             val nameParams = LinearLayout.LayoutParams(
-                dp(80),
+                dp(110),
                 dp(24)
             )
 
