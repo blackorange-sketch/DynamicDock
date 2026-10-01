@@ -5,6 +5,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.IBinder
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -32,6 +34,20 @@ class DockService : Service() {
     private lateinit var appInfoRepository: AppInfoRepository
 
     private var dockView: View? = null
+
+    private val hideHandler =
+        Handler(Looper.getMainLooper())
+
+    private var isDockHidden = false
+
+    private var dockHeightDp =
+        DockSettings(this).dockHeightDp
+
+    private val hiddenHeightDp = 6
+
+    private val hideRunnable = Runnable {
+        hideDock()
+    }
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
@@ -88,9 +104,83 @@ class DockService : Service() {
 
         dockView = appContainer
 
+        dockHeightDp =
+            DockSettings(this).dockHeightDp
+
+        appContainer.setOnClickListener {
+            if (isDockHidden) {
+                showDock()
+            }
+        }
+
         windowManager.addView(
             appContainer,
             params
+        )
+
+        scheduleAutoHide()
+    }
+
+    private fun hideDock() {
+
+        if (isDockHidden) {
+            return
+        }
+
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return
+
+        params.height = dp(hiddenHeightDp)
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
+
+        isDockHidden = true
+    }
+
+    private fun showDock() {
+
+        if (!isDockHidden) {
+            return
+        }
+
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return
+
+        params.height = dp(dockHeightDp)
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
+
+        isDockHidden = false
+
+        scheduleAutoHide()
+    }
+
+    private fun scheduleAutoHide() {
+
+        hideHandler.removeCallbacks(
+            hideRunnable
+        )
+
+        val settings =
+            DockSettings(this)
+
+        if (!settings.reservedSpace) {
+            return
+        }
+
+        hideHandler.postDelayed(
+            hideRunnable,
+            settings.autoHideDelaySeconds * 1000L
         )
     }
 
@@ -162,6 +252,9 @@ class DockService : Service() {
                 setPadding(dp(6), 0, dp(6), 0)
 
                 setOnClickListener {
+
+                    showDock()
+
                     val launchIntent =
                         packageManager.getLaunchIntentForPackage(
                             app.packageName
@@ -174,6 +267,9 @@ class DockService : Service() {
                 }
 
                 setOnLongClickListener {
+
+                    showDock()
+
                     if (app.pinned) {
                         registry.unpin(app.packageName)
                     } else {
