@@ -4,6 +4,8 @@ import android.app.Activity
 import android.os.Bundle
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.widget.Switch
 import android.widget.TextView
 
@@ -49,6 +51,99 @@ class SettingsActivity : Activity() {
 
                         DockService.instance
                             ?.updateDockHeight(progress)
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
+        val positionLabel = TextView(this).apply {
+            text = "Положення Dock"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val positionSpinner = Spinner(this).apply {
+
+            val positions = arrayOf(
+                "Знизу",
+                "Зліва",
+                "Справа"
+            )
+
+            adapter = ArrayAdapter(
+                this@SettingsActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                positions
+            )
+
+            setSelection(
+                when (settings.dockPosition) {
+                    "left" -> 1
+                    "right" -> 2
+                    else -> 0
+                }
+            )
+
+            onItemSelectedListener =
+                object : android.widget.AdapterView.OnItemSelectedListener {
+
+                    override fun onItemSelected(
+                        parent: android.widget.AdapterView<*>?,
+                        view: android.view.View?,
+                        position: Int,
+                        id: Long
+                    ) {
+                        settings.dockPosition =
+                            when (position) {
+                                1 -> "left"
+                                2 -> "right"
+                                else -> "bottom"
+                            }
+                    }
+
+                    override fun onNothingSelected(
+                        parent: android.widget.AdapterView<*>?
+                    ) {
+                    }
+                }
+        }
+
+        val lengthLabel = TextView(this).apply {
+            text =
+                "Довжина Dock: " +
+                "${settings.dockLengthDp} dp"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val lengthSeekBar = SeekBar(this).apply {
+            min = 160
+            max = 600
+            progress = settings.dockLengthDp
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        settings.dockLengthDp = progress
+
+                        lengthLabel.text =
+                            "Довжина Dock: " +
+                            "$progress dp"
                     }
 
                     override fun onStartTrackingTouch(
@@ -118,6 +213,10 @@ class SettingsActivity : Activity() {
         layout.addView(title)
         layout.addView(heightLabel)
         layout.addView(heightSeekBar)
+        layout.addView(positionLabel)
+        layout.addView(positionSpinner)
+        layout.addView(lengthLabel)
+        layout.addView(lengthSeekBar)
         layout.addView(autoHideSwitch)
         layout.addView(autoHideLabel)
         layout.addView(autoHideSeekBar)

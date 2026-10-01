@@ -36,6 +36,28 @@ class DockSettings(
         }
 
 
+    var dockPosition: String
+        get() = preferences.getString(
+            "dock_position",
+            "bottom"
+        ) ?: "bottom"
+        set(value) {
+            preferences.edit()
+                .putString("dock_position", value)
+                .apply()
+        }
+
+    var dockLengthDp: Int
+        get() = preferences.getInt(
+            "dock_length_dp",
+            280
+        )
+        set(value) {
+            preferences.edit()
+                .putInt("dock_length_dp", value)
+                .apply()
+        }
+
     var reservedSpace: Boolean
         get() = preferences.getBoolean(
             "reserved_space",
