@@ -464,21 +464,24 @@ class DockService : Service() {
                 dp(iconSize)
             )
 
-            val name = TextView(this).apply {
-                text = app.appName
-                textSize = 10f
-                setTextColor(Color.WHITE)
-                gravity = Gravity.CENTER
-                maxLines = 1
-            }
-
-            val nameParams = LinearLayout.LayoutParams(
-                dp(40),
-                dp(24)
-            )
-
             item.addView(icon, iconParams)
-            item.addView(name, nameParams)
+
+            if (DockSettings(this).showAppLabels) {
+                val name = TextView(this).apply {
+                    text = app.appName
+                    textSize = 10f
+                    setTextColor(Color.WHITE)
+                    gravity = Gravity.CENTER
+                    maxLines = 1
+                }
+
+                val nameParams = LinearLayout.LayoutParams(
+                    dp(40),
+                    dp(24)
+                )
+
+                item.addView(name, nameParams)
+            }
 
             appContainer.addView(item)
         }
