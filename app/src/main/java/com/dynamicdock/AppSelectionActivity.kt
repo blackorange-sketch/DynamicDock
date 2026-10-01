@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.content.pm.ApplicationInfo
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
+import android.widget.Switch
 
 class AppSelectionActivity : Activity() {
 
@@ -36,7 +36,7 @@ class AppSelectionActivity : Activity() {
             )
         }
 
-        val title = TextView(this).apply {
+        val title = android.widget.TextView(this).apply {
             text = "Програми Dock"
             textSize = 24f
         }
@@ -44,23 +44,31 @@ class AppSelectionActivity : Activity() {
         layout.addView(title)
 
         for (app in apps) {
+
             val name =
                 packageManager
                     .getApplicationLabel(app)
                     .toString()
 
-            val item = TextView(this).apply {
+            val switch = Switch(this).apply {
                 text = name
                 textSize = 17f
+
                 setPadding(
                     dp(8),
-                    dp(14),
+                    dp(10),
                     dp(8),
-                    dp(14)
+                    dp(10)
                 )
             }
 
-            layout.addView(item)
+            layout.addView(
+                switch,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            )
         }
 
         val scrollView = ScrollView(this)
