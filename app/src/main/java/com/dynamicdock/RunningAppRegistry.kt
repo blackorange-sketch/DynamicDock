@@ -21,6 +21,16 @@ class RunningAppRegistry(
         )?.toMutableSet()
             ?: mutableSetOf()
 
+    private val pinnedOrder =
+        preferences.getString(
+            "pinned_order",
+            ""
+        )
+            ?.split("|")
+            ?.filter { it.isNotBlank() }
+            ?.toMutableList()
+            ?: mutableListOf()
+
     fun activate(app: RunningApp) {
 
         val pinned =
@@ -41,6 +51,10 @@ class RunningAppRegistry(
 
         pinnedPackages.add(packageName)
 
+        if (!pinnedOrder.contains(packageName)) {
+            pinnedOrder.add(packageName)
+        }
+
         savePinned()
 
         val index =
@@ -59,6 +73,7 @@ class RunningAppRegistry(
     fun unpin(packageName: String) {
 
         pinnedPackages.remove(packageName)
+        pinnedOrder.remove(packageName)
 
         savePinned()
 
@@ -80,6 +95,10 @@ class RunningAppRegistry(
             .putStringSet(
                 "pinned_packages",
                 pinnedPackages
+            )
+            .putString(
+                "pinned_order",
+                pinnedOrder.joinToString("|")
             )
             .apply()
     }
@@ -147,9 +166,17 @@ class RunningAppRegistry(
     }
 
     fun getApps(): List<RunningApp> {
-        return apps
-            .sortedByDescending { it.pinned }
-            .toList()
+        val pinned = pinnedOrder.mapNotNull { packageName ->
+            apps.find { it.packageName == packageName && it.pinned }
+        }
+
+        val remainingPinned = apps.filter {
+            it.pinned && !pinnedOrder.contains(it.packageName)
+        }
+
+        val active = apps.filter { !it.pinned }
+
+        return pinned + remainingPinned + active
     }
 
     fun clear() {
