@@ -5,7 +5,6 @@ import android.content.Context
 class RunningAppRegistry(
     context: Context
 ) {
-
     private val apps = mutableListOf<RunningApp>()
 
     private val preferences =
@@ -32,7 +31,6 @@ class RunningAppRegistry(
             ?: mutableListOf()
 
     fun activate(app: RunningApp) {
-
         val pinned =
             pinnedPackages.contains(app.packageName)
 
@@ -48,7 +46,6 @@ class RunningAppRegistry(
     }
 
     fun pin(packageName: String) {
-
         pinnedPackages.add(packageName)
 
         if (!pinnedOrder.contains(packageName)) {
@@ -71,7 +68,6 @@ class RunningAppRegistry(
     }
 
     fun unpin(packageName: String) {
-
         pinnedPackages.remove(packageName)
         pinnedOrder.remove(packageName)
 
@@ -90,6 +86,43 @@ class RunningAppRegistry(
         }
     }
 
+    fun isSelected(packageName: String): Boolean {
+        return preferences
+            .getStringSet(
+                "selected_packages",
+                emptySet()
+            )
+            ?.contains(packageName)
+            ?: false
+    }
+
+    fun setSelected(
+        packageName: String,
+        selected: Boolean
+    ) {
+        val selectedPackages =
+            preferences
+                .getStringSet(
+                    "selected_packages",
+                    emptySet()
+                )
+                ?.toMutableSet()
+                ?: mutableSetOf()
+
+        if (selected) {
+            selectedPackages.add(packageName)
+        } else {
+            selectedPackages.remove(packageName)
+        }
+
+        preferences.edit()
+            .putStringSet(
+                "selected_packages",
+                selectedPackages
+            )
+            .apply()
+    }
+
     private fun savePinned() {
         preferences.edit()
             .putStringSet(
@@ -103,27 +136,8 @@ class RunningAppRegistry(
             .apply()
     }
 
-    fun removeUnavailable(context: Context) {
-
-        val packageManager =
-            context.packageManager
-
-        apps.removeAll { app ->
-
-            if (app.pinned) {
-                false
-            } else {
-                packageManager.getLaunchIntentForPackage(
-                    app.packageName
-                ) == null
-            }
-        }
-    }
-
     fun restorePinned(context: Context) {
-
         pinnedPackages.forEach { packageName ->
-
             if (apps.any { it.packageName == packageName }) {
                 return@forEach
             }
@@ -158,25 +172,54 @@ class RunningAppRegistry(
                         pinned = true
                     )
                 )
-
             } catch (e: Exception) {
                 // Application is no longer available.
             }
         }
     }
 
+    fun removeUnavailable(context: Context) {
+        val packageManager =
+            context.packageManager
+
+        apps.removeAll { app ->
+            if (app.pinned) {
+                false
+            } else {
+                packageManager.getLaunchIntentForPackage(
+                    app.packageName
+                ) == null
+            }
+        }
+    }
+
     fun getApps(): List<RunningApp> {
-        val pinned = pinnedOrder.mapNotNull { packageName ->
-            apps.find { it.packageName == packageName && it.pinned }
-        }
 
-        val remainingPinned = apps.filter {
-            it.pinned && !pinnedOrder.contains(it.packageName)
-        }
+        val pinned =
+            pinnedOrder.mapNotNull { packageName ->
+                apps.find {
+                    it.packageName == packageName &&
+                        it.pinned
+                }
+            }
 
-        val active = apps.filter { !it.pinned }
+        val remainingPinned =
+            apps.filter {
+                it.pinned &&
+                    !pinnedOrder.contains(
+                        it.packageName
+                    )
+            }
 
-        return pinned + remainingPinned + active
+        val selected =
+            apps.filter {
+                !it.pinned &&
+                    isSelected(it.packageName)
+            }
+
+        return pinned +
+            remainingPinned +
+            selected
     }
 
     fun clear() {

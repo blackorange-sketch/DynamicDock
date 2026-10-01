@@ -26,17 +26,27 @@ class AppSelectionActivity : Activity() {
                 emptySet()
             ) ?: emptySet()
 
+        val pinnedPackages =
+            preferences.getStringSet(
+                "pinned_packages",
+                emptySet()
+            ) ?: emptySet()
+
         val apps = packageManager
             .getInstalledApplications(0)
             .filter {
                 it.flags and ApplicationInfo.FLAG_SYSTEM == 0
             }
-            .sortedBy {
-                packageManager
-                    .getApplicationLabel(it)
-                    .toString()
-                    .lowercase()
-            }
+            .sortedWith(
+                compareByDescending<ApplicationInfo> {
+                    pinnedPackages.contains(it.packageName)
+                }.thenBy {
+                    packageManager
+                        .getApplicationLabel(it)
+                        .toString()
+                        .lowercase()
+                }
+            )
 
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -66,7 +76,11 @@ class AppSelectionActivity : Activity() {
                 text = name
                 textSize = 17f
                 isChecked =
-                    selectedPackages.contains(
+                    pinnedPackages.contains(app.packageName) ||
+                        selectedPackages.contains(app.packageName)
+
+                isEnabled =
+                    !pinnedPackages.contains(
                         app.packageName
                     )
 
@@ -93,6 +107,8 @@ class AppSelectionActivity : Activity() {
                             updated
                         )
                         .apply()
+
+                    DockService.instance?.refreshDock()
                 }
             }
 
