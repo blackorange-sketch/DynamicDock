@@ -80,6 +80,28 @@ class DockSettings(
                 .apply()
         }
 
+    var horizontalPaddingDp: Int
+        get() = preferences.getInt(
+            "horizontal_padding_dp",
+            6
+        )
+        set(value) {
+            preferences.edit()
+                .putInt("horizontal_padding_dp", value)
+                .apply()
+        }
+
+    var verticalPaddingDp: Int
+        get() = preferences.getInt(
+            "vertical_padding_dp",
+            0
+        )
+        set(value) {
+            preferences.edit()
+                .putInt("vertical_padding_dp", value)
+                .apply()
+        }
+
     var reservedSpace: Boolean
         get() = preferences.getBoolean(
             "reserved_space",

@@ -222,6 +222,88 @@ class SettingsActivity : Activity() {
             DockService.instance?.refreshDock()
         }
 
+        val horizontalPaddingLabel = TextView(this).apply {
+            text =
+                "Горизонтальний відступ: " +
+                "${settings.horizontalPaddingDp} dp"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val horizontalPaddingSeekBar = SeekBar(this).apply {
+            min = 0
+            max = 16
+            progress = settings.horizontalPaddingDp
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        settings.horizontalPaddingDp = progress
+
+                        horizontalPaddingLabel.text =
+                            "Горизонтальний відступ: " +
+                            "$progress dp"
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
+        val verticalPaddingLabel = TextView(this).apply {
+            text =
+                "Вертикальний відступ: " +
+                "${settings.verticalPaddingDp} dp"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val verticalPaddingSeekBar = SeekBar(this).apply {
+            min = 0
+            max = 16
+            progress = settings.verticalPaddingDp
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        settings.verticalPaddingDp = progress
+
+                        verticalPaddingLabel.text =
+                            "Вертикальний відступ: " +
+                            "$progress dp"
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
         val autoHideSwitch = Switch(this).apply {
             text = "Автоматично ховати док"
             textSize = 16f
@@ -283,6 +365,10 @@ class SettingsActivity : Activity() {
         layout.addView(labelsSwitch)
         layout.addView(iconSizeLabel)
         layout.addView(iconSizeSeekBar)
+        layout.addView(horizontalPaddingLabel)
+        layout.addView(horizontalPaddingSeekBar)
+        layout.addView(verticalPaddingLabel)
+        layout.addView(verticalPaddingSeekBar)
         layout.addView(autoHideSwitch)
         layout.addView(autoHideLabel)
         layout.addView(autoHideSeekBar)
