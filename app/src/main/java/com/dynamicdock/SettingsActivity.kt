@@ -199,6 +199,9 @@ class SettingsActivity : Activity() {
                         iconSizeLabel.text =
                             "Розмір іконок: " +
                             "$progress dp"
+
+                        DockService.instance
+                            ?.updateIconSize(progress)
                     }
 
                     override fun onStartTrackingTouch(
