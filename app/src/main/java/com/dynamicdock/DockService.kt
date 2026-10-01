@@ -15,6 +15,7 @@ import android.widget.TextView
 class DockService : Service() {
 
     companion object {
+
         private var instance: DockService? = null
 
         fun updateActivePackage(packageName: String) {
@@ -24,7 +25,9 @@ class DockService : Service() {
 
     private lateinit var windowManager: WindowManager
     private var dockView: View? = null
-    private var packageText: TextView? = null
+    private lateinit var appContainer: LinearLayout
+
+    private val registry = RunningAppRegistry()
 
     override fun onCreate() {
         super.onCreate()
@@ -36,26 +39,21 @@ class DockService : Service() {
             return
         }
 
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        windowManager =
+            getSystemService(WINDOW_SERVICE) as WindowManager
 
-        val dock = LinearLayout(this).apply {
+        appContainer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.argb(220, 30, 30, 30))
+            setBackgroundColor(
+                Color.argb(220, 30, 30, 30)
+            )
+            setPadding(16, 0, 16, 0)
         }
-
-        packageText = TextView(this).apply {
-            text = "Waiting..."
-            textSize = 14f
-            setTextColor(Color.WHITE)
-            setPadding(24, 0, 24, 0)
-        }
-
-        dock.addView(packageText)
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            80,
+            100,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -63,17 +61,61 @@ class DockService : Service() {
 
         params.gravity = Gravity.BOTTOM
 
-        dockView = dock
-        windowManager.addView(dock, params)
+        dockView = appContainer
+
+        windowManager.addView(
+            appContainer,
+            params
+        )
     }
 
     private fun updatePackage(packageName: String) {
-        packageText?.post {
-            packageText?.text = packageName
+
+        if (packageName == packageNameOfSelf()) {
+            return
+        }
+
+        registry.activate(packageName)
+
+        appContainer.post {
+            rebuildDock()
         }
     }
 
+    private fun rebuildDock() {
+
+        appContainer.removeAllViews()
+
+        registry.getApps().forEach { app ->
+
+            val item = TextView(this).apply {
+
+                text = app.packageName
+
+                textSize = 12f
+
+                setTextColor(Color.WHITE)
+
+                gravity = Gravity.CENTER
+
+                setPadding(
+                    24,
+                    0,
+                    24,
+                    0
+                )
+            }
+
+            appContainer.addView(item)
+        }
+    }
+
+    private fun packageNameOfSelf(): String {
+        return packageName
+    }
+
     override fun onDestroy() {
+
         instance = null
 
         dockView?.let {
@@ -81,8 +123,11 @@ class DockService : Service() {
         }
 
         dockView = null
+
         super.onDestroy()
     }
 
-    override fun onBind(intent: Intent?): IBinder? = null
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
 }
