@@ -149,6 +149,9 @@ class SettingsActivity : Activity() {
                         lengthLabel.text =
                             "Довжина Dock: " +
                             "$progress dp"
+
+                        DockService.instance
+                            ?.updateDockLength(progress)
                     }
 
                     override fun onStartTrackingTouch(

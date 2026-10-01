@@ -101,6 +101,32 @@ class DockService : Service() {
         rebuildDock()
     }
 
+    fun updateDockLength(lengthDp: Int) {
+
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return
+
+        val settings =
+            DockSettings(this)
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        if (isVertical) {
+            params.height = dp(lengthDp)
+        } else {
+            params.width = dp(lengthDp)
+        }
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
+    }
+
     fun updateDockHeight(heightDp: Int) {
         val params = appContainer.layoutParams
             as? WindowManager.LayoutParams
@@ -150,10 +176,10 @@ class DockService : Service() {
             if (isVertical)
                 dp(settings.dockHeightDp)
             else
-                WindowManager.LayoutParams.MATCH_PARENT,
+                dp(settings.dockLengthDp),
 
             if (isVertical)
-                WindowManager.LayoutParams.MATCH_PARENT
+                dp(settings.dockLengthDp)
             else
                 dp(settings.dockHeightDp),
 
