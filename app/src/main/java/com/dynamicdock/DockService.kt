@@ -5,6 +5,9 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
@@ -127,9 +130,20 @@ class DockService : Service() {
                         registry.pin(app.packageName)
                     }
 
-                    performHapticFeedback(
-                        android.view.HapticFeedbackConstants.LONG_PRESS
-                    )
+                    val vibratorManager =
+                        getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
+
+                    val vibrator =
+                        vibratorManager.defaultVibrator
+
+                    if (vibrator.hasVibrator()) {
+                        vibrator.vibrate(
+                            VibrationEffect.createOneShot(
+                                60,
+                                VibrationEffect.DEFAULT_AMPLITUDE
+                            )
+                        )
+                    }
 
                     rebuildDock()
                     true
