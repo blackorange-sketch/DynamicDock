@@ -176,6 +176,32 @@ class SettingsActivity : Activity() {
 
         addSectionTitle(
             layout,
+            "Програми"
+        )
+
+        val appSelectionButton = android.widget.Button(this).apply {
+            text = "Програми Dock"
+
+            setOnClickListener {
+                startActivity(
+                    android.content.Intent(
+                        this@SettingsActivity,
+                        AppSelectionActivity::class.java
+                    )
+                )
+            }
+        }
+
+        layout.addView(
+            appSelectionButton,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        addSectionTitle(
+            layout,
             "Приховування"
         )
 
