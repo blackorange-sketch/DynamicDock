@@ -246,6 +246,59 @@ class RunningAppRegistry(
 
     fun getApps(): List<RunningApp> {
 
+        val packageManager =
+            context.packageManager
+
+        val selectedPackages =
+            preferences
+                .getStringSet(
+                    "selected_packages",
+                    emptySet()
+                )
+                ?: emptySet()
+
+        selectedPackages.forEach { packageName ->
+
+            if (
+                !apps.any {
+                    it.packageName == packageName
+                }
+            ) {
+                try {
+                    val applicationInfo =
+                        packageManager.getApplicationInfo(
+                            packageName,
+                            0
+                        )
+
+                    val appName =
+                        packageManager
+                            .getApplicationLabel(
+                                applicationInfo
+                            )
+                            .toString()
+
+                    val icon =
+                        packageManager.getApplicationIcon(
+                            applicationInfo
+                        )
+
+                    apps.add(
+                        RunningApp(
+                            packageName = packageName,
+                            appName = appName,
+                            icon = icon,
+                            pinned = pinnedPackages.contains(
+                                packageName
+                            )
+                        )
+                    )
+                } catch (e: Exception) {
+                    // Application is no longer available.
+                }
+            }
+        }
+
         val pinned =
             pinnedOrder.mapNotNull { packageName ->
                 apps.find {
@@ -265,7 +318,9 @@ class RunningAppRegistry(
         val selected =
             apps.filter {
                 !it.pinned &&
-                    isSelected(it.packageName)
+                    selectedPackages.contains(
+                        it.packageName
+                    )
             }
 
         return pinned +
