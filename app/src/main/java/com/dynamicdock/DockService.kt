@@ -117,6 +117,17 @@ class DockService : Service() {
                         startActivity(intent)
                     }
                 }
+
+                setOnLongClickListener {
+                    if (app.pinned) {
+                        registry.unpin(app.packageName)
+                    } else {
+                        registry.pin(app.packageName)
+                    }
+
+                    rebuildDock()
+                    true
+                }
             }
 
             val icon = ImageView(this).apply {
