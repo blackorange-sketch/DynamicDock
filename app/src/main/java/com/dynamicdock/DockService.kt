@@ -40,8 +40,7 @@ class DockService : Service() {
 
     private var isDockHidden = false
 
-    private var dockHeightDp =
-        DockSettings(this).dockHeightDp
+    private var dockHeightDp = 40
 
     private val hiddenHeightDp = 6
 
