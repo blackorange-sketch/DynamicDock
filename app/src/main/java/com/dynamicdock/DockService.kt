@@ -98,6 +98,8 @@ class DockService : Service() {
 
     private fun rebuildDock() {
 
+        registry.removeUnavailable(this)
+
         appContainer.removeAllViews()
 
         registry.getApps().forEach { app ->

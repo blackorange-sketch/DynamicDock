@@ -1,5 +1,7 @@
 package com.dynamicdock
 
+import android.content.Context
+
 class RunningAppRegistry {
 
     private val apps = mutableListOf<RunningApp>()
@@ -10,6 +12,16 @@ class RunningAppRegistry {
         }
 
         apps.add(app)
+    }
+
+    fun removeUnavailable(context: Context) {
+        val packageManager = context.packageManager
+
+        apps.removeAll { app ->
+            packageManager.getLaunchIntentForPackage(
+                app.packageName
+            ) == null
+        }
     }
 
     fun getApps(): List<RunningApp> {
