@@ -91,15 +91,39 @@ class DockService : Service() {
             background = getDrawable(R.drawable.dock_background)
         }
 
+        val settings = DockSettings(this)
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            dp(DockSettings(this).dockHeightDp),
+            if (isVertical)
+                dp(settings.dockHeightDp)
+            else
+                WindowManager.LayoutParams.MATCH_PARENT,
+
+            if (isVertical)
+                WindowManager.LayoutParams.MATCH_PARENT
+            else
+                dp(settings.dockHeightDp),
+
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
 
-        params.gravity = Gravity.BOTTOM
+        params.gravity =
+            when (settings.dockPosition) {
+                "left" ->
+                    Gravity.CENTER_VERTICAL or Gravity.LEFT
+
+                "right" ->
+                    Gravity.CENTER_VERTICAL or Gravity.RIGHT
+
+                else ->
+                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            }
 
         dockView = appContainer
 
