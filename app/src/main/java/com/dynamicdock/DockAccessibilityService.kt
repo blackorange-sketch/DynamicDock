@@ -2,6 +2,7 @@ package com.dynamicdock
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
 class DockAccessibilityService : AccessibilityService() {
@@ -14,7 +15,7 @@ class DockAccessibilityService : AccessibilityService() {
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
         }
 
-        OrionLogger.log(
+        Log.d("DynamicDock", 
             "Accessibility connected: interactive windows enabled"
         )
     }
@@ -38,7 +39,7 @@ class DockAccessibilityService : AccessibilityService() {
 
         val windows = windows
 
-        OrionLogger.log(
+        Log.d("DynamicDock", 
             "WINDOWS: count=${windows.size}"
         )
 
@@ -49,7 +50,7 @@ class DockAccessibilityService : AccessibilityService() {
 
             window.getBoundsInScreen(bounds)
 
-            OrionLogger.log(
+            Log.d("DynamicDock", 
                 "WINDOW: type=${window.type} " +
                 "package=${window.root?.packageName} " +
                 "bounds=$bounds"
