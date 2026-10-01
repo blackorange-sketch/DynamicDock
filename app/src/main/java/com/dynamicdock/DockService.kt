@@ -82,7 +82,6 @@ class DockService : Service() {
 
         val appInfo =
             appInfoRepository.getAppInfo(packageName)
-                ?: return
 
         val runningApp = RunningApp(
             packageName = appInfo.packageName,
