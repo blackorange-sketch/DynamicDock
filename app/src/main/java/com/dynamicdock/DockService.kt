@@ -553,12 +553,19 @@ class DockService : Service() {
             val iconSize =
                 DockSettings(this).iconSizeDp
 
-            val iconParams = LinearLayout.LayoutParams(
-                dp(iconSize),
-                dp(iconSize)
-            )
+            val iconContainer =
+                android.widget.FrameLayout(this)
 
-            item.addView(icon, iconParams)
+            val iconParams =
+                android.widget.FrameLayout.LayoutParams(
+                    dp(iconSize),
+                    dp(iconSize)
+                )
+
+            iconContainer.addView(
+                icon,
+                iconParams
+            )
 
             if (app.packageName == activePackageName) {
                 val indicator = View(this).apply {
@@ -567,24 +574,42 @@ class DockService : Service() {
 
                 val indicatorParams =
                     if (isVerticalDock) {
-                        LinearLayout.LayoutParams(
+                        val indicatorGravity =
+                            if (paddingSettings.dockPosition == "left") {
+                                Gravity.CENTER_VERTICAL or
+                                    Gravity.END
+                            } else {
+                                Gravity.CENTER_VERTICAL or
+                                    Gravity.START
+                            }
+
+                        android.widget.FrameLayout.LayoutParams(
                             dp(3),
-                            dp(18)
+                            dp(18),
+                            indicatorGravity
                         )
                     } else {
-                        LinearLayout.LayoutParams(
+                        android.widget.FrameLayout.LayoutParams(
                             dp(18),
-                            dp(3)
+                            dp(3),
+                            Gravity.CENTER_HORIZONTAL or
+                                Gravity.BOTTOM
                         )
                     }
 
-                indicatorParams.gravity = Gravity.CENTER
-
-                item.addView(
+                iconContainer.addView(
                     indicator,
                     indicatorParams
                 )
             }
+
+            item.addView(
+                iconContainer,
+                LinearLayout.LayoutParams(
+                    dp(iconSize),
+                    dp(iconSize)
+                )
+            )
 
             if (DockSettings(this).showAppLabels) {
                 val name = TextView(this).apply {
