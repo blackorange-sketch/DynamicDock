@@ -109,7 +109,39 @@ class DockService : Service() {
 
         appContainer.removeAllViews()
 
-        registry.getApps().forEach { app ->
+        val apps = registry.getApps()
+
+        apps.forEachIndexed { index, app ->
+
+            if (
+                index > 0 &&
+                apps[index - 1].pinned &&
+                !app.pinned
+            ) {
+                val separator = View(this).apply {
+                    setBackgroundColor(
+                        Color.argb(90, 255, 255, 255)
+                    )
+                }
+
+                val separatorParams =
+                    LinearLayout.LayoutParams(
+                        dp(1),
+                        dp(28)
+                    ).apply {
+                        setMargins(
+                            dp(4),
+                            0,
+                            dp(4),
+                            0
+                        )
+                    }
+
+                appContainer.addView(
+                    separator,
+                    separatorParams
+                )
+            }
 
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
