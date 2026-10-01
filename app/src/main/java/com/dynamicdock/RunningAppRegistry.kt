@@ -147,7 +147,9 @@ class RunningAppRegistry(
     }
 
     fun getApps(): List<RunningApp> {
-        return apps.toList()
+        return apps
+            .sortedByDescending { it.pinned }
+            .toList()
     }
 
     fun clear() {
