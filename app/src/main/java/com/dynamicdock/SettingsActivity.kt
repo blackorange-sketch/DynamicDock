@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Switch
 import android.widget.TextView
 
 class SettingsActivity : Activity() {
@@ -46,7 +47,8 @@ class SettingsActivity : Activity() {
                         heightLabel.text =
                             "Висота дока: $progress dp"
 
-                        DockService.instance?.updateDockHeight(progress)
+                        DockService.instance
+                            ?.updateDockHeight(progress)
                     }
 
                     override fun onStartTrackingTouch(
@@ -62,9 +64,63 @@ class SettingsActivity : Activity() {
             )
         }
 
+        val autoHideSwitch = Switch(this).apply {
+            text = "Автоматично ховати док"
+            textSize = 16f
+            isChecked = settings.reservedSpace
+        }
+
+        val autoHideLabel = TextView(this).apply {
+            text =
+                "Час до приховування: " +
+                "${settings.autoHideDelaySeconds} с"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val autoHideSeekBar = SeekBar(this).apply {
+            min = 1
+            max = 10
+            progress = settings.autoHideDelaySeconds
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        settings.autoHideDelaySeconds = progress
+
+                        autoHideLabel.text =
+                            "Час до приховування: " +
+                            "$progress с"
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
+        autoHideSwitch.setOnCheckedChangeListener { _, checked ->
+            settings.reservedSpace = checked
+        }
+
         layout.addView(title)
         layout.addView(heightLabel)
         layout.addView(heightSeekBar)
+        layout.addView(autoHideSwitch)
+        layout.addView(autoHideLabel)
+        layout.addView(autoHideSeekBar)
 
         setContentView(layout)
     }

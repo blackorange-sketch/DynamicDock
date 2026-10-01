@@ -22,4 +22,28 @@ class DockSettings(
                 .putInt("dock_height_dp", value)
                 .apply()
         }
+
+
+    var autoHideDelaySeconds: Int
+        get() = preferences.getInt(
+            "auto_hide_delay_seconds",
+            3
+        )
+        set(value) {
+            preferences.edit()
+                .putInt("auto_hide_delay_seconds", value)
+                .apply()
+        }
+
+
+    var reservedSpace: Boolean
+        get() = preferences.getBoolean(
+            "reserved_space",
+            false
+        )
+        set(value) {
+            preferences.edit()
+                .putBoolean("reserved_space", value)
+                .apply()
+        }
 }
