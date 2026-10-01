@@ -33,6 +33,10 @@ class DockService : Service() {
 
     private var dockView: View? = null
 
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
+
     private lateinit var registry: RunningAppRegistry
 
     override fun onCreate() {
@@ -61,7 +65,7 @@ class DockService : Service() {
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            130,
+            dp(80),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -110,7 +114,7 @@ class DockService : Service() {
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setPadding(8, 0, 8, 0)
+                setPadding(dp(6), 0, dp(6), 0)
 
                 setOnClickListener {
                     val launchIntent =
@@ -154,8 +158,8 @@ class DockService : Service() {
             }
 
             val iconParams = LinearLayout.LayoutParams(
-                52,
-                52
+                dp(48),
+                dp(48)
             )
 
             val name = TextView(this).apply {
@@ -167,8 +171,8 @@ class DockService : Service() {
             }
 
             val nameParams = LinearLayout.LayoutParams(
-                80,
-                35
+                dp(80),
+                dp(24)
             )
 
             item.addView(icon, iconParams)
