@@ -51,7 +51,7 @@ class DockService : Service() {
             MotionEvent.ACTION_DOWN -> {
                 gestureStartX = event.rawX
                 gestureStartY = event.rawY
-                return true
+                return false
             }
 
             MotionEvent.ACTION_UP -> {
@@ -95,6 +95,70 @@ class DockService : Service() {
         return true
     }
 
+
+    private inner class DockContainer(
+        context: android.content.Context
+    ) : LinearLayout(context) {
+
+        private var gestureTriggered = false
+
+        override fun onInterceptTouchEvent(
+            event: MotionEvent
+        ): Boolean {
+
+            when (event.actionMasked) {
+
+                MotionEvent.ACTION_DOWN -> {
+                    gestureStartX = event.rawX
+                    gestureStartY = event.rawY
+                    gestureTriggered = false
+                    return false
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+
+                    val deltaX =
+                        event.rawX - gestureStartX
+
+                    val deltaY =
+                        event.rawY - gestureStartY
+
+                    val threshold = dp(60)
+
+                    val position =
+                        DockSettings(this@DockService).dockPosition
+
+                    val shouldHide =
+                        when (position) {
+                            "bottom" ->
+                                deltaY > threshold
+
+                            "left" ->
+                                deltaX < -threshold
+
+                            "right" ->
+                                deltaX > threshold
+
+                            else ->
+                                false
+                        }
+
+                    if (shouldHide && !gestureTriggered) {
+                        gestureTriggered = true
+                        hideDock()
+                        return true
+                    }
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    gestureTriggered = false
+                }
+            }
+
+            return false
+        }
+    }
 
     private var activePackageName: String? = null
 
@@ -308,14 +372,11 @@ class DockService : Service() {
         windowManager =
             getSystemService(WINDOW_SERVICE) as WindowManager
 
-        appContainer = LinearLayout(this).apply {
+        appContainer = DockContainer(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             background = getDrawable(R.drawable.dock_background)
 
-        setOnTouchListener { _, event ->
-            handleDockGesture(event)
-        }
 }
 
         val settings = DockSettings(this)
