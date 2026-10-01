@@ -2,19 +2,29 @@ package com.dynamicdock
 
 import android.content.Context
 
-class RunningAppRegistry {
+class RunningAppRegistry(
+    context: Context
+) {
 
     private val apps = mutableListOf<RunningApp>()
 
+    private val preferences =
+        context.getSharedPreferences(
+            "dynamic_dock",
+            Context.MODE_PRIVATE
+        )
+
+    private val pinnedPackages =
+        preferences.getStringSet(
+            "pinned_packages",
+            emptySet()
+        )?.toMutableSet()
+            ?: mutableSetOf()
+
     fun activate(app: RunningApp) {
 
-        val existing =
-            apps.firstOrNull {
-                it.packageName == app.packageName
-            }
-
         val pinned =
-            existing?.pinned ?: app.pinned
+            pinnedPackages.contains(app.packageName)
 
         apps.removeAll {
             it.packageName == app.packageName
@@ -29,32 +39,49 @@ class RunningAppRegistry {
 
     fun pin(packageName: String) {
 
+        pinnedPackages.add(packageName)
+
+        savePinned()
+
         val index =
             apps.indexOfFirst {
                 it.packageName == packageName
             }
 
-        if (index == -1) return
-
-        apps[index] =
-            apps[index].copy(
-                pinned = true
-            )
+        if (index != -1) {
+            apps[index] =
+                apps[index].copy(
+                    pinned = true
+                )
+        }
     }
 
     fun unpin(packageName: String) {
 
+        pinnedPackages.remove(packageName)
+
+        savePinned()
+
         val index =
             apps.indexOfFirst {
                 it.packageName == packageName
             }
 
-        if (index == -1) return
+        if (index != -1) {
+            apps[index] =
+                apps[index].copy(
+                    pinned = false
+                )
+        }
+    }
 
-        apps[index] =
-            apps[index].copy(
-                pinned = false
+    private fun savePinned() {
+        preferences.edit()
+            .putStringSet(
+                "pinned_packages",
+                pinnedPackages
             )
+            .apply()
     }
 
     fun removeUnavailable(context: Context) {

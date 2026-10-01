@@ -30,10 +30,12 @@ class DockService : Service() {
 
     private var dockView: View? = null
 
-    private val registry = RunningAppRegistry()
+    private lateinit var registry: RunningAppRegistry
 
     override fun onCreate() {
         super.onCreate()
+
+        registry = RunningAppRegistry(this)
 
         instance = this
 
