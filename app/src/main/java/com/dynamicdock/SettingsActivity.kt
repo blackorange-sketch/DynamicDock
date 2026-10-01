@@ -2,10 +2,16 @@ package com.dynamicdock
 
 import android.app.Activity
 import android.os.Bundle
+import android.graphics.Color
+import android.graphics.Typeface
+import android.view.Gravity
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.Spinner
-import android.widget.ArrayAdapter
 import android.widget.Switch
 import android.widget.TextView
 
@@ -16,414 +22,367 @@ class SettingsActivity : Activity() {
 
         val settings = DockSettings(this)
 
+        val scrollView = ScrollView(this)
+
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(24, 24, 24, 24)
+            setPadding(
+                dp(20),
+                dp(16),
+                dp(20),
+                dp(32)
+            )
         }
 
         val title = TextView(this).apply {
-            text = "Налаштування Dynamic Dock"
-            textSize = 24f
+            text = "Dynamic Dock"
+            textSize = 28f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, 0, 0, dp(8))
         }
 
-        val heightLabel = TextView(this).apply {
-            text = "Висота дока: ${settings.dockHeightDp} dp"
-            textSize = 18f
-            setPadding(0, 32, 0, 8)
-        }
-
-        val heightSeekBar = SeekBar(this).apply {
-            min = 32
-            max = 80
-            progress = settings.dockHeightDp
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.dockHeightDp = progress
-                        heightLabel.text =
-                            "Висота дока: $progress dp"
-
-                        DockService.instance
-                            ?.updateDockHeight(progress)
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        val positionLabel = TextView(this).apply {
-            text = "Положення Dock"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val positionSpinner = Spinner(this).apply {
-
-            val positions = arrayOf(
-                "Знизу",
-                "Зліва",
-                "Справа"
-            )
-
-            adapter = ArrayAdapter(
-                this@SettingsActivity,
-                android.R.layout.simple_spinner_dropdown_item,
-                positions
-            )
-
-            setSelection(
-                when (settings.dockPosition) {
-                    "left" -> 1
-                    "right" -> 2
-                    else -> 0
-                }
-            )
-
-            onItemSelectedListener =
-                object : android.widget.AdapterView.OnItemSelectedListener {
-
-                    override fun onItemSelected(
-                        parent: android.widget.AdapterView<*>?,
-                        view: android.view.View?,
-                        position: Int,
-                        id: Long
-                    ) {
-                        val dockPosition =
-                            when (position) {
-                                1 -> "left"
-                                2 -> "right"
-                                else -> "bottom"
-                            }
-
-                        settings.dockPosition = dockPosition
-
-                        DockService.instance
-                            ?.updateDockPosition(dockPosition)
-                    }
-
-                    override fun onNothingSelected(
-                        parent: android.widget.AdapterView<*>?
-                    ) {
-                    }
-                }
-        }
-
-        val lengthLabel = TextView(this).apply {
-            text =
-                "Довжина Dock: " +
-                "${settings.dockLengthDp} dp"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val lengthSeekBar = SeekBar(this).apply {
-            min = 160
-            max = 600
-            progress = settings.dockLengthDp
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.dockLengthDp = progress
-
-                        lengthLabel.text =
-                            "Довжина Dock: " +
-                            "$progress dp"
-
-                        DockService.instance
-                            ?.updateDockLength(progress)
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        val verticalPositionLabel = TextView(this).apply {
-            text =
-                "Положення по вертикалі: " +
-                "${settings.verticalPositionPercent}%"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val verticalPositionSeekBar = SeekBar(this).apply {
-            min = 0
-            max = 100
-            progress = settings.verticalPositionPercent
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.verticalPositionPercent = progress
-
-                        verticalPositionLabel.text =
-                            "Положення по вертикалі: " +
-                            "$progress%"
-
-                        DockService.instance
-                            ?.updateVerticalPosition(progress)
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        val labelsSwitch = Switch(this).apply {
-            text = "Показувати назви програм"
-            textSize = 16f
-            isChecked = settings.showAppLabels
-        }
-
-        val iconSizeLabel = TextView(this).apply {
-            text =
-                "Розмір іконок: " +
-                "${settings.iconSizeDp} dp"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val iconSizeSeekBar = SeekBar(this).apply {
-            min = 24
-            max = 48
-            progress = settings.iconSizeDp
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.iconSizeDp = progress
-
-                        iconSizeLabel.text =
-                            "Розмір іконок: " +
-                            "$progress dp"
-
-                        DockService.instance
-                            ?.updateIconSize(progress)
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        labelsSwitch.setOnCheckedChangeListener { _, checked ->
-            settings.showAppLabels = checked
-            DockService.instance?.refreshDock()
-        }
-
-        val horizontalPaddingLabel = TextView(this).apply {
-            text =
-                "Горизонтальний відступ: " +
-                "${settings.horizontalPaddingDp} dp"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val horizontalPaddingSeekBar = SeekBar(this).apply {
-            min = 0
-            max = 16
-            progress = settings.horizontalPaddingDp
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.horizontalPaddingDp = progress
-
-                        horizontalPaddingLabel.text =
-                            "Горизонтальний відступ: " +
-                            "$progress dp"
-
-                        DockService.instance
-                            ?.updatePadding()
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        val verticalPaddingLabel = TextView(this).apply {
-            text =
-                "Вертикальний відступ: " +
-                "${settings.verticalPaddingDp} dp"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val verticalPaddingSeekBar = SeekBar(this).apply {
-            min = 0
-            max = 16
-            progress = settings.verticalPaddingDp
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.verticalPaddingDp = progress
-
-                        verticalPaddingLabel.text =
-                            "Вертикальний відступ: " +
-                            "$progress dp"
-
-                        DockService.instance
-                            ?.updatePadding()
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        val autoHideSwitch = Switch(this).apply {
-            text = "Автоматично ховати док"
-            textSize = 16f
-            isChecked = settings.reservedSpace
-        }
-
-        val autoHideLabel = TextView(this).apply {
-            text =
-                "Час до приховування: " +
-                "${settings.autoHideDelaySeconds} с"
-            textSize = 18f
-            setPadding(0, 24, 0, 8)
-        }
-
-        val autoHideSeekBar = SeekBar(this).apply {
-            min = 1
-            max = 10
-            progress = settings.autoHideDelaySeconds
-
-            setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener {
-
-                    override fun onProgressChanged(
-                        seekBar: SeekBar?,
-                        progress: Int,
-                        fromUser: Boolean
-                    ) {
-                        settings.autoHideDelaySeconds = progress
-
-                        autoHideLabel.text =
-                            "Час до приховування: " +
-                            "$progress с"
-                    }
-
-                    override fun onStartTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-
-                    override fun onStopTrackingTouch(
-                        seekBar: SeekBar?
-                    ) {
-                    }
-                }
-            )
-        }
-
-        autoHideSwitch.setOnCheckedChangeListener { _, checked ->
-            settings.reservedSpace = checked
+        val subtitle = TextView(this).apply {
+            text = "Налаштування Dock"
+            textSize = 14f
+            alpha = 0.7f
+            setPadding(0, 0, 0, dp(24))
         }
 
         layout.addView(title)
-        layout.addView(heightLabel)
-        layout.addView(heightSeekBar)
-        layout.addView(positionLabel)
-        layout.addView(positionSpinner)
-        layout.addView(lengthLabel)
-        layout.addView(lengthSeekBar)
-        layout.addView(verticalPositionLabel)
-        layout.addView(verticalPositionSeekBar)
-        layout.addView(labelsSwitch)
-        layout.addView(iconSizeLabel)
-        layout.addView(iconSizeSeekBar)
-        layout.addView(horizontalPaddingLabel)
-        layout.addView(horizontalPaddingSeekBar)
-        layout.addView(verticalPaddingLabel)
-        layout.addView(verticalPaddingSeekBar)
-        layout.addView(autoHideSwitch)
-        layout.addView(autoHideLabel)
-        layout.addView(autoHideSeekBar)
+        layout.addView(subtitle)
 
-        setContentView(layout)
+        addSectionTitle(
+            layout,
+            "Вигляд Dock"
+        )
+
+        val heightLabel = addSlider(
+            layout,
+            "Висота Dock",
+            settings.dockHeightDp,
+            32,
+            80
+        ) { progress ->
+            settings.dockHeightDp = progress
+
+            DockService.instance
+                ?.updateDockHeight(progress)
+        }
+
+        addSpinner(
+            layout,
+            "Положення Dock",
+            arrayOf("Знизу", "Зліва", "Справа"),
+            when (settings.dockPosition) {
+                "left" -> 1
+                "right" -> 2
+                else -> 0
+            }
+        ) { position ->
+            val dockPosition =
+                when (position) {
+                    1 -> "left"
+                    2 -> "right"
+                    else -> "bottom"
+                }
+
+            settings.dockPosition = dockPosition
+
+            DockService.instance
+                ?.updateDockPosition(dockPosition)
+        }
+
+        val lengthLabel = addSlider(
+            layout,
+            "Довжина Dock",
+            settings.dockLengthDp,
+            160,
+            600
+        ) { progress ->
+            settings.dockLengthDp = progress
+
+            DockService.instance
+                ?.updateDockLength(progress)
+        }
+
+        val verticalPositionLabel = addSlider(
+            layout,
+            "Положення по вертикалі",
+            settings.verticalPositionPercent,
+            0,
+            100,
+            suffix = "%"
+        ) { progress ->
+            settings.verticalPositionPercent = progress
+
+            DockService.instance
+                ?.updateVerticalPosition(progress)
+        }
+
+        addSectionTitle(
+            layout,
+            "Іконки"
+        )
+
+        addSwitch(
+            layout,
+            "Показувати назви програм",
+            settings.showAppLabels
+        ) { checked ->
+            settings.showAppLabels = checked
+
+            DockService.instance
+                ?.refreshDock()
+        }
+
+        addSlider(
+            layout,
+            "Розмір іконок",
+            settings.iconSizeDp,
+            24,
+            48
+        ) { progress ->
+            settings.iconSizeDp = progress
+
+            DockService.instance
+                ?.updateIconSize(progress)
+        }
+
+        addSlider(
+            layout,
+            "Горизонтальний відступ",
+            settings.horizontalPaddingDp,
+            0,
+            16
+        ) { progress ->
+            settings.horizontalPaddingDp = progress
+
+            DockService.instance
+                ?.updatePadding()
+        }
+
+        addSlider(
+            layout,
+            "Вертикальний відступ",
+            settings.verticalPaddingDp,
+            0,
+            16
+        ) { progress ->
+            settings.verticalPaddingDp = progress
+
+            DockService.instance
+                ?.updatePadding()
+        }
+
+        addSectionTitle(
+            layout,
+            "Приховування"
+        )
+
+        addSwitch(
+            layout,
+            "Автоматично ховати Dock",
+            settings.reservedSpace
+        ) { checked ->
+            settings.reservedSpace = checked
+        }
+
+        addSlider(
+            layout,
+            "Час до приховування",
+            settings.autoHideDelaySeconds,
+            1,
+            10,
+            suffix = " с"
+        ) { progress ->
+            settings.autoHideDelaySeconds = progress
+        }
+
+        scrollView.addView(layout)
+
+        setContentView(scrollView)
+    }
+
+    private fun addSectionTitle(
+        layout: LinearLayout,
+        text: String
+    ) {
+        val title = TextView(this).apply {
+            this.text = text
+            textSize = 18f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(
+                0,
+                dp(20),
+                0,
+                dp(8)
+            )
+        }
+
+        layout.addView(title)
+    }
+
+    private fun addSwitch(
+        layout: LinearLayout,
+        text: String,
+        checked: Boolean,
+        onChanged: (Boolean) -> Unit
+    ) {
+        val switch = Switch(this).apply {
+            this.text = text
+            textSize = 16f
+            isChecked = checked
+
+            setOnCheckedChangeListener { _, value ->
+                onChanged(value)
+            }
+
+            setPadding(
+                0,
+                dp(6),
+                0,
+                dp(6)
+            )
+        }
+
+        layout.addView(
+            switch,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+    }
+
+    private fun addSlider(
+        layout: LinearLayout,
+        title: String,
+        value: Int,
+        min: Int,
+        max: Int,
+        suffix: String = " dp",
+        onChanged: (Int) -> Unit
+    ): TextView {
+
+        val label = TextView(this).apply {
+            text = "$title: $value$suffix"
+            textSize = 16f
+            setPadding(
+                0,
+                dp(12),
+                0,
+                dp(4)
+            )
+        }
+
+        val seekBar = SeekBar(this).apply {
+            this.min = min
+            this.max = max
+            progress = value
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        label.text =
+                            "$title: $progress$suffix"
+
+                        onChanged(progress)
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
+        layout.addView(label)
+
+        layout.addView(
+            seekBar,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        return label
+    }
+
+    private fun addSpinner(
+        layout: LinearLayout,
+        title: String,
+        items: Array<String>,
+        selected: Int,
+        onSelected: (Int) -> Unit
+    ) {
+        val label = TextView(this).apply {
+            text = title
+            textSize = 16f
+            setPadding(
+                0,
+                dp(12),
+                0,
+                dp(4)
+            )
+        }
+
+        val spinner = Spinner(this)
+
+        spinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            items
+        ).also {
+            it.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+            )
+        }
+
+        spinner.setSelection(selected)
+
+        spinner.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    onSelected(position)
+                }
+
+                override fun onNothingSelected(
+                    parent: AdapterView<*>?
+                ) {
+                }
+            }
+
+        layout.addView(label)
+
+        layout.addView(
+            spinner,
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        )
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density)
+            .toInt()
     }
 }
