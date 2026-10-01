@@ -106,6 +106,11 @@ class DockService : Service() {
             event: MotionEvent
         ): Boolean {
 
+            android.util.Log.d(
+                "DynamicDockGesture",
+                "action=${event.actionMasked} x=${event.rawX} y=${event.rawY}"
+            )
+
             when (event.actionMasked) {
 
                 MotionEvent.ACTION_DOWN -> {
