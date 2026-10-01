@@ -1,14 +1,9 @@
 package com.dynamicdock
 
 import android.accessibilityservice.AccessibilityService
-import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 
 class DockAccessibilityService : AccessibilityService() {
-
-    companion object {
-        private const val TAG = "DynamicDock"
-    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
@@ -23,14 +18,7 @@ class DockAccessibilityService : AccessibilityService() {
             event.packageName?.toString()
                 ?: return
 
-        Log.d(
-            TAG,
-            "WINDOW: $packageName"
-        )
-
-        DockService.updateActivePackage(
-            packageName
-        )
+        DockService.updateActivePackage(packageName)
     }
 
     override fun onInterrupt() {
