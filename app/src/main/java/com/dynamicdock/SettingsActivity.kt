@@ -167,6 +167,49 @@ class SettingsActivity : Activity() {
             )
         }
 
+        val verticalPositionLabel = TextView(this).apply {
+            text =
+                "Положення по вертикалі: " +
+                "${settings.verticalPositionPercent}%"
+            textSize = 18f
+            setPadding(0, 24, 0, 8)
+        }
+
+        val verticalPositionSeekBar = SeekBar(this).apply {
+            min = 0
+            max = 100
+            progress = settings.verticalPositionPercent
+
+            setOnSeekBarChangeListener(
+                object : SeekBar.OnSeekBarChangeListener {
+                    override fun onProgressChanged(
+                        seekBar: SeekBar?,
+                        progress: Int,
+                        fromUser: Boolean
+                    ) {
+                        settings.verticalPositionPercent = progress
+
+                        verticalPositionLabel.text =
+                            "Положення по вертикалі: " +
+                            "$progress%"
+
+                        DockService.instance
+                            ?.updateVerticalPosition(progress)
+                    }
+
+                    override fun onStartTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+
+                    override fun onStopTrackingTouch(
+                        seekBar: SeekBar?
+                    ) {
+                    }
+                }
+            )
+        }
+
         val labelsSwitch = Switch(this).apply {
             text = "Показувати назви програм"
             textSize = 16f
@@ -368,6 +411,8 @@ class SettingsActivity : Activity() {
         layout.addView(positionSpinner)
         layout.addView(lengthLabel)
         layout.addView(lengthSeekBar)
+        layout.addView(verticalPositionLabel)
+        layout.addView(verticalPositionSeekBar)
         layout.addView(labelsSwitch)
         layout.addView(iconSizeLabel)
         layout.addView(iconSizeSeekBar)

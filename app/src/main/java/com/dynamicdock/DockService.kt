@@ -87,17 +87,34 @@ class DockService : Service() {
             else
                 dp(settings.dockHeightDp)
 
-        params.gravity =
-            when (position) {
-                "left" ->
-                    Gravity.CENTER_VERTICAL or Gravity.LEFT
+        if (isVertical) {
+            params.gravity =
+                if (position == "left") {
+                    Gravity.TOP or Gravity.LEFT
+                } else {
+                    Gravity.TOP or Gravity.RIGHT
+                }
 
-                "right" ->
-                    Gravity.CENTER_VERTICAL or Gravity.RIGHT
+            val displayMetrics = resources.displayMetrics
+            val screenHeight = displayMetrics.heightPixels
 
-                else ->
-                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            }
+            val dockHeight =
+                dp(settings.dockLengthDp)
+
+            val maxY =
+                (screenHeight - dockHeight).coerceAtLeast(0)
+
+            val percent =
+                settings.verticalPositionPercent.coerceIn(0, 100)
+
+            params.y =
+                (maxY * percent / 100f).toInt()
+        } else {
+            params.gravity =
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+
+            params.y = 0
+        }
 
         windowManager.updateViewLayout(
             appContainer,
@@ -105,6 +122,45 @@ class DockService : Service() {
         )
 
         rebuildDock()
+    }
+
+    fun updateVerticalPosition(percent: Int) {
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return
+
+        val settings =
+            DockSettings(this)
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        if (!isVertical) {
+            return
+        }
+
+        val screenHeight =
+            resources.displayMetrics.heightPixels
+
+        val dockHeight =
+            dp(settings.dockLengthDp)
+
+        val maxY =
+            (screenHeight - dockHeight)
+                .coerceAtLeast(0)
+
+        val clampedPercent =
+            percent.coerceIn(0, 100)
+
+        params.y =
+            (maxY * clampedPercent / 100f).toInt()
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
     }
 
     fun updateDockLength(lengthDp: Int) {

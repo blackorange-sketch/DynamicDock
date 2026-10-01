@@ -58,6 +58,20 @@ class DockSettings(
                 .apply()
         }
 
+    var verticalPositionPercent: Int
+        get() = preferences.getInt(
+            "vertical_position_percent",
+            50
+        )
+        set(value) {
+            preferences.edit()
+                .putInt(
+                    "vertical_position_percent",
+                    value
+                )
+                .apply()
+        }
+
     var showAppLabels: Boolean
         get() = preferences.getBoolean(
             "show_app_labels",
