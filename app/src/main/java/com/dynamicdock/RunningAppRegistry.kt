@@ -4,9 +4,12 @@ class RunningAppRegistry {
 
     private val apps = mutableListOf<RunningApp>()
 
-    fun activate(packageName: String) {
-        apps.removeAll { it.packageName == packageName }
-        apps.add(RunningApp(packageName))
+    fun activate(app: RunningApp) {
+        apps.removeAll {
+            it.packageName == app.packageName
+        }
+
+        apps.add(app)
     }
 
     fun getApps(): List<RunningApp> {

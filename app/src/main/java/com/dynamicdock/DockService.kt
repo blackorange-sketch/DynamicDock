@@ -9,8 +9,8 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.TextView
 
 class DockService : Service() {
 
@@ -24,8 +24,11 @@ class DockService : Service() {
     }
 
     private lateinit var windowManager: WindowManager
-    private var dockView: View? = null
     private lateinit var appContainer: LinearLayout
+
+    private var dockView: View? = null
+
+    private lateinit var appInfoRepository: AppInfoRepository
 
     private val registry = RunningAppRegistry()
 
@@ -39,29 +42,51 @@ class DockService : Service() {
             return
         }
 
+        appInfoRepository =
+            AppInfoRepository(this)
+
         windowManager =
-            getSystemService(WINDOW_SERVICE) as WindowManager
+            getSystemService(WINDOW_SERVICE)
+                    as WindowManager
 
         appContainer = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
+
+            orientation =
+                LinearLayout.HORIZONTAL
+
             gravity = Gravity.CENTER
+
             setBackgroundColor(
-                Color.argb(220, 30, 30, 30)
+                Color.argb(
+                    220,
+                    30,
+                    30,
+                    30
+                )
             )
-            setPadding(16, 0, 16, 0)
+
+            setPadding(
+                12,
+                8,
+                12,
+                8
+            )
         }
 
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            100,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        )
+        val params =
+            WindowManager.LayoutParams(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                90,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            )
 
-        params.gravity = Gravity.BOTTOM
+        params.gravity =
+            Gravity.BOTTOM
 
-        dockView = appContainer
+        dockView =
+            appContainer
 
         windowManager.addView(
             appContainer,
@@ -69,13 +94,35 @@ class DockService : Service() {
         )
     }
 
-    private fun updatePackage(packageName: String) {
+    private fun updatePackage(
+        packageName: String
+    ) {
 
-        if (packageName == packageNameOfSelf()) {
+        if (
+            packageName ==
+            this.packageName
+        ) {
             return
         }
 
-        registry.activate(packageName)
+        val appInfo =
+            appInfoRepository
+                .getAppInfo(packageName)
+                ?: return
+
+        val runningApp =
+            RunningApp(
+                packageName =
+                    appInfo.packageName,
+                appName =
+                    appInfo.appName,
+                icon =
+                    appInfo.icon
+            )
+
+        registry.activate(
+            runningApp
+        )
 
         appContainer.post {
             rebuildDock()
@@ -86,32 +133,44 @@ class DockService : Service() {
 
         appContainer.removeAllViews()
 
-        registry.getApps().forEach { app ->
+        registry.getApps().forEach {
+            app ->
 
-            val item = TextView(this).apply {
+            val iconView =
+                ImageView(this).apply {
 
-                text = app.packageName
+                    setImageDrawable(
+                        app.icon
+                    )
 
-                textSize = 12f
+                    contentDescription =
+                        app.appName
 
-                setTextColor(Color.WHITE)
+                    scaleType =
+                        ImageView.ScaleType.CENTER_INSIDE
 
-                gravity = Gravity.CENTER
+                    setPadding(
+                        10,
+                        10,
+                        10,
+                        10
+                    )
+                }
 
-                setPadding(
-                    24,
-                    0,
-                    24,
-                    0
+            val params =
+                LinearLayout.LayoutParams(
+                    72,
+                    72
                 )
-            }
 
-            appContainer.addView(item)
+            params.gravity =
+                Gravity.CENTER
+
+            appContainer.addView(
+                iconView,
+                params
+            )
         }
-    }
-
-    private fun packageNameOfSelf(): String {
-        return packageName
     }
 
     override fun onDestroy() {
@@ -127,7 +186,9 @@ class DockService : Service() {
         super.onDestroy()
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
+    override fun onBind(
+        intent: Intent?
+    ): IBinder? {
         return null
     }
 }
