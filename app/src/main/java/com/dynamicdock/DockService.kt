@@ -39,6 +39,7 @@ class DockService : Service() {
         super.onCreate()
 
         registry = RunningAppRegistry(this)
+        registry.restorePinned(this)
 
         instance = this
 

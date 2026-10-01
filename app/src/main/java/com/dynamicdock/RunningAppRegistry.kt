@@ -101,6 +101,51 @@ class RunningAppRegistry(
         }
     }
 
+    fun restorePinned(context: Context) {
+
+        pinnedPackages.forEach { packageName ->
+
+            if (apps.any { it.packageName == packageName }) {
+                return@forEach
+            }
+
+            try {
+                val packageManager =
+                    context.packageManager
+
+                val applicationInfo =
+                    packageManager.getApplicationInfo(
+                        packageName,
+                        0
+                    )
+
+                val appName =
+                    packageManager
+                        .getApplicationLabel(
+                            applicationInfo
+                        )
+                        .toString()
+
+                val icon =
+                    packageManager.getApplicationIcon(
+                        applicationInfo
+                    )
+
+                apps.add(
+                    RunningApp(
+                        packageName = packageName,
+                        appName = appName,
+                        icon = icon,
+                        pinned = true
+                    )
+                )
+
+            } catch (e: Exception) {
+                // Application is no longer available.
+            }
+        }
+    }
+
     fun getApps(): List<RunningApp> {
         return apps.toList()
     }
