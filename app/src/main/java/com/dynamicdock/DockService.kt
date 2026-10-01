@@ -50,10 +50,7 @@ class DockService : Service() {
         appContainer = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setBackgroundColor(
-                Color.argb(230, 30, 30, 30)
-            )
-            setPadding(16, 8, 16, 8)
+            background = getDrawable(R.drawable.dock_background)
         }
 
         val params = WindowManager.LayoutParams(
