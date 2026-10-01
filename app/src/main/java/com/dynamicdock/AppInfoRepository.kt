@@ -11,20 +11,17 @@ class AppInfoRepository(
     private val packageManager =
         context.packageManager
 
-    fun getAppInfo(
-        packageName: String
-    ): AppInfo {
+    fun getAppInfo(packageName: String): AppInfo {
 
-        var appName = packageName
+        return try {
 
-        try {
             val applicationInfo =
                 packageManager.getApplicationInfo(
                     packageName,
                     0
                 )
 
-            appName =
+            val appName =
                 packageManager
                     .getApplicationLabel(
                         applicationInfo
@@ -32,22 +29,19 @@ class AppInfoRepository(
                     .toString()
 
             val icon =
-                try {
-                    packageManager.getApplicationIcon(
-                        applicationInfo
-                    )
-                } catch (e: Exception) {
-                    ColorDrawable(Color.DKGRAY)
-                }
+                packageManager.getApplicationIcon(
+                    applicationInfo
+                )
 
-            return AppInfo(
+            AppInfo(
                 packageName = packageName,
                 appName = appName,
                 icon = icon
             )
 
         } catch (e: Exception) {
-            return AppInfo(
+
+            AppInfo(
                 packageName = packageName,
                 appName = packageName,
                 icon = ColorDrawable(Color.DKGRAY)
