@@ -14,6 +14,18 @@ class AppSelectionActivity : Activity() {
 
         val packageManager = packageManager
 
+        val preferences =
+            getSharedPreferences(
+                "dynamic_dock",
+                MODE_PRIVATE
+            )
+
+        val selectedPackages =
+            preferences.getStringSet(
+                "selected_packages",
+                emptySet()
+            ) ?: emptySet()
+
         val apps = packageManager
             .getInstalledApplications(0)
             .filter {
@@ -53,6 +65,10 @@ class AppSelectionActivity : Activity() {
             val switch = Switch(this).apply {
                 text = name
                 textSize = 17f
+                isChecked =
+                    selectedPackages.contains(
+                        app.packageName
+                    )
 
                 setPadding(
                     dp(8),
@@ -60,6 +76,24 @@ class AppSelectionActivity : Activity() {
                     dp(8),
                     dp(10)
                 )
+
+                setOnCheckedChangeListener { _, checked ->
+                    val updated =
+                        selectedPackages.toMutableSet()
+
+                    if (checked) {
+                        updated.add(app.packageName)
+                    } else {
+                        updated.remove(app.packageName)
+                    }
+
+                    preferences.edit()
+                        .putStringSet(
+                            "selected_packages",
+                            updated
+                        )
+                        .apply()
+                }
             }
 
             layout.addView(
