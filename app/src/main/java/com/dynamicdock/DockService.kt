@@ -605,7 +605,7 @@ class DockService : Service() {
                     if (isVerticalDock) {
                         android.widget.FrameLayout.LayoutParams(
                             dp(3),
-                            dp(18)
+                            dp((iconSize * 0.8f).toInt())
                         ).apply {
                             gravity =
                                 Gravity.CENTER_VERTICAL or
@@ -617,7 +617,7 @@ class DockService : Service() {
                         }
                     } else {
                         android.widget.FrameLayout.LayoutParams(
-                            dp(18),
+                            dp((iconSize * 0.8f).toInt()),
                             dp(3)
                         ).apply {
                             gravity =
