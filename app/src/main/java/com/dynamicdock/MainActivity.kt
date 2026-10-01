@@ -48,8 +48,22 @@ class MainActivity : Activity() {
             }
         }
 
+        val settingsButton = Button(this).apply {
+            text = "Налаштування"
+
+            setOnClickListener {
+                startActivity(
+                    Intent(
+                        this@MainActivity,
+                        SettingsActivity::class.java
+                    )
+                )
+            }
+        }
+
         layout.addView(title)
         layout.addView(overlayButton)
+        layout.addView(settingsButton)
 
         setContentView(layout)
 
@@ -107,8 +121,7 @@ class MainActivity : Activity() {
         super.onResume()
 
         if (isAccessibilityEnabled()) {
-            // Accessibility вже увімкнено.
-            // Тут пізніше будемо оновлювати стан Dock.
+            // Accessibility already enabled.
         }
     }
 }
