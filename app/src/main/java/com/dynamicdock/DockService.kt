@@ -127,6 +127,10 @@ class DockService : Service() {
                         registry.pin(app.packageName)
                     }
 
+                    performHapticFeedback(
+                        android.view.HapticFeedbackConstants.LONG_PRESS
+                    )
+
                     rebuildDock()
                     true
                 }
