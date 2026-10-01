@@ -144,7 +144,17 @@ class DockService : Service() {
             as? WindowManager.LayoutParams
             ?: return
 
-        params.height = dp(heightDp)
+        val settings = DockSettings(this)
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        if (isVertical) {
+            params.width = dp(heightDp)
+        } else {
+            params.height = dp(heightDp)
+        }
 
         windowManager.updateViewLayout(
             appContainer,
