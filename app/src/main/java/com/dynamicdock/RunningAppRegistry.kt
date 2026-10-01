@@ -5,7 +5,10 @@ import android.content.Context
 class RunningAppRegistry(
     context: Context
 ) {
-    private val apps = mutableListOf<RunningApp>()
+    private val context = context
+
+    private val apps =
+        mutableListOf<RunningApp>()
 
     private val preferences =
         context.getSharedPreferences(
@@ -111,8 +114,56 @@ class RunningAppRegistry(
 
         if (selected) {
             selectedPackages.add(packageName)
+
+            if (
+                !apps.any {
+                    it.packageName == packageName
+                }
+            ) {
+                try {
+                    val packageManager =
+                        context.packageManager
+
+                    val applicationInfo =
+                        packageManager.getApplicationInfo(
+                            packageName,
+                            0
+                        )
+
+                    val appName =
+                        packageManager
+                            .getApplicationLabel(
+                                applicationInfo
+                            )
+                            .toString()
+
+                    val icon =
+                        packageManager.getApplicationIcon(
+                            applicationInfo
+                        )
+
+                    apps.add(
+                        RunningApp(
+                            packageName = packageName,
+                            appName = appName,
+                            icon = icon,
+                            pinned = pinnedPackages.contains(
+                                packageName
+                            )
+                        )
+                    )
+                } catch (e: Exception) {
+                    // Application is no longer available.
+                }
+            }
         } else {
             selectedPackages.remove(packageName)
+
+            if (!pinnedPackages.contains(packageName)) {
+                apps.removeAll {
+                    it.packageName == packageName
+                }
+            }
         }
 
         preferences.edit()

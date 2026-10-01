@@ -20,6 +20,9 @@ class AppSelectionActivity : Activity() {
                 MODE_PRIVATE
             )
 
+        val registry =
+            RunningAppRegistry(this)
+
         val selectedPackages =
             preferences.getStringSet(
                 "selected_packages",
@@ -92,21 +95,10 @@ class AppSelectionActivity : Activity() {
                 )
 
                 setOnCheckedChangeListener { _, checked ->
-                    val updated =
-                        selectedPackages.toMutableSet()
-
-                    if (checked) {
-                        updated.add(app.packageName)
-                    } else {
-                        updated.remove(app.packageName)
-                    }
-
-                    preferences.edit()
-                        .putStringSet(
-                            "selected_packages",
-                            updated
-                        )
-                        .apply()
+                    registry.setSelected(
+                        app.packageName,
+                        checked
+                    )
 
                     DockService.instance?.refreshDock()
                 }
