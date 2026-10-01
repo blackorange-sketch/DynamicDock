@@ -130,17 +130,14 @@ class DockService : Service() {
                         registry.pin(app.packageName)
                     }
 
-                    val vibratorManager =
-                        getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
-
                     val vibrator =
-                        vibratorManager.defaultVibrator
+                        getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
 
                     if (vibrator.hasVibrator()) {
                         vibrator.vibrate(
-                            VibrationEffect.createOneShot(
-                                60,
-                                VibrationEffect.DEFAULT_AMPLITUDE
+                            android.os.VibrationEffect.createOneShot(
+                                100,
+                                android.os.VibrationEffect.DEFAULT_AMPLITUDE
                             )
                         )
                     }
