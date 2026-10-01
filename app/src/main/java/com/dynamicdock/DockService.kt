@@ -20,7 +20,7 @@ class DockService : Service() {
 
     companion object {
 
-        private var instance: DockService? = null
+        var instance: DockService? = null
 
         fun updateActivePackage(packageName: String) {
             instance?.updatePackage(packageName)
@@ -37,10 +37,25 @@ class DockService : Service() {
         return (value * resources.displayMetrics.density).toInt()
     }
 
+    fun updateDockHeight(heightDp: Int) {
+        val params = appContainer.layoutParams
+            as? WindowManager.LayoutParams
+            ?: return
+
+        params.height = dp(heightDp)
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
+    }
+
     private lateinit var registry: RunningAppRegistry
 
     override fun onCreate() {
         super.onCreate()
+
+        instance = this
 
         registry = RunningAppRegistry(this)
         registry.restorePinned(this)
@@ -65,7 +80,7 @@ class DockService : Service() {
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
-            dp(40),
+            dp(DockSettings(this).dockHeightDp),
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -230,4 +245,5 @@ class DockService : Service() {
     override fun onBind(intent: Intent?): IBinder? {
         return null
     }
+
 }
