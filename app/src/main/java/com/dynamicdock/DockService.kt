@@ -62,7 +62,7 @@ class DockService : Service() {
                 val deltaY =
                     event.rawY - gestureStartY
 
-                val threshold = dp(60)
+                val threshold = dp(20)
 
                 val position =
                     DockSettings(this).dockPosition
@@ -106,11 +106,6 @@ class DockService : Service() {
             event: MotionEvent
         ): Boolean {
 
-            android.util.Log.d(
-                "DynamicDockGesture",
-                "action=${event.actionMasked} x=${event.rawX} y=${event.rawY}"
-            )
-
             when (event.actionMasked) {
 
                 MotionEvent.ACTION_DOWN -> {
@@ -128,7 +123,7 @@ class DockService : Service() {
                     val deltaY =
                         event.rawY - gestureStartY
 
-                    val threshold = dp(60)
+                    val threshold = dp(20)
 
                     val position =
                         DockSettings(this@DockService).dockPosition
