@@ -456,9 +456,12 @@ class DockService : Service() {
                 contentDescription = app.appName
             }
 
+            val iconSize =
+                DockSettings(this).iconSizeDp
+
             val iconParams = LinearLayout.LayoutParams(
-                dp(30),
-                dp(30)
+                dp(iconSize),
+                dp(iconSize)
             )
 
             val name = TextView(this).apply {
