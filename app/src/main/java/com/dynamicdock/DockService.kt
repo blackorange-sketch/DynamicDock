@@ -556,14 +556,14 @@ class DockService : Service() {
             val iconContainer =
                 android.widget.FrameLayout(this)
 
-            val iconContainerWidth =
+            val containerWidth =
                 if (isVerticalDock) {
                     dp(iconSize + 6)
                 } else {
                     dp(iconSize)
                 }
 
-            val iconContainerHeight =
+            val containerHeight =
                 if (isVerticalDock) {
                     dp(iconSize)
                 } else {
@@ -573,25 +573,23 @@ class DockService : Service() {
             val iconParams =
                 android.widget.FrameLayout.LayoutParams(
                     dp(iconSize),
-                    dp(iconSize),
-                    Gravity.CENTER
+                    dp(iconSize)
                 ).apply {
-                    if (isVerticalDock) {
-                        if (paddingSettings.dockPosition == "left") {
-                            leftMargin = dp(3)
+                    gravity =
+                        if (isVerticalDock &&
+                            paddingSettings.dockPosition == "right") {
+                            Gravity.START or
+                                Gravity.CENTER_VERTICAL
                         } else {
-                            rightMargin = dp(3)
+                            Gravity.START or
+                                Gravity.TOP
                         }
-                    } else {
-                        topMargin = dp(3)
+
+                    if (isVerticalDock &&
+                        paddingSettings.dockPosition == "right") {
+                        leftMargin = dp(3)
                     }
                 }
-
-            iconContainer.layoutParams =
-                LinearLayout.LayoutParams(
-                    iconContainerWidth,
-                    iconContainerHeight
-                )
 
             iconContainer.addView(
                 icon,
@@ -605,34 +603,26 @@ class DockService : Service() {
 
                 val indicatorParams =
                     if (isVerticalDock) {
-                        val indicatorGravity =
-                            if (paddingSettings.dockPosition == "left") {
-                                Gravity.CENTER_VERTICAL or
-                                    Gravity.END
-                            } else {
-                                Gravity.CENTER_VERTICAL or
-                                    Gravity.START
-                            }
-
                         android.widget.FrameLayout.LayoutParams(
                             dp(3),
-                            dp(18),
-                            indicatorGravity
+                            dp(18)
                         ).apply {
-                            if (paddingSettings.dockPosition == "left") {
-                                rightMargin = dp(0)
-                            } else {
-                                leftMargin = dp(0)
-                            }
+                            gravity =
+                                Gravity.CENTER_VERTICAL or
+                                    if (paddingSettings.dockPosition == "left") {
+                                        Gravity.END
+                                    } else {
+                                        Gravity.START
+                                    }
                         }
                     } else {
                         android.widget.FrameLayout.LayoutParams(
                             dp(18),
-                            dp(3),
-                            Gravity.CENTER_HORIZONTAL or
-                                Gravity.BOTTOM
+                            dp(3)
                         ).apply {
-                            bottomMargin = dp(0)
+                            gravity =
+                                Gravity.CENTER_HORIZONTAL or
+                                    Gravity.BOTTOM
                         }
                     }
 
@@ -645,8 +635,8 @@ class DockService : Service() {
             item.addView(
                 iconContainer,
                 LinearLayout.LayoutParams(
-                    dp(iconSize),
-                    dp(iconSize)
+                    containerWidth,
+                    containerHeight
                 )
             )
 
