@@ -13,6 +13,7 @@ import android.os.VibratorManager
 import android.provider.Settings
 import android.view.Gravity
 import android.view.View
+import android.view.MotionEvent
 import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -39,6 +40,61 @@ class DockService : Service() {
         Handler(Looper.getMainLooper())
 
     private var isDockHidden = false
+
+    private var gestureStartX = 0f
+    private var gestureStartY = 0f
+
+    private fun handleDockGesture(event: MotionEvent): Boolean {
+
+        when (event.actionMasked) {
+
+            MotionEvent.ACTION_DOWN -> {
+                gestureStartX = event.rawX
+                gestureStartY = event.rawY
+                return true
+            }
+
+            MotionEvent.ACTION_UP -> {
+
+                val deltaX =
+                    event.rawX - gestureStartX
+
+                val deltaY =
+                    event.rawY - gestureStartY
+
+                val threshold = dp(60)
+
+                val position =
+                    DockSettings(this).dockPosition
+
+                when (position) {
+
+                    "bottom" -> {
+                        if (deltaY > threshold) {
+                            hideDock()
+                        }
+                    }
+
+                    "left" -> {
+                        if (deltaX < -threshold) {
+                            hideDock()
+                        }
+                    }
+
+                    "right" -> {
+                        if (deltaX > threshold) {
+                            hideDock()
+                        }
+                    }
+                }
+
+                return true
+            }
+        }
+
+        return true
+    }
+
 
     private var activePackageName: String? = null
 
@@ -256,7 +312,11 @@ class DockService : Service() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             background = getDrawable(R.drawable.dock_background)
+
+        setOnTouchListener { _, event ->
+            handleDockGesture(event)
         }
+}
 
         val settings = DockSettings(this)
 
