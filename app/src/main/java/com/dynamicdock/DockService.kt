@@ -144,6 +144,7 @@ class DockService : Service() {
     private fun showDock() {
 
         if (!isDockHidden) {
+            resetAutoHideTimer()
             return
         }
 
@@ -183,6 +184,15 @@ class DockService : Service() {
         )
     }
 
+    private fun resetAutoHideTimer() {
+
+        if (isDockHidden) {
+            return
+        }
+
+        scheduleAutoHide()
+    }
+
     private fun updatePackage(packageName: String) {
 
         if (packageName == this.packageName) {
@@ -202,6 +212,7 @@ class DockService : Service() {
 
         appContainer.post {
             rebuildDock()
+            scheduleAutoHide()
         }
     }
 
@@ -288,6 +299,7 @@ class DockService : Service() {
                     }
 
                     rebuildDock()
+                    resetAutoHideTimer()
                     true
                 }
             }
