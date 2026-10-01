@@ -556,10 +556,41 @@ class DockService : Service() {
             val iconContainer =
                 android.widget.FrameLayout(this)
 
+            val iconContainerWidth =
+                if (isVerticalDock) {
+                    dp(iconSize + 6)
+                } else {
+                    dp(iconSize)
+                }
+
+            val iconContainerHeight =
+                if (isVerticalDock) {
+                    dp(iconSize)
+                } else {
+                    dp(iconSize + 6)
+                }
+
             val iconParams =
                 android.widget.FrameLayout.LayoutParams(
                     dp(iconSize),
-                    dp(iconSize)
+                    dp(iconSize),
+                    Gravity.CENTER
+                ).apply {
+                    if (isVerticalDock) {
+                        if (paddingSettings.dockPosition == "left") {
+                            leftMargin = dp(3)
+                        } else {
+                            rightMargin = dp(3)
+                        }
+                    } else {
+                        topMargin = dp(3)
+                    }
+                }
+
+            iconContainer.layoutParams =
+                LinearLayout.LayoutParams(
+                    iconContainerWidth,
+                    iconContainerHeight
                 )
 
             iconContainer.addView(
@@ -587,14 +618,22 @@ class DockService : Service() {
                             dp(3),
                             dp(18),
                             indicatorGravity
-                        )
+                        ).apply {
+                            if (paddingSettings.dockPosition == "left") {
+                                rightMargin = dp(0)
+                            } else {
+                                leftMargin = dp(0)
+                            }
+                        }
                     } else {
                         android.widget.FrameLayout.LayoutParams(
                             dp(18),
                             dp(3),
                             Gravity.CENTER_HORIZONTAL or
                                 Gravity.BOTTOM
-                        )
+                        ).apply {
+                            bottomMargin = dp(0)
+                        }
                     }
 
                 iconContainer.addView(
