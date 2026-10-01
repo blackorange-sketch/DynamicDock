@@ -434,14 +434,6 @@ class DockService : Service() {
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                val dockSettings = DockSettings(this)
-
-                setPadding(
-                    dp(dockSettings.horizontalPaddingDp),
-                    dp(dockSettings.verticalPaddingDp),
-                    dp(dockSettings.horizontalPaddingDp),
-                    dp(dockSettings.verticalPaddingDp)
-                )
 
                 setOnClickListener {
 
@@ -518,7 +510,33 @@ class DockService : Service() {
                 item.addView(name, nameParams)
             }
 
-            appContainer.addView(item)
+            val paddingSettings =
+                DockSettings(this)
+
+            val isVerticalDock =
+                paddingSettings.dockPosition == "left" ||
+                paddingSettings.dockPosition == "right"
+
+            val itemParams =
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+
+            if (index > 0) {
+                if (isVerticalDock) {
+                    itemParams.topMargin =
+                        dp(paddingSettings.verticalPaddingDp)
+                } else {
+                    itemParams.leftMargin =
+                        dp(paddingSettings.horizontalPaddingDp)
+                }
+            }
+
+            appContainer.addView(
+                item,
+                itemParams
+            )
         }
     }
 
