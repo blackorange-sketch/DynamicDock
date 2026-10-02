@@ -333,45 +333,6 @@ class DockService : Service() {
 
         rebuildDock()
 
-        appContainer.measure(
-            View.MeasureSpec.makeMeasureSpec(
-                0,
-                View.MeasureSpec.UNSPECIFIED
-            ),
-            View.MeasureSpec.makeMeasureSpec(
-                0,
-                View.MeasureSpec.UNSPECIFIED
-            )
-        )
-
-        if (isVertical) {
-            params.height =
-                appContainer.measuredHeight
-
-            val screenHeight =
-                resources.displayMetrics.heightPixels
-
-            val dockHeight =
-                appContainer.measuredHeight
-
-            val maxY =
-                (screenHeight - dockHeight)
-                    .coerceAtLeast(0)
-
-            val percent =
-                settings.verticalPositionPercent
-                    .coerceIn(0, 100)
-
-            params.y =
-                (maxY * percent / 100f).toInt()
-
-        } else {
-            params.width =
-                appContainer.measuredWidth
-
-            params.y = 0
-        }
-
         windowManager.updateViewLayout(
             appContainer,
             params
