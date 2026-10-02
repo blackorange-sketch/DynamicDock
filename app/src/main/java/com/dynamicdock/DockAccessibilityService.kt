@@ -7,16 +7,25 @@ class DockAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
-        if (
-            event?.eventType !=
-            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
-        ) {
+        if (event == null) {
             return
         }
 
         val packageName =
             event.packageName?.toString()
-                ?: return
+                ?: "null"
+
+        android.util.Log.d(
+            "DynamicDockA11y",
+            "type=${event.eventType} package=$packageName class=${event.className}"
+        )
+
+        if (
+            event.eventType !=
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+        ) {
+            return
+        }
 
         DockService.updateActivePackage(
             packageName
