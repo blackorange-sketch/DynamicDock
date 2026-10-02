@@ -461,7 +461,7 @@ class DockService : Service() {
                     (maxY * percent / 100f).toInt()
             } else {
                 params.width =
-                    WindowManager.LayoutParams.WRAP_CONTENT
+                    dp(settings.dockLengthDp)
 
                 params.height =
                     dp(settings.dockHeightDp)
@@ -529,14 +529,22 @@ class DockService : Service() {
         windowManager =
             getSystemService(WINDOW_SERVICE) as WindowManager
 
+        val settings = DockSettings(this)
+
         appContainer = DockContainer(this).apply {
-            orientation = LinearLayout.HORIZONTAL
+            orientation =
+                if (
+                    settings.dockPosition == "left" ||
+                    settings.dockPosition == "right"
+                ) {
+                    LinearLayout.VERTICAL
+                } else {
+                    LinearLayout.HORIZONTAL
+                }
+
             gravity = Gravity.CENTER
             background = getDrawable(R.drawable.dock_background)
-
-}
-
-        val settings = DockSettings(this)
+        }
 
         val isVertical =
             settings.dockPosition == "left" ||
@@ -549,7 +557,7 @@ class DockService : Service() {
                 dp(settings.dockLengthDp),
 
             if (isVertical)
-                WindowManager.LayoutParams.WRAP_CONTENT
+                dp(settings.dockLengthDp)
             else
                 dp(settings.dockHeightDp),
 
