@@ -90,6 +90,9 @@ class SettingsActivity : Activity() {
 
             DockService.instance
                 ?.updateDockPosition(dockPosition)
+
+            DockService.instance
+                ?.refreshHideHandle()
         }
 
         val lengthLabel = addSlider(
