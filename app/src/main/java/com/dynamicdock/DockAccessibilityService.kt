@@ -10,15 +10,29 @@ class DockAccessibilityService : AccessibilityService() {
     private val handler =
         Handler(Looper.getMainLooper())
 
+    private var lastAppPackage: String? = null
+    private var possibleBackPackage: String? = null
+
+    private val clearBackCandidate =
+        Runnable {
+            possibleBackPackage = null
+        }
+
     private val checkLauncherWindows =
         Runnable {
-            val root =
-                rootInActiveWindow
+            val root = rootInActiveWindow
+
+            if (
+                root?.packageName?.toString() !=
+                "com.zte.mifavor.launcher"
+            ) {
+                return@Runnable
+            }
 
             android.util.Log.d(
                 "DynamicDockRecents",
-                "Recents root package=${root?.packageName} " +
-                    "class=${root?.className}"
+                "Recents root package=${root.packageName} " +
+                    "class=${root.className}"
             )
 
             fun dumpNode(
@@ -49,8 +63,9 @@ class DockAccessibilityService : AccessibilityService() {
             dumpNode(root)
         }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-
+    override fun onAccessibilityEvent(
+        event: AccessibilityEvent?
+    ) {
         if (event == null) {
             return
         }
@@ -68,7 +83,10 @@ class DockAccessibilityService : AccessibilityService() {
                 "windowChanges=${event.windowChanges}"
         )
 
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOWS_CHANGED) {
+        if (
+            event.eventType ==
+            AccessibilityEvent.TYPE_WINDOWS_CHANGED
+        ) {
             windows?.forEach { window ->
                 android.util.Log.d(
                     "DynamicDockWindows",
@@ -89,18 +107,14 @@ class DockAccessibilityService : AccessibilityService() {
 
         if (
             packageName == "com.zte.mifavor.launcher" &&
-            event.className?.toString() == "android.widget.ListView"
+            event.className?.toString() ==
+                "android.widget.ListView"
         ) {
             android.util.Log.d(
                 "DynamicDockRecents",
                 "RECENTS detected"
             )
-        }
 
-        if (
-            packageName == "com.zte.mifavor.launcher" &&
-            event.className?.toString() == "android.widget.ListView"
-        ) {
             handler.removeCallbacks(
                 checkLauncherWindows
             )
@@ -109,7 +123,62 @@ class DockAccessibilityService : AccessibilityService() {
                 checkLauncherWindows,
                 500
             )
+
+            return
         }
+
+        if (packageName == "com.android.systemui") {
+            if (lastAppPackage != null) {
+                possibleBackPackage = lastAppPackage
+
+                android.util.Log.d(
+                    "DynamicDockBack",
+                    "Possible Back: $possibleBackPackage"
+                )
+
+                handler.removeCallbacks(
+                    clearBackCandidate
+                )
+
+                handler.postDelayed(
+                    clearBackCandidate,
+                    1000
+                )
+            }
+
+            return
+        }
+
+        if (packageName == "com.zte.mifavor.launcher") {
+            val backPackage = possibleBackPackage
+
+            if (backPackage != null) {
+                android.util.Log.d(
+                    "DynamicDockBack",
+                    "Back detected, removing $backPackage"
+                )
+
+                DockService.removeDynamicPackage(
+                    backPackage
+                )
+
+                possibleBackPackage = null
+                handler.removeCallbacks(
+                    clearBackCandidate
+                )
+            }
+
+            return
+        }
+
+        if (
+            packageName == this.packageName ||
+            packageName == "com.google.android.inputmethod.latin"
+        ) {
+            return
+        }
+
+        lastAppPackage = packageName
 
         DockService.updateActivePackage(
             packageName

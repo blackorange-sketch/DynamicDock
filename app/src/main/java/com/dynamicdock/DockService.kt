@@ -36,6 +36,10 @@ class DockService : Service() {
         fun updateVisiblePackages(packages: Set<String>) {
             instance?.removeMissingDynamicApps(packages)
         }
+
+        fun removeDynamicPackage(packageName: String) {
+            instance?.removeDynamicPackage(packageName)
+        }
     }
 
     private lateinit var windowManager: WindowManager
@@ -890,6 +894,20 @@ class DockService : Service() {
         )
 
         registry.activate(runningApp)
+
+        appContainer.post {
+            rebuildDock()
+            refreshDock()
+            scheduleAutoHide()
+        }
+    }
+
+    private fun removeDynamicPackage(packageName: String) {
+        val removed = registry.removeDynamic(packageName)
+
+        if (!removed) {
+            return
+        }
 
         appContainer.post {
             rebuildDock()
