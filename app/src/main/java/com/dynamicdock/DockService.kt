@@ -1238,7 +1238,20 @@ iconContainer.addView(
                                 return true
                             }
 
-                            v.performClick()
+                            showDock()
+
+                            val launchIntent =
+                                packageManager.getLaunchIntentForPackage(
+                                    app.packageName
+                                )
+
+                            launchIntent?.let { intent ->
+                                intent.addFlags(
+                                    Intent.FLAG_ACTIVITY_NEW_TASK
+                                )
+                                startActivity(intent)
+                            }
+
                             return true
                         }
                     }
