@@ -830,37 +830,7 @@ class DockService : Service() {
     private fun showDock() {
         if (!isDockHidden) {
             resetAutoHideTimer()
-
-
-        setOnTouchListener(object : View.OnTouchListener {
-            private var downX = 0f
-            private var downY = 0f
-
-            override fun onTouch(
-                v: View,
-                event: android.view.MotionEvent
-            ): Boolean {
-                when (event.actionMasked) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        downX = event.rawX
-                        downY = event.rawY
-                    }
-
-                    android.view.MotionEvent.ACTION_UP -> {
-                        val dx = event.rawX - downX
-                        val dy = event.rawY - downY
-                        val distance = kotlin.math.sqrt(dx * dx + dy * dy)
-
-                        if (distance > dp(80) && !app.pinned) {
-                            removeDynamicPackage(app.packageName)
-                            return true
-                        }
-                    }
-                }
-
-                return false
-            }
-        })            return
+            return
         }
 
         hideHandle?.let { handle ->
