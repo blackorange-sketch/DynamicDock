@@ -704,7 +704,7 @@ class DockService : Service() {
                     .animate()
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
-                    .alpha(0.15f)
+                    .alpha(0.05f)
                     .setDuration(240)
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
@@ -748,7 +748,7 @@ class DockService : Service() {
                     .animate()
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
-                    .alpha(0.15f)
+                    .alpha(0.05f)
                     .setDuration(240)
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
