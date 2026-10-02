@@ -1212,6 +1212,41 @@ iconContainer.addView(
                 )
             )
 
+            iconContainer.setOnTouchListener(object : View.OnTouchListener {
+                private var downX = 0f
+                private var downY = 0f
+
+                override fun onTouch(
+                    v: View,
+                    event: android.view.MotionEvent
+                ): Boolean {
+                    when (event.actionMasked) {
+                        android.view.MotionEvent.ACTION_DOWN -> {
+                            downX = event.rawX
+                            downY = event.rawY
+                            return true
+                        }
+
+                        android.view.MotionEvent.ACTION_UP -> {
+                            val dx = event.rawX - downX
+                            val dy = event.rawY - downY
+                            val distance =
+                                kotlin.math.sqrt(dx * dx + dy * dy)
+
+                            if (distance > dp(80) && !app.pinned) {
+                                removeDynamicPackage(app.packageName)
+                                return true
+                            }
+
+                            v.performClick()
+                            return true
+                        }
+                    }
+
+                    return true
+                }
+            })
+
             if (DockSettings(this).showAppLabels) {
                 val name = TextView(this).apply {
                     text = app.appName
