@@ -1,6 +1,8 @@
 package com.dynamicdock
 
 import android.app.Service
+import android.app.usage.UsageStatsManager
+import android.util.Log
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -40,12 +42,62 @@ class DockService : Service() {
     private val hideHandler =
         Handler(Looper.getMainLooper())
 
+    private val usageHandler =
+        Handler(Looper.getMainLooper())
+
+    private val usageCheckRunnable =
+        object : Runnable {
+            override fun run() {
+                checkRecentApps()
+                usageHandler.postDelayed(
+                    this,
+                    2000
+                )
+            }
+        }
+
     private var isDockHidden = false
     private var hideHandle: View? = null
     private var hideHandleParams: WindowManager.LayoutParams? = null
 
     private var gestureStartX = 0f
     private var gestureStartY = 0f
+
+    private fun checkRecentApps() {
+        val usageStatsManager =
+            getSystemService(USAGE_STATS_SERVICE)
+                as UsageStatsManager
+
+        val endTime =
+            System.currentTimeMillis()
+
+        val startTime =
+            endTime - 60_000
+
+        val stats =
+            usageStatsManager.queryUsageStats(
+                UsageStatsManager.INTERVAL_BEST,
+                startTime,
+                endTime
+            )
+
+        val recentPackages =
+            stats
+                .filter {
+                    it.lastTimeUsed > 0
+                }
+                .sortedByDescending {
+                    it.lastTimeUsed
+                }
+                .take(10)
+
+        recentPackages.forEach {
+            Log.d(
+                "DynamicDockUsage",
+                "${it.packageName} lastUsed=${it.lastTimeUsed}"
+            )
+        }
+    }
 
     private fun handleDockGesture(event: MotionEvent): Boolean {
 
@@ -463,6 +515,8 @@ class DockService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+
+        usageHandler.post(usageCheckRunnable)
 
         instance = this
 
@@ -1108,6 +1162,10 @@ iconContainer.addView(
     }
 
     override fun onDestroy() {
+
+        usageHandler.removeCallbacks(
+            usageCheckRunnable
+        )
 
         instance = null
 
