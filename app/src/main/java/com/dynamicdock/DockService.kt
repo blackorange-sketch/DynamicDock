@@ -41,6 +41,8 @@ class DockService : Service() {
         Handler(Looper.getMainLooper())
 
     private var isDockHidden = false
+    private var hideHandle: View? = null
+    private var hideHandleParams: WindowManager.LayoutParams? = null
 
     private var gestureStartX = 0f
     private var gestureStartY = 0f
@@ -456,6 +458,46 @@ class DockService : Service() {
 
         appContainer.visibility = View.GONE
         isDockHidden = true
+
+        val settings = DockSettings(this)
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        hideHandle = View(this).apply {
+            setBackgroundColor(Color.WHITE)
+
+            setOnClickListener {
+                showDock()
+            }
+        }
+
+        val handleParams = WindowManager.LayoutParams(
+            if (isVertical) dp(48) else dp(48),
+            if (isVertical) dp(48) else dp(48),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity =
+                when (settings.dockPosition) {
+                    "left" ->
+                        Gravity.CENTER_VERTICAL or Gravity.LEFT
+
+                    "right" ->
+                        Gravity.CENTER_VERTICAL or Gravity.RIGHT
+
+                    else ->
+                        Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                }
+        }
+
+        hideHandleParams = handleParams
+
+        windowManager.addView(
+            hideHandle,
+            handleParams
+        )
     }
 
     private fun showDock() {
@@ -463,6 +505,16 @@ class DockService : Service() {
             resetAutoHideTimer()
             return
         }
+
+        hideHandle?.let { handle ->
+            try {
+                windowManager.removeView(handle)
+            } catch (_: Exception) {
+            }
+        }
+
+        hideHandle = null
+        hideHandleParams = null
 
         appContainer.visibility = View.VISIBLE
         isDockHidden = false
