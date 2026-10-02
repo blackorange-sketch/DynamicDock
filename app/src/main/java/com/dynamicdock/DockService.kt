@@ -812,6 +812,7 @@ class DockService : Service() {
 
         appContainer.post {
             rebuildDock()
+            refreshDock()
             scheduleAutoHide()
         }
     }
