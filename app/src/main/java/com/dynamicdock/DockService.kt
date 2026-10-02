@@ -451,6 +451,12 @@ class DockService : Service() {
         scheduleAutoHide()
     }
 
+    fun refreshHideHandle() {
+        if (isDockHidden) {
+            createHideHandle()
+        }
+    }
+
     private fun hideDock() {
         if (isDockHidden) {
             return
