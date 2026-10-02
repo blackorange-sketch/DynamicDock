@@ -646,34 +646,91 @@ class DockService : Service() {
             settings.dockPosition == "left" ||
             settings.dockPosition == "right"
 
-        appContainer.animate().cancel()
+        appContainer.post {
+            appContainer.animate().cancel()
 
-        if (isVertical) {
-            appContainer
-                .animate()
-                .scaleX(0.02f)
-                .setDuration(200)
-                .withEndAction {
-                    appContainer.visibility = View.GONE
-                    appContainer.scaleX = 1f
+            val dockWidth = appContainer.width.toFloat()
+            val dockHeight = appContainer.height.toFloat()
 
-                    isDockHidden = true
-                    createHideHandle()
-                }
-                .start()
-        } else {
-            appContainer
-                .animate()
-                .scaleY(0.02f)
-                .setDuration(200)
-                .withEndAction {
-                    appContainer.visibility = View.GONE
-                    appContainer.scaleY = 1f
+            val handleLength =
+                dp(settings.hideHandleLengthDp).toFloat()
 
-                    isDockHidden = true
-                    createHideHandle()
-                }
-                .start()
+            val handleThickness =
+                dp(settings.hideHandleThicknessDp).toFloat()
+
+            val margin =
+                dp(settings.hideHandleMarginDp).toFloat()
+
+            if (dockWidth <= 0f || dockHeight <= 0f) {
+                isDockHidden = true
+                appContainer.visibility = View.GONE
+                createHideHandle()
+                return@post
+            }
+
+            if (isVertical) {
+                val targetScaleX =
+                    (handleThickness / dockWidth)
+                        .coerceAtLeast(0.02f)
+
+                val targetScaleY =
+                    (handleLength / dockHeight)
+                        .coerceAtLeast(0.02f)
+
+                val targetTranslationX =
+                    if (settings.dockPosition == "left") {
+                        -(dockWidth - handleThickness) / 2f
+                    } else {
+                        (dockWidth - handleThickness) / 2f
+                    }
+
+                appContainer
+                    .animate()
+                    .scaleX(targetScaleX)
+                    .scaleY(targetScaleY)
+                    .translationX(targetTranslationX)
+                    .setDuration(220)
+                    .withEndAction {
+                        appContainer.visibility = View.GONE
+                        appContainer.scaleX = 1f
+                        appContainer.scaleY = 1f
+                        appContainer.translationX = 0f
+                        appContainer.translationY = 0f
+
+                        isDockHidden = true
+                        createHideHandle()
+                    }
+                    .start()
+            } else {
+                val targetScaleX =
+                    (handleLength / dockWidth)
+                        .coerceAtLeast(0.02f)
+
+                val targetScaleY =
+                    (handleThickness / dockHeight)
+                        .coerceAtLeast(0.02f)
+
+                val targetTranslationY =
+                    (dockHeight - handleThickness) / 2f
+
+                appContainer
+                    .animate()
+                    .scaleX(targetScaleX)
+                    .scaleY(targetScaleY)
+                    .translationY(targetTranslationY)
+                    .setDuration(220)
+                    .withEndAction {
+                        appContainer.visibility = View.GONE
+                        appContainer.scaleX = 1f
+                        appContainer.scaleY = 1f
+                        appContainer.translationX = 0f
+                        appContainer.translationY = 0f
+
+                        isDockHidden = true
+                        createHideHandle()
+                    }
+                    .start()
+            }
         }
     }
 
@@ -863,35 +920,97 @@ class DockService : Service() {
 
         appContainer.visibility = View.VISIBLE
 
-        if (isVertical) {
-            appContainer.scaleX = 0.02f
-        } else {
-            appContainer.scaleY = 0.02f
-        }
+        appContainer.post {
+            val dockWidth =
+                appContainer.width.toFloat()
 
-        isDockHidden = false
+            val dockHeight =
+                appContainer.height.toFloat()
 
-        appContainer.animate().cancel()
+            val handleLength =
+                dp(settings.hideHandleLengthDp).toFloat()
 
-        val animator =
+            val handleThickness =
+                dp(settings.hideHandleThicknessDp).toFloat()
+
+            if (dockWidth <= 0f || dockHeight <= 0f) {
+                appContainer.scaleX = 1f
+                appContainer.scaleY = 1f
+                appContainer.translationX = 0f
+                appContainer.translationY = 0f
+                isDockHidden = false
+                scheduleAutoHide()
+                return@post
+            }
+
             if (isVertical) {
+                val startScaleX =
+                    (handleThickness / dockWidth)
+                        .coerceAtLeast(0.02f)
+
+                val startScaleY =
+                    (handleLength / dockHeight)
+                        .coerceAtLeast(0.02f)
+
+                val startTranslationX =
+                    if (settings.dockPosition == "left") {
+                        -(dockWidth - handleThickness) / 2f
+                    } else {
+                        (dockWidth - handleThickness) / 2f
+                    }
+
+                appContainer.scaleX = startScaleX
+                appContainer.scaleY = startScaleY
+                appContainer.translationX =
+                    startTranslationX
+                appContainer.translationY = 0f
+
+                isDockHidden = false
+
                 appContainer
                     .animate()
                     .scaleX(1f)
+                    .scaleY(1f)
+                    .translationX(0f)
+                    .translationY(0f)
+                    .setDuration(220)
+                    .withEndAction {
+                        scheduleAutoHide()
+                    }
+                    .start()
             } else {
+                val startScaleX =
+                    (handleLength / dockWidth)
+                        .coerceAtLeast(0.02f)
+
+                val startScaleY =
+                    (handleThickness / dockHeight)
+                        .coerceAtLeast(0.02f)
+
+                val startTranslationY =
+                    (dockHeight - handleThickness) / 2f
+
+                appContainer.scaleX = startScaleX
+                appContainer.scaleY = startScaleY
+                appContainer.translationX = 0f
+                appContainer.translationY =
+                    startTranslationY
+
+                isDockHidden = false
+
                 appContainer
                     .animate()
+                    .scaleX(1f)
                     .scaleY(1f)
+                    .translationX(0f)
+                    .translationY(0f)
+                    .setDuration(220)
+                    .withEndAction {
+                        scheduleAutoHide()
+                    }
+                    .start()
             }
-
-        animator
-            .setDuration(200)
-            .withEndAction {
-                appContainer.scaleX = 1f
-                appContainer.scaleY = 1f
-                scheduleAutoHide()
-            }
-            .start()
+        }
     }
 
     private fun scheduleAutoHide() {
