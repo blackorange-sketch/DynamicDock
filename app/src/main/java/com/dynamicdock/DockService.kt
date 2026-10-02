@@ -441,13 +441,13 @@ class DockService : Service() {
                     dp(settings.dockHeightDp)
 
                 params.height =
-                    WindowManager.LayoutParams.WRAP_CONTENT
+                    dp(settings.dockLengthDp)
 
                 val screenHeight =
                     resources.displayMetrics.heightPixels
 
                 val dockHeight =
-                    appContainer.height
+                    dp(settings.dockLengthDp)
 
                 val maxY =
                     (screenHeight - dockHeight)
