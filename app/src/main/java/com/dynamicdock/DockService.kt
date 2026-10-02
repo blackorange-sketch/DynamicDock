@@ -460,17 +460,10 @@ class DockService : Service() {
         isDockHidden = true
 
         val settings = DockSettings(this)
+
         val isVertical =
             settings.dockPosition == "left" ||
             settings.dockPosition == "right"
-
-        hideHandle = View(this).apply {
-            setBackgroundColor(Color.WHITE)
-
-            setOnClickListener {
-                showDock()
-            }
-        }
 
         val handleLength =
             dp(settings.hideHandleLengthDp)
@@ -478,9 +471,22 @@ class DockService : Service() {
         val handleThickness =
             dp(settings.hideHandleThicknessDp)
 
+        val touchSize =
+            dp(24)
+
+        hideHandle = View(this).apply {
+            setBackgroundColor(Color.TRANSPARENT)
+            isClickable = true
+            setOnClickListener {
+                showDock()
+            }
+
+            foreground = null
+        }
+
         val handleParams = WindowManager.LayoutParams(
-            if (isVertical) handleThickness else handleLength,
-            if (isVertical) handleLength else handleThickness,
+            if (isVertical) touchSize else handleLength,
+            if (isVertical) handleLength else touchSize,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -515,6 +521,26 @@ class DockService : Service() {
             hideHandle,
             handleParams
         )
+
+        hideHandle?.post {
+            val drawable = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.WHITE)
+
+                if (isVertical) {
+                    setSize(
+                        handleThickness,
+                        handleLength
+                    )
+                } else {
+                    setSize(
+                        handleLength,
+                        handleThickness
+                    )
+                }
+            }
+
+            hideHandle?.background = drawable
+        }
     }
 
     private fun showDock() {
