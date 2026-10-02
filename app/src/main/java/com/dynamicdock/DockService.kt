@@ -1103,17 +1103,15 @@ class DockService : Service() {
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
 
-            if (index > 0) {
-                if (isVerticalDock) {
-                    itemParams.topMargin =
-                        dp(paddingSettings.verticalPaddingDp)
-                } else {
-                    itemParams.leftMargin =
-                        dp(paddingSettings.horizontalPaddingDp)
-                }
-            }
+            if (isVerticalDock) {
+            itemParams.topMargin =
+                dp(paddingSettings.verticalPaddingDp)
+        } else {
+            itemParams.leftMargin =
+                dp(paddingSettings.horizontalPaddingDp)
+        }
 
-            appContainer.addView(
+        appContainer.addView(
                 item,
                 itemParams
             )
