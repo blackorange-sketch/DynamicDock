@@ -712,12 +712,31 @@ class DockService : Service() {
                             ).coerceAtLeast(0L) / 70f
 
                         if (progress > 0f) {
+                            val t =
+                                progress.coerceAtMost(1f)
+
+                            val startColor =
+                                Color.parseColor("#E61E1E1E")
+
+                            val startA =
+                                Color.alpha(startColor)
+
+                            val startR =
+                                Color.red(startColor)
+
+                            val startG =
+                                Color.green(startColor)
+
+                            val startB =
+                                Color.blue(startColor)
+
                             val color =
-                                ArgbEvaluator().evaluate(
-                                    progress.coerceAtMost(1f),
-                                    Color.parseColor("#E61E1E1E"),
-                                    Color.WHITE
-                                ) as Int
+                                Color.argb(
+                                    (startA + (255 - startA) * t).toInt(),
+                                    (startR + (255 - startR) * t).toInt(),
+                                    (startG + (255 - startG) * t).toInt(),
+                                    (startB + (255 - startB) * t).toInt()
+                                )
 
                             (appContainer.background as? GradientDrawable)
                                 ?.setColor(color)
@@ -774,12 +793,31 @@ class DockService : Service() {
                             ).coerceAtLeast(0L) / 70f
 
                         if (progress > 0f) {
+                            val t =
+                                progress.coerceAtMost(1f)
+
+                            val startColor =
+                                Color.parseColor("#E61E1E1E")
+
+                            val startA =
+                                Color.alpha(startColor)
+
+                            val startR =
+                                Color.red(startColor)
+
+                            val startG =
+                                Color.green(startColor)
+
+                            val startB =
+                                Color.blue(startColor)
+
                             val color =
-                                ArgbEvaluator().evaluate(
-                                    progress.coerceAtMost(1f),
-                                    Color.parseColor("#E61E1E1E"),
-                                    Color.WHITE
-                                ) as Int
+                                Color.argb(
+                                    (startA + (255 - startA) * t).toInt(),
+                                    (startR + (255 - startR) * t).toInt(),
+                                    (startG + (255 - startG) * t).toInt(),
+                                    (startB + (255 - startB) * t).toInt()
+                                )
 
                             (appContainer.background as? GradientDrawable)
                                 ?.setColor(color)
