@@ -1015,23 +1015,10 @@ class DockService : Service() {
                     dp(iconSize),
                     dp(iconSize)
                 ).apply {
-                    gravity =
-                        if (isVerticalDock &&
-                            paddingSettings.dockPosition == "right") {
-                            Gravity.START or
-                                Gravity.CENTER_VERTICAL
-                        } else {
-                            Gravity.START or
-                                Gravity.TOP
-                        }
-
-                    if (isVerticalDock &&
-                        paddingSettings.dockPosition == "right") {
-                        leftMargin = dp(3)
-                    }
+                    gravity = Gravity.CENTER
                 }
 
-            iconContainer.addView(
+iconContainer.addView(
                 icon,
                 iconParams
             )
