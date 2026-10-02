@@ -3,6 +3,7 @@ package com.dynamicdock
 import android.app.Service
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.os.Handler
@@ -569,6 +570,45 @@ class DockService : Service() {
             paddingSettings.dockPosition == "left" ||
             paddingSettings.dockPosition == "right"
 
+        val hideButton = TextView(this).apply {
+            text = "×"
+            textSize = 20f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.argb(110, 40, 40, 40))
+                setStroke(
+                    dp(1),
+                    Color.argb(160, 255, 255, 255)
+                )
+            }
+
+            contentDescription = "Сховати Dock"
+
+            setOnClickListener {
+                hideDock()
+            }
+        }
+
+        val buttonSize = dp(28)
+
+        appContainer.addView(
+            hideButton,
+            LinearLayout.LayoutParams(
+                buttonSize,
+                buttonSize
+            ).apply {
+                setMargins(
+                    dp(3),
+                    dp(3),
+                    dp(3),
+                    dp(3)
+                )
+            }
+        )
+
         apps.forEachIndexed { index, app ->
 
             if (
@@ -800,35 +840,6 @@ class DockService : Service() {
             )
         }
 
-        val hideButton = TextView(this).apply {
-            text = "−"
-            textSize = 18f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.TRANSPARENT)
-            contentDescription = "Сховати Dock"
-
-            setOnClickListener {
-                hideDock()
-            }
-        }
-
-        val buttonSize = dp(20)
-
-        appContainer.addView(
-            hideButton,
-            LinearLayout.LayoutParams(
-                buttonSize,
-                buttonSize
-            ).apply {
-                setMargins(
-                    dp(3),
-                    dp(3),
-                    dp(3),
-                    dp(3)
-                )
-            }
-        )
     }
 
     override fun onDestroy() {
