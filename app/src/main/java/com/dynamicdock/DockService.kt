@@ -970,7 +970,7 @@ class DockService : Service() {
         hideHandleParams = null
 
         appContainer.visibility =
-            View.VISIBLE
+            View.INVISIBLE
 
         appContainer.post {
             val dockWidth =
@@ -1036,6 +1036,9 @@ class DockService : Service() {
                 appContainer.scaleY =
                     startScaleY
 
+                appContainer.visibility =
+                    View.VISIBLE
+
                 isDockHidden = false
 
                 appContainer
@@ -1082,6 +1085,9 @@ class DockService : Service() {
 
                 appContainer.scaleY =
                     startScaleY
+
+                appContainer.visibility =
+                    View.VISIBLE
 
                 isDockHidden = false
 
