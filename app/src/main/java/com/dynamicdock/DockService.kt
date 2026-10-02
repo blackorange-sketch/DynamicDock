@@ -705,24 +705,6 @@ class DockService : Service() {
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
                     .setDuration(240)
-                    .setUpdateListener { animator ->
-                        val progress =
-                            (
-                                animator.currentPlayTime - 170L
-                            ).coerceAtLeast(0L) / 70f
-
-                        if (progress > 0f) {
-                            val color =
-                                ArgbEvaluator().evaluate(
-                                    progress.coerceAtMost(1f),
-                                    Color.parseColor("#E61E1E1E"),
-                                    Color.WHITE
-                                ) as Int
-
-                            (appContainer.background as? GradientDrawable)
-                                ?.setColor(color)
-                        }
-                    }
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
                     )
@@ -767,24 +749,6 @@ class DockService : Service() {
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
                     .setDuration(240)
-                    .setUpdateListener { animator ->
-                        val progress =
-                            (
-                                animator.currentPlayTime - 170L
-                            ).coerceAtLeast(0L) / 70f
-
-                        if (progress > 0f) {
-                            val color =
-                                ArgbEvaluator().evaluate(
-                                    progress.coerceAtMost(1f),
-                                    Color.parseColor("#E61E1E1E"),
-                                    Color.WHITE
-                                ) as Int
-
-                            (appContainer.background as? GradientDrawable)
-                                ?.setColor(color)
-                        }
-                    }
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
                     )
