@@ -704,6 +704,7 @@ class DockService : Service() {
                     .animate()
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
+                    .alpha(0.15f)
                     .setDuration(240)
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
@@ -712,8 +713,7 @@ class DockService : Service() {
                         appContainer.visibility =
                             View.GONE
 
-                        (appContainer.background as? GradientDrawable)
-                            ?.setColor(Color.parseColor("#E61E1E1E"))
+                        appContainer.alpha = 1f
 
                         appContainer.scaleX = 1f
                         appContainer.scaleY = 1f
@@ -748,6 +748,7 @@ class DockService : Service() {
                     .animate()
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
+                    .alpha(0.15f)
                     .setDuration(240)
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
@@ -756,8 +757,7 @@ class DockService : Service() {
                         appContainer.visibility =
                             View.GONE
 
-                        (appContainer.background as? GradientDrawable)
-                            ?.setColor(Color.parseColor("#E61E1E1E"))
+                        appContainer.alpha = 1f
 
                         appContainer.scaleX = 1f
                         appContainer.scaleY = 1f
