@@ -70,6 +70,16 @@ class DockAccessibilityService : AccessibilityService() {
         }
 
         if (
+            packageName == "com.zte.mifavor.launcher" &&
+            event.className?.toString() == "android.widget.ListView"
+        ) {
+            android.util.Log.d(
+                "DynamicDockRecents",
+                "RECENTS detected"
+            )
+        }
+
+        if (
             packageName == "com.zte.mifavor.launcher"
         ) {
             handler.removeCallbacks(
