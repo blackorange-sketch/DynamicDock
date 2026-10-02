@@ -102,6 +102,7 @@ class DockService : Service() {
     ) : LinearLayout(context) {
 
         private var gestureTriggered = false
+        private var touchStartedOnHideButton = false
 
         override fun onInterceptTouchEvent(
             event: MotionEvent
@@ -113,6 +114,16 @@ class DockService : Service() {
                     gestureStartX = event.rawX
                     gestureStartY = event.rawY
                     gestureTriggered = false
+
+                    val hideButton = getChildAt(0)
+
+                    touchStartedOnHideButton =
+                        hideButton != null &&
+                        event.x >= hideButton.left &&
+                        event.x <= hideButton.right &&
+                        event.y >= hideButton.top &&
+                        event.y <= hideButton.bottom
+
                     return false
                 }
 
@@ -144,7 +155,11 @@ class DockService : Service() {
                                 false
                         }
 
-                    if (shouldHide && !gestureTriggered) {
+                    if (
+                        shouldHide &&
+                        !gestureTriggered &&
+                        !touchStartedOnHideButton
+                    ) {
                         gestureTriggered = true
                         hideDock()
                         return true
@@ -154,6 +169,7 @@ class DockService : Service() {
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
                     gestureTriggered = false
+                    touchStartedOnHideButton = false
                 }
             }
 
