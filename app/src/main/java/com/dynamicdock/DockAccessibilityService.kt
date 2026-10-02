@@ -12,24 +12,42 @@ class DockAccessibilityService : AccessibilityService() {
 
     private val checkLauncherWindows =
         Runnable {
-            val visiblePackages =
-                windows
-                    ?.mapNotNull {
-                        it.root?.packageName?.toString()
-                    }
-                    ?.toSet()
-                    ?: emptySet()
+            val root =
+                rootInActiveWindow
 
             android.util.Log.d(
-                "DynamicDockWindows",
-                "Launcher check visiblePackages=$visiblePackages"
+                "DynamicDockRecents",
+                "Recents root package=${root?.packageName} " +
+                    "class=${root?.className}"
             )
 
-            DockService.updateVisiblePackages(
-                visiblePackages
-            )
+            fun dumpNode(
+                node: android.view.accessibility.AccessibilityNodeInfo?,
+                depth: Int = 0
+            ) {
+                if (node == null || depth > 6) {
+                    return
+                }
+
+                android.util.Log.d(
+                    "DynamicDockRecents",
+                    "node depth=$depth " +
+                        "class=${node.className} " +
+                        "package=${node.packageName} " +
+                        "text=${node.text} " +
+                        "desc=${node.contentDescription}"
+                )
+
+                for (i in 0 until node.childCount) {
+                    dumpNode(
+                        node.getChild(i),
+                        depth + 1
+                    )
+                }
+            }
+
+            dumpNode(root)
         }
-
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
