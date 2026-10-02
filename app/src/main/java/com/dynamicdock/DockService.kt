@@ -969,7 +969,8 @@ class DockService : Service() {
         hideHandle = null
         hideHandleParams = null
 
-        appContainer.visibility = View.VISIBLE
+        appContainer.visibility =
+            View.VISIBLE
 
         appContainer.post {
             val dockWidth =
@@ -987,34 +988,53 @@ class DockService : Service() {
             if (dockWidth <= 0f || dockHeight <= 0f) {
                 appContainer.scaleX = 1f
                 appContainer.scaleY = 1f
-                appContainer.translationX = 0f
-                appContainer.translationY = 0f
+                appContainer.pivotX =
+                    dockWidth / 2f
+                appContainer.pivotY =
+                    dockHeight / 2f
+
                 isDockHidden = false
                 scheduleAutoHide()
                 return@post
             }
 
             if (isVertical) {
-                val startScaleX =
-                    (handleThickness / dockWidth)
-                        .coerceAtLeast(0.02f)
-
-                val startScaleY =
-                    (handleLength / dockHeight)
-                        .coerceAtLeast(0.02f)
-
-                val startTranslationX =
+                val pivotX =
                     if (settings.dockPosition == "left") {
-                        -(dockWidth - handleThickness) / 2f
+                        dp(settings.hideHandleMarginDp).toFloat() +
+                            handleThickness / 2f
                     } else {
-                        (dockWidth - handleThickness) / 2f
+                        dockWidth -
+                            dp(settings.hideHandleMarginDp).toFloat() -
+                            handleThickness / 2f
                     }
 
-                appContainer.scaleX = startScaleX
-                appContainer.scaleY = startScaleY
-                appContainer.translationX =
-                    startTranslationX
-                appContainer.translationY = 0f
+                appContainer.pivotX =
+                    pivotX.coerceIn(
+                        0f,
+                        dockWidth
+                    )
+
+                appContainer.pivotY =
+                    dockHeight / 2f
+
+                val startScaleX =
+                    (
+                        handleThickness /
+                            dockWidth
+                    ).coerceAtLeast(0.02f)
+
+                val startScaleY =
+                    (
+                        handleLength /
+                            dockHeight
+                    ).coerceAtLeast(0.02f)
+
+                appContainer.scaleX =
+                    startScaleX
+
+                appContainer.scaleY =
+                    startScaleY
 
                 isDockHidden = false
 
@@ -1022,30 +1042,46 @@ class DockService : Service() {
                     .animate()
                     .scaleX(1f)
                     .scaleY(1f)
-                    .translationX(0f)
-                    .translationY(0f)
-                    .setDuration(220)
+                    .setDuration(240)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
                     .withEndAction {
+                        appContainer.pivotX =
+                            dockWidth / 2f
+
+                        appContainer.pivotY =
+                            dockHeight / 2f
+
                         scheduleAutoHide()
                     }
                     .start()
             } else {
+                appContainer.pivotX =
+                    dockWidth / 2f
+
+                appContainer.pivotY =
+                    dockHeight -
+                        dp(settings.hideHandleMarginDp).toFloat() -
+                        handleThickness / 2f
+
                 val startScaleX =
-                    (handleLength / dockWidth)
-                        .coerceAtLeast(0.02f)
+                    (
+                        handleLength /
+                            dockWidth
+                    ).coerceAtLeast(0.02f)
 
                 val startScaleY =
-                    (handleThickness / dockHeight)
-                        .coerceAtLeast(0.02f)
+                    (
+                        handleThickness /
+                            dockHeight
+                    ).coerceAtLeast(0.02f)
 
-                val startTranslationY =
-                    (dockHeight - handleThickness) / 2f
+                appContainer.scaleX =
+                    startScaleX
 
-                appContainer.scaleX = startScaleX
-                appContainer.scaleY = startScaleY
-                appContainer.translationX = 0f
-                appContainer.translationY =
-                    startTranslationY
+                appContainer.scaleY =
+                    startScaleY
 
                 isDockHidden = false
 
@@ -1053,10 +1089,17 @@ class DockService : Service() {
                     .animate()
                     .scaleX(1f)
                     .scaleY(1f)
-                    .translationX(0f)
-                    .translationY(0f)
-                    .setDuration(220)
+                    .setDuration(240)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
                     .withEndAction {
+                        appContainer.pivotX =
+                            dockWidth / 2f
+
+                        appContainer.pivotY =
+                            dockHeight / 2f
+
                         scheduleAutoHide()
                     }
                     .start()
