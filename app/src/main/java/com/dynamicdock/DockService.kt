@@ -944,6 +944,20 @@ class DockService : Service() {
                 container,
                 handleParams
             )
+
+            container.alpha = 0f
+            container.scaleX = 0.7f
+            container.scaleY = 0.7f
+
+            container.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(160)
+                .setInterpolator(
+                    android.view.animation.DecelerateInterpolator()
+                )
+                .start()
         }
     }
 
