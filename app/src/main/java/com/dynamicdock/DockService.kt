@@ -485,6 +485,9 @@ class DockService : Service() {
         val touchSize =
             dp(24)
 
+        val margin =
+            dp(settings.hideHandleMarginDp)
+
         val container =
             android.widget.FrameLayout(this).apply {
                 setBackgroundColor(Color.TRANSPARENT)
@@ -535,33 +538,61 @@ class DockService : Service() {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT
             ).apply {
-                gravity =
-                    when (settings.dockPosition) {
-                        "left" ->
-                            Gravity.CENTER_VERTICAL or Gravity.LEFT
-
-                        "right" ->
-                            Gravity.CENTER_VERTICAL or Gravity.RIGHT
-
-                        else ->
-                            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                    }
-
-                val margin =
-                    dp(settings.hideHandleMarginDp)
-
-                val extraSpace =
-                    (touchSize - handleThickness) / 2
 
                 when (settings.dockPosition) {
-                    "left" ->
-                        x = margin - extraSpace
 
-                    "right" ->
-                        x = extraSpace - margin
+                    "left" -> {
+                        gravity =
+                            Gravity.TOP or Gravity.LEFT
 
-                    else ->
-                        y = -(margin + extraSpace)
+                        x = margin -
+                            (touchSize - handleThickness) / 2
+
+                        val screenHeight =
+                            resources.displayMetrics.heightPixels
+
+                        val maxY =
+                            (screenHeight - handleLength)
+                                .coerceAtLeast(0)
+
+                        y =
+                            (maxY *
+                                settings.verticalPositionPercent
+                                    .coerceIn(0, 100) / 100f
+                            ).toInt()
+                    }
+
+                    "right" -> {
+                        gravity =
+                            Gravity.TOP or Gravity.RIGHT
+
+                        x =
+                            -margin +
+                            (touchSize - handleThickness) / 2
+
+                        val screenHeight =
+                            resources.displayMetrics.heightPixels
+
+                        val maxY =
+                            (screenHeight - handleLength)
+                                .coerceAtLeast(0)
+
+                        y =
+                            (maxY *
+                                settings.verticalPositionPercent
+                                    .coerceIn(0, 100) / 100f
+                            ).toInt()
+                    }
+
+                    else -> {
+                        gravity =
+                            Gravity.BOTTOM or
+                                Gravity.CENTER_HORIZONTAL
+
+                        y =
+                            -margin +
+                            (touchSize - handleThickness) / 2
+                    }
                 }
             }
 
@@ -574,11 +605,9 @@ class DockService : Service() {
     }
 
     fun refreshHideHandle() {
-        if (!isDockHidden) {
-            return
+        if (isDockHidden) {
+            createHideHandle()
         }
-
-        createHideHandle()
     }
 
     private fun showDock() {
