@@ -185,6 +185,19 @@ class DockAccessibilityService : AccessibilityService() {
         )
     }
 
+    override fun onKeyEvent(
+        event: android.view.KeyEvent
+    ): Boolean {
+        android.util.Log.d(
+            "DynamicDockKey",
+            "keyCode=${event.keyCode} " +
+                "action=${event.action} " +
+                "repeat=${event.repeatCount}"
+        )
+
+        return false
+    }
+
     override fun onInterrupt() {
     }
 }
