@@ -17,7 +17,7 @@ class DockAccessibilityService : AccessibilityService() {
 
         android.util.Log.d(
             "DynamicDockA11y",
-            "type=${event.eventType} package=$packageName class=${event.className}"
+            "type=${event.eventType} package=$packageName class=${event.className} windowId=${event.windowId}"
         )
 
         if (
