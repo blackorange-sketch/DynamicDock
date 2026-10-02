@@ -140,6 +140,20 @@ class DockSettings(
                 .apply()
         }
 
+    var maxDynamicApps: Int
+        get() = preferences.getInt(
+            "max_dynamic_apps",
+            5
+        )
+        set(value) {
+            preferences.edit()
+                .putInt(
+                    "max_dynamic_apps",
+                    value.coerceIn(1, 20)
+                )
+                .apply()
+        }
+
     var autoHide: Boolean
         get() = preferences.getBoolean(
             "reserved_space",

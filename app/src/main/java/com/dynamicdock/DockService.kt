@@ -428,6 +428,7 @@ class DockService : Service() {
 
     fun refreshDock() {
         appContainer.post {
+            registry.trimDynamicAppsToLimit()
             rebuildDock()
 
             val params =

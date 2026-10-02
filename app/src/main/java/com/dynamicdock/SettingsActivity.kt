@@ -182,6 +182,17 @@ class SettingsActivity : Activity() {
             "Програми"
         )
 
+        addSlider(
+            layout,
+            "Максимум динамічних програм",
+            settings.maxDynamicApps,
+            1,
+            20
+        ) { progress ->
+            settings.maxDynamicApps = progress
+            DockService.instance?.refreshDock()
+        }
+
         val appSelectionButton = android.widget.Button(this).apply {
             text = "Програми Dock"
 

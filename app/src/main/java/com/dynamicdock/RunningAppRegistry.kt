@@ -46,6 +46,31 @@ class RunningAppRegistry(
                 pinned = pinned
             )
         )
+
+        if (!pinned) {
+            trimDynamicAppsToLimit()
+        }
+    }
+
+    fun trimDynamicAppsToLimit() {
+        val maxDynamicApps =
+            DockSettings(context).maxDynamicApps
+
+        while (
+            apps.count { !it.pinned } >
+                maxDynamicApps
+        ) {
+            val oldestDynamicIndex =
+                apps.indexOfFirst {
+                    !it.pinned
+                }
+
+            if (oldestDynamicIndex == -1) {
+                break
+            }
+
+            apps.removeAt(oldestDynamicIndex)
+        }
     }
 
     fun removeDynamic(packageName: String): Boolean {
