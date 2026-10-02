@@ -80,7 +80,12 @@ class DockAccessibilityService : AccessibilityService() {
                 "package=$packageName " +
                 "class=${event.className} " +
                 "windowId=${event.windowId} " +
-                "windowChanges=${event.windowChanges}"
+                "windowChanges=${event.windowChanges} " +
+                "action=${event.action} " +
+                "contentChangeTypes=${event.contentChangeTypes} " +
+                "text=${event.text} " +
+                "desc=${event.contentDescription} " +
+                "source=${event.source?.className}"
         )
 
         if (
