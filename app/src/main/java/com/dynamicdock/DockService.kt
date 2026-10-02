@@ -624,23 +624,14 @@ class DockService : Service() {
         rebuildDock()
 
         appContainer.post {
-            appContainer.measure(
-                View.MeasureSpec.makeMeasureSpec(
-                    0,
-                    View.MeasureSpec.UNSPECIFIED
-                ),
-                View.MeasureSpec.makeMeasureSpec(
-                    0,
-                    View.MeasureSpec.UNSPECIFIED
-                )
-            )
-
             if (isVertical) {
+                params.width = dp(settings.dockHeightDp)
                 params.height =
-                    appContainer.measuredHeight
+                    WindowManager.LayoutParams.WRAP_CONTENT
             } else {
                 params.width =
-                    appContainer.measuredWidth
+                    WindowManager.LayoutParams.WRAP_CONTENT
+                params.height = dp(settings.dockHeightDp)
             }
 
             windowManager.updateViewLayout(
