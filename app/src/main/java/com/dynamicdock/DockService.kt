@@ -519,7 +519,12 @@ class DockService : Service() {
                     handleThickness,
                     handleLength
                 ).apply {
-                    gravity = Gravity.CENTER_VERTICAL
+                    gravity =
+                        if (settings.dockPosition == "left") {
+                            Gravity.START or Gravity.CENTER_VERTICAL
+                        } else {
+                            Gravity.END or Gravity.CENTER_VERTICAL
+                        }
 
                     if (settings.dockPosition == "left") {
                         leftMargin = margin
