@@ -7,100 +7,40 @@ import android.view.accessibility.AccessibilityEvent
 
 class DockAccessibilityService : AccessibilityService() {
 
-    private val handler =
-        Handler(Looper.getMainLooper())
+    private val handler = Handler(Looper.getMainLooper())
 
     private var lastAppPackage: String? = null
-    private var possibleBackPackage: String? = null
+    private var waitingForNextApp = false
+    private var homeDetected = false
 
-    private val clearBackCandidate =
-        Runnable {
-            possibleBackPackage = null
-        }
+    private val removePreviousApp = Runnable {
+        if (
+            waitingForNextApp &&
+            !homeDetected
+        ) {
+            val previousPackage = lastAppPackage
 
-    private val checkLauncherWindows =
-        Runnable {
-            val root = rootInActiveWindow
-
-            if (
-                root?.packageName?.toString() !=
-                "com.zte.mifavor.launcher"
-            ) {
-                return@Runnable
-            }
-
-            android.util.Log.d(
-                "DynamicDockRecents",
-                "Recents root package=${root.packageName} " +
-                    "class=${root.className}"
-            )
-
-            fun dumpNode(
-                node: android.view.accessibility.AccessibilityNodeInfo?,
-                depth: Int = 0
-            ) {
-                if (node == null || depth > 6) {
-                    return
-                }
-
+            if (previousPackage != null) {
                 android.util.Log.d(
-                    "DynamicDockRecents",
-                    "node depth=$depth " +
-                        "class=${node.className} " +
-                        "package=${node.packageName} " +
-                        "text=${node.text} " +
-                        "desc=${node.contentDescription}"
+                    "DynamicDockBack",
+                    "Back detected, removing $previousPackage"
                 )
 
-                for (i in 0 until node.childCount) {
-                    dumpNode(
-                        node.getChild(i),
-                        depth + 1
-                    )
-                }
+                DockService.removeDynamicPackage(
+                    previousPackage
+                )
             }
-
-            dumpNode(root)
         }
+
+        waitingForNextApp = false
+        homeDetected = false
+    }
 
     override fun onAccessibilityEvent(
         event: AccessibilityEvent?
     ) {
         if (event == null) {
             return
-        }
-
-        val packageName =
-            event.packageName?.toString()
-                ?: "null"
-
-        android.util.Log.d(
-            "DynamicDockA11y",
-            "type=${event.eventType} " +
-                "package=$packageName " +
-                "class=${event.className} " +
-                "windowId=${event.windowId} " +
-                "windowChanges=${event.windowChanges} " +
-                "action=${event.action} " +
-                "contentChangeTypes=${event.contentChangeTypes} " +
-                "text=${event.text} " +
-                "desc=${event.contentDescription} " +
-                "source=${event.source?.className}"
-        )
-
-        if (
-            event.eventType ==
-            AccessibilityEvent.TYPE_WINDOWS_CHANGED
-        ) {
-            windows?.forEach { window ->
-                android.util.Log.d(
-                    "DynamicDockWindows",
-                    "id=${window.id} " +
-                        "type=${window.type} " +
-                        "package=${window.root?.packageName} " +
-                        "title=${window.title}"
-                )
-            }
         }
 
         if (
@@ -110,77 +50,64 @@ class DockAccessibilityService : AccessibilityService() {
             return
         }
 
+        val packageName =
+            event.packageName?.toString()
+                ?: return
+
         if (
-            packageName == "com.zte.mifavor.launcher" &&
-            event.className?.toString() ==
-                "android.widget.ListView"
+            packageName ==
+            "com.google.android.inputmethod.latin"
         ) {
-            android.util.Log.d(
-                "DynamicDockRecents",
-                "RECENTS detected"
-            )
+            return
+        }
 
-            handler.removeCallbacks(
-                checkLauncherWindows
-            )
-
-            handler.postDelayed(
-                checkLauncherWindows,
-                500
-            )
-
+        if (packageName == this.packageName) {
             return
         }
 
         if (packageName == "com.android.systemui") {
-            if (lastAppPackage != null) {
-                possibleBackPackage = lastAppPackage
-
-                android.util.Log.d(
-                    "DynamicDockBack",
-                    "Possible Back: $possibleBackPackage"
-                )
-
-                handler.removeCallbacks(
-                    clearBackCandidate
-                )
-
-                handler.postDelayed(
-                    clearBackCandidate,
-                    1000
-                )
-            }
-
             return
         }
 
         if (packageName == "com.zte.mifavor.launcher") {
-            val backPackage = possibleBackPackage
+            homeDetected = true
 
-            if (backPackage != null) {
-                android.util.Log.d(
-                    "DynamicDockBack",
-                    "Back detected, removing $backPackage"
-                )
+            handler.removeCallbacks(
+                removePreviousApp
+            )
 
-                DockService.removeDynamicPackage(
-                    backPackage
-                )
+            waitingForNextApp = false
 
-                possibleBackPackage = null
-                handler.removeCallbacks(
-                    clearBackCandidate
-                )
-            }
+            android.util.Log.d(
+                "DynamicDockBack",
+                "Home detected"
+            )
 
             return
         }
 
-        if (
-            packageName == this.packageName ||
-            packageName == "com.google.android.inputmethod.latin"
-        ) {
+        if (packageName == "com.google.android.googlequicksearchbox") {
             return
+        }
+
+        if (packageName == lastAppPackage) {
+            return
+        }
+
+        val previousPackage = lastAppPackage
+
+        if (previousPackage != null) {
+            handler.removeCallbacks(
+                removePreviousApp
+            )
+
+            homeDetected = false
+            waitingForNextApp = true
+
+            handler.postDelayed(
+                removePreviousApp,
+                400
+            )
         }
 
         lastAppPackage = packageName
@@ -193,22 +120,12 @@ class DockAccessibilityService : AccessibilityService() {
     override fun onKeyEvent(
         event: android.view.KeyEvent
     ): Boolean {
-        android.util.Log.d(
-            "DynamicDockKey",
-            "keyCode=${event.keyCode} " +
-                "action=${event.action} " +
-                "repeat=${event.repeatCount}"
-        )
-
         return false
     }
 
-    override fun onGesture(gestureId: Int): Boolean {
-        android.util.Log.d(
-            "DynamicDockGesture",
-            "gestureId=$gestureId"
-        )
-
+    override fun onGesture(
+        gestureId: Int
+    ): Boolean {
         return false
     }
 
