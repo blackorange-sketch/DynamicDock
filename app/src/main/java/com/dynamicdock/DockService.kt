@@ -799,6 +799,36 @@ class DockService : Service() {
                 itemParams
             )
         }
+
+        val hideButton = TextView(this).apply {
+            text = "−"
+            textSize = 18f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            setBackgroundColor(Color.TRANSPARENT)
+            contentDescription = "Сховати Dock"
+
+            setOnClickListener {
+                hideDock()
+            }
+        }
+
+        val buttonSize = dp(20)
+
+        appContainer.addView(
+            hideButton,
+            LinearLayout.LayoutParams(
+                buttonSize,
+                buttonSize
+            ).apply {
+                setMargins(
+                    dp(3),
+                    dp(3),
+                    dp(3),
+                    dp(3)
+                )
+            }
+        )
     }
 
     override fun onDestroy() {
