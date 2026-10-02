@@ -194,7 +194,6 @@ class DockService : Service() {
     }
 
     fun updateDockPosition(position: String) {
-
         val params =
             appContainer.layoutParams
                 as? WindowManager.LayoutParams
@@ -216,19 +215,13 @@ class DockService : Service() {
             else
                 LinearLayout.HORIZONTAL
 
-        params.width =
-            if (isVertical)
-                dp(settings.dockHeightDp)
-            else
-                dp(settings.dockLengthDp)
-
-        params.height =
-            if (isVertical)
-                dp(settings.dockLengthDp)
-            else
-                dp(settings.dockHeightDp)
-
         if (isVertical) {
+            params.width =
+                dp(settings.dockHeightDp)
+
+            params.height =
+                WindowManager.LayoutParams.WRAP_CONTENT
+
             params.gravity =
                 if (position == "left") {
                     Gravity.TOP or Gravity.LEFT
@@ -236,23 +229,16 @@ class DockService : Service() {
                     Gravity.TOP or Gravity.RIGHT
                 }
 
-            val displayMetrics = resources.displayMetrics
-            val screenHeight = displayMetrics.heightPixels
-
-            val dockHeight =
-                dp(settings.dockLengthDp)
-
-            val maxY =
-                (screenHeight - dockHeight).coerceAtLeast(0)
-
-            val percent =
-                settings.verticalPositionPercent.coerceIn(0, 100)
-
-            params.y =
-                (maxY * percent / 100f).toInt()
         } else {
+            params.width =
+                WindowManager.LayoutParams.WRAP_CONTENT
+
+            params.height =
+                dp(settings.dockHeightDp)
+
             params.gravity =
-                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                Gravity.BOTTOM or
+                    Gravity.CENTER_HORIZONTAL
 
             params.y = 0
         }
@@ -263,6 +249,50 @@ class DockService : Service() {
         )
 
         rebuildDock()
+
+        appContainer.measure(
+            View.MeasureSpec.makeMeasureSpec(
+                0,
+                View.MeasureSpec.UNSPECIFIED
+            ),
+            View.MeasureSpec.makeMeasureSpec(
+                0,
+                View.MeasureSpec.UNSPECIFIED
+            )
+        )
+
+        if (isVertical) {
+            params.height =
+                appContainer.measuredHeight
+
+            val screenHeight =
+                resources.displayMetrics.heightPixels
+
+            val dockHeight =
+                appContainer.measuredHeight
+
+            val maxY =
+                (screenHeight - dockHeight)
+                    .coerceAtLeast(0)
+
+            val percent =
+                settings.verticalPositionPercent
+                    .coerceIn(0, 100)
+
+            params.y =
+                (maxY * percent / 100f).toInt()
+
+        } else {
+            params.width =
+                appContainer.measuredWidth
+
+            params.y = 0
+        }
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
     }
 
     fun updateVerticalPosition(percent: Int) {
@@ -333,19 +363,77 @@ class DockService : Service() {
     fun refreshDock() {
         appContainer.post {
             rebuildDock()
+
+            val params =
+                appContainer.layoutParams
+                    as? WindowManager.LayoutParams
+                    ?: return@post
+
+            val settings =
+                DockSettings(this)
+
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                )
+            )
+
+            val isVertical =
+                settings.dockPosition == "left" ||
+                settings.dockPosition == "right"
+
+            if (isVertical) {
+                params.width =
+                    dp(settings.dockHeightDp)
+
+                params.height =
+                    appContainer.measuredHeight
+
+                val screenHeight =
+                    resources.displayMetrics.heightPixels
+
+                val dockHeight =
+                    appContainer.measuredHeight
+
+                val maxY =
+                    (screenHeight - dockHeight)
+                        .coerceAtLeast(0)
+
+                val percent =
+                    settings.verticalPositionPercent
+                        .coerceIn(0, 100)
+
+                params.y =
+                    (maxY * percent / 100f).toInt()
+
+            } else {
+                params.width =
+                    appContainer.measuredWidth
+
+                params.height =
+                    dp(settings.dockHeightDp)
+
+                params.y = 0
+            }
+
+            windowManager.updateViewLayout(
+                appContainer,
+                params
+            )
         }
     }
 
     fun updateIconSize(sizeDp: Int) {
-        appContainer.post {
-            rebuildDock()
-        }
+        refreshDock()
     }
 
     fun updatePadding() {
-        appContainer.post {
-            rebuildDock()
-        }
+        refreshDock()
     }
 
     fun updateDockHeight(heightDp: Int) {
@@ -408,10 +496,10 @@ class DockService : Service() {
             if (isVertical)
                 dp(settings.dockHeightDp)
             else
-                dp(settings.dockLengthDp),
+                WindowManager.LayoutParams.WRAP_CONTENT,
 
             if (isVertical)
-                dp(settings.dockLengthDp)
+                WindowManager.LayoutParams.WRAP_CONTENT
             else
                 dp(settings.dockHeightDp),
 
@@ -447,6 +535,34 @@ class DockService : Service() {
             appContainer,
             params
         )
+
+        rebuildDock()
+
+        appContainer.post {
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                )
+            )
+
+            if (isVertical) {
+                params.height =
+                    appContainer.measuredHeight
+            } else {
+                params.width =
+                    appContainer.measuredWidth
+            }
+
+            windowManager.updateViewLayout(
+                appContainer,
+                params
+            )
+        }
 
         scheduleAutoHide()
     }
