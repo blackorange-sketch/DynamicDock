@@ -503,110 +503,115 @@ class DockService : Service() {
                 setBackgroundColor(Color.WHITE)
             }
 
-        val visibleParams =
-            android.widget.FrameLayout.LayoutParams(
-                if (isVertical)
-                    handleThickness
-                else
-                    handleLength,
-                if (isVertical)
+        if (isVertical) {
+
+            val containerWidth =
+                margin + touchSize
+
+            val visibleParams =
+                android.widget.FrameLayout.LayoutParams(
+                    handleThickness,
                     handleLength
-                else
-                    handleThickness
-            ).apply {
-                gravity = Gravity.CENTER
-            }
+                ).apply {
+                    gravity = Gravity.CENTER_VERTICAL
 
-        container.addView(
-            visibleHandle,
-            visibleParams
-        )
-
-        hideHandle = container
-
-        val handleParams =
-            WindowManager.LayoutParams(
-                if (isVertical)
-                    touchSize
-                else
-                    handleLength,
-                if (isVertical)
-                    handleLength
-                else
-                    touchSize,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            ).apply {
-
-                when (settings.dockPosition) {
-
-                    "left" -> {
-                        gravity =
-                            Gravity.TOP or Gravity.LEFT
-
-                        x = margin -
-                            (touchSize - handleThickness) / 2
-
-                        val screenHeight =
-                            resources.displayMetrics.heightPixels
-
-                        val maxY =
-                            (screenHeight - handleLength)
-                                .coerceAtLeast(0)
-
-                        y =
-                            (maxY *
-                                settings.verticalPositionPercent
-                                    .coerceIn(0, 100) / 100f
-                            ).toInt()
-                    }
-
-                    "right" -> {
-                        gravity =
-                            Gravity.TOP or Gravity.RIGHT
-
-                        x =
-                            -margin +
-                            (touchSize - handleThickness) / 2
-
-                        val screenHeight =
-                            resources.displayMetrics.heightPixels
-
-                        val maxY =
-                            (screenHeight - handleLength)
-                                .coerceAtLeast(0)
-
-                        y =
-                            (maxY *
-                                settings.verticalPositionPercent
-                                    .coerceIn(0, 100) / 100f
-                            ).toInt()
-                    }
-
-                    else -> {
-                        gravity =
-                            Gravity.BOTTOM or
-                                Gravity.CENTER_HORIZONTAL
-
-                        y =
-                            -margin +
-                            (touchSize - handleThickness) / 2
+                    if (settings.dockPosition == "left") {
+                        leftMargin = margin
+                    } else {
+                        rightMargin = margin
                     }
                 }
-            }
 
-        hideHandleParams = handleParams
+            container.addView(
+                visibleHandle,
+                visibleParams
+            )
 
-        windowManager.addView(
-            container,
-            handleParams
-        )
-    }
+            hideHandle = container
 
-    fun refreshHideHandle() {
-        if (isDockHidden) {
-            createHideHandle()
+            val handleParams =
+                WindowManager.LayoutParams(
+                    containerWidth,
+                    handleLength,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT
+                ).apply {
+
+                    gravity =
+                        if (settings.dockPosition == "left") {
+                            Gravity.TOP or Gravity.LEFT
+                        } else {
+                            Gravity.TOP or Gravity.RIGHT
+                        }
+
+                    val screenHeight =
+                        resources.displayMetrics.heightPixels
+
+                    val maxY =
+                        (screenHeight - handleLength)
+                            .coerceAtLeast(0)
+
+                    y =
+                        (
+                            maxY *
+                                settings.verticalPositionPercent
+                                    .coerceIn(0, 100) /
+                                100f
+                        ).toInt()
+                }
+
+            hideHandleParams = handleParams
+
+            windowManager.addView(
+                container,
+                handleParams
+            )
+
+        } else {
+
+            val containerHeight =
+                margin + touchSize
+
+            val visibleParams =
+                android.widget.FrameLayout.LayoutParams(
+                    handleLength,
+                    handleThickness
+                ).apply {
+                    gravity =
+                        Gravity.CENTER_HORIZONTAL or
+                            Gravity.BOTTOM
+
+                    bottomMargin = margin
+                }
+
+            container.addView(
+                visibleHandle,
+                visibleParams
+            )
+
+            hideHandle = container
+
+            val handleParams =
+                WindowManager.LayoutParams(
+                    handleLength,
+                    containerHeight,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT
+                ).apply {
+
+                    gravity =
+                        Gravity.BOTTOM or
+                            Gravity.CENTER_HORIZONTAL
+                }
+
+            hideHandleParams = handleParams
+
+            windowManager.addView(
+                container,
+                handleParams
+            )
         }
     }
 
