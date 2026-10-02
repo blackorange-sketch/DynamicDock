@@ -834,7 +834,7 @@ class DockService : Service() {
         val settings =
             DockSettings(this)
 
-        if (!settings.reservedSpace) {
+        if (!settings.autoHide) {
             return
         }
 
@@ -873,7 +873,6 @@ class DockService : Service() {
         registry.activate(runningApp)
 
         appContainer.post {
-            rebuildDock()
             refreshDock()
             scheduleAutoHide()
         }
@@ -887,7 +886,6 @@ class DockService : Service() {
         }
 
         appContainer.post {
-            rebuildDock()
             refreshDock()
             scheduleAutoHide()
         }
@@ -901,7 +899,6 @@ class DockService : Service() {
         }
 
         appContainer.post {
-            rebuildDock()
             refreshDock()
             scheduleAutoHide()
         }

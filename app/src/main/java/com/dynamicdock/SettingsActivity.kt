@@ -211,9 +211,9 @@ class SettingsActivity : Activity() {
         addSwitch(
             layout,
             "Автоматично ховати Dock",
-            settings.reservedSpace
+            settings.autoHide
         ) { checked ->
-            settings.reservedSpace = checked
+            settings.autoHide = checked
         }
 
         addSlider(

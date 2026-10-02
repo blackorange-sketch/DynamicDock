@@ -140,7 +140,7 @@ class DockSettings(
                 .apply()
         }
 
-    var reservedSpace: Boolean
+    var autoHide: Boolean
         get() = preferences.getBoolean(
             "reserved_space",
             false
