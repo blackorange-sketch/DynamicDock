@@ -277,67 +277,84 @@ class DockService : Service() {
     }
 
     fun updateDockPosition(position: String) {
-        val params =
-            appContainer.layoutParams
-                as? WindowManager.LayoutParams
-                ?: return
+    val params =
+        appContainer.layoutParams
+            as? WindowManager.LayoutParams
+            ?: return
 
-        val settings =
-            DockSettings(this)
+    val settings =
+        DockSettings(this)
 
-        dockHeightDp =
-            settings.dockHeightDp
+    dockHeightDp =
+        settings.dockHeightDp
 
-        val isVertical =
-            position == "left" ||
-            position == "right"
+    val isVertical =
+        position == "left" ||
+        position == "right"
 
-        appContainer.orientation =
-            if (isVertical)
-                LinearLayout.VERTICAL
-            else
-                LinearLayout.HORIZONTAL
+    appContainer.orientation =
+        if (isVertical)
+            LinearLayout.VERTICAL
+        else
+            LinearLayout.HORIZONTAL
 
-        if (isVertical) {
-            params.width =
-                dp(settings.dockHeightDp)
+    if (isVertical) {
+        params.width =
+            dp(settings.dockHeightDp)
 
-            params.height =
-                WindowManager.LayoutParams.WRAP_CONTENT
+        params.height =
+            dp(settings.dockLengthDp)
 
-            params.gravity =
-                if (position == "left") {
-                    Gravity.TOP or Gravity.LEFT
-                } else {
-                    Gravity.TOP or Gravity.RIGHT
-                }
+        params.gravity =
+            if (position == "left") {
+                Gravity.TOP or Gravity.LEFT
+            } else {
+                Gravity.TOP or Gravity.RIGHT
+            }
 
-        } else {
-            params.width =
-                WindowManager.LayoutParams.WRAP_CONTENT
+        val screenHeight =
+            resources.displayMetrics.heightPixels
 
-            params.height =
-                dp(settings.dockHeightDp)
+        val dockHeight =
+            dp(settings.dockLengthDp)
 
-            params.gravity =
-                Gravity.BOTTOM or
-                    Gravity.CENTER_HORIZONTAL
+        val maxY =
+            (screenHeight - dockHeight)
+                .coerceAtLeast(0)
 
-            params.y = 0
-        }
+        val percent =
+            settings.verticalPositionPercent
+                .coerceIn(0, 100)
 
-        windowManager.updateViewLayout(
-            appContainer,
-            params
-        )
+        params.y =
+            (maxY * percent / 100f).toInt()
 
-        rebuildDock()
+    } else {
+        params.width =
+            dp(settings.dockLengthDp)
 
-        windowManager.updateViewLayout(
-            appContainer,
-            params
-        )
+        params.height =
+            dp(settings.dockHeightDp)
+
+        params.gravity =
+            Gravity.BOTTOM or
+                Gravity.CENTER_HORIZONTAL
+
+        params.y = 0
     }
+
+    windowManager.updateViewLayout(
+        appContainer,
+        params
+    )
+
+    rebuildDock()
+
+    windowManager.updateViewLayout(
+        appContainer,
+        params
+    )
+}
 
     fun updateVerticalPosition(percent: Int) {
         val params =
