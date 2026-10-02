@@ -640,10 +640,41 @@ class DockService : Service() {
             return
         }
 
-        appContainer.visibility = View.GONE
-        isDockHidden = true
+        val settings = DockSettings(this)
 
-        createHideHandle()
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        appContainer.animate().cancel()
+
+        if (isVertical) {
+            appContainer
+                .animate()
+                .scaleX(0.02f)
+                .setDuration(200)
+                .withEndAction {
+                    appContainer.visibility = View.GONE
+                    appContainer.scaleX = 1f
+
+                    isDockHidden = true
+                    createHideHandle()
+                }
+                .start()
+        } else {
+            appContainer
+                .animate()
+                .scaleY(0.02f)
+                .setDuration(200)
+                .withEndAction {
+                    appContainer.visibility = View.GONE
+                    appContainer.scaleY = 1f
+
+                    isDockHidden = true
+                    createHideHandle()
+                }
+                .start()
+        }
     }
 
     private fun createHideHandle() {
@@ -814,6 +845,12 @@ class DockService : Service() {
             return
         }
 
+        val settings = DockSettings(this)
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
         hideHandle?.let { handle ->
             try {
                 windowManager.removeView(handle)
@@ -825,8 +862,36 @@ class DockService : Service() {
         hideHandleParams = null
 
         appContainer.visibility = View.VISIBLE
+
+        if (isVertical) {
+            appContainer.scaleX = 0.02f
+        } else {
+            appContainer.scaleY = 0.02f
+        }
+
         isDockHidden = false
-        scheduleAutoHide()
+
+        appContainer.animate().cancel()
+
+        val animator =
+            if (isVertical) {
+                appContainer
+                    .animate()
+                    .scaleX(1f)
+            } else {
+                appContainer
+                    .animate()
+                    .scaleY(1f)
+            }
+
+        animator
+            .setDuration(200)
+            .withEndAction {
+                appContainer.scaleX = 1f
+                appContainer.scaleY = 1f
+                scheduleAutoHide()
+            }
+            .start()
     }
 
     private fun scheduleAutoHide() {
