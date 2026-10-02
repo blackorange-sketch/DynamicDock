@@ -831,6 +831,29 @@ class DockService : Service() {
             paddingSettings.dockPosition == "left" ||
             paddingSettings.dockPosition == "right"
 
+        appContainer.setPadding(
+            if (isVerticalDock) {
+                0
+            } else {
+                dp(paddingSettings.horizontalPaddingDp)
+            },
+            if (isVerticalDock) {
+                dp(paddingSettings.verticalPaddingDp)
+            } else {
+                0
+            },
+            if (isVerticalDock) {
+                0
+            } else {
+                dp(paddingSettings.horizontalPaddingDp)
+            },
+            if (isVerticalDock) {
+                dp(paddingSettings.verticalPaddingDp)
+            } else {
+                0
+            }
+        )
+
         val hideButton = TextView(this).apply {
             text = "×"
             textSize = 20f
@@ -861,12 +884,7 @@ class DockService : Service() {
                 buttonSize,
                 buttonSize
             ).apply {
-                setMargins(
-                    dp(3),
-                    dp(3),
-                    dp(3),
-                    dp(3)
-                )
+                setMargins(0, 0, 0, 0)
             }
         )
 
