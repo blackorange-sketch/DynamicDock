@@ -684,7 +684,11 @@ class DockService : Service() {
 
         val visibleHandle =
             View(this).apply {
-                setBackgroundColor(Color.WHITE)
+                background =
+                    android.graphics.drawable.GradientDrawable().apply {
+                        setColor(Color.WHITE)
+                        cornerRadius = dp(100).toFloat()
+                    }
             }
 
         if (isVertical) {
@@ -1033,6 +1037,19 @@ class DockService : Service() {
                 setOnClickListener {
 
                     showDock()
+                    animate()
+                        .scaleX(0.88f)
+                        .scaleY(0.88f)
+                        .setDuration(120)
+                        .withEndAction {
+                            animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(120)
+                                .start()
+                        }
+                        .start()
+
 
                     val launchIntent =
                         packageManager.getLaunchIntentForPackage(
@@ -1144,7 +1161,11 @@ iconContainer.addView(
 
             if (app.packageName == activePackageName) {
                 val indicator = View(this).apply {
-                    setBackgroundColor(Color.WHITE)
+                    background =
+                        android.graphics.drawable.GradientDrawable().apply {
+                            setColor(Color.WHITE)
+                            cornerRadius = dp(100).toFloat()
+                        }
                 }
 
                 val indicatorParams =
