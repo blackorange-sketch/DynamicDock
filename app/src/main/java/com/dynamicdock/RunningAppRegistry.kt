@@ -48,6 +48,20 @@ class RunningAppRegistry(
         )
     }
 
+    fun removeDynamic(packageName: String): Boolean {
+        val app = apps.find {
+            it.packageName == packageName
+        } ?: return false
+
+        if (app.pinned) {
+            return false
+        }
+
+        return apps.removeAll {
+            it.packageName == packageName
+        }
+    }
+
     fun pin(packageName: String) {
         pinnedPackages.add(packageName)
 
@@ -226,6 +240,14 @@ class RunningAppRegistry(
             } catch (e: Exception) {
                 // Application is no longer available.
             }
+        }
+    }
+
+    fun removeMissingDynamicApps(visiblePackages: Set<String>): Boolean {
+        return apps.removeAll { app ->
+            !app.pinned &&
+                !isSelected(app.packageName) &&
+                !visiblePackages.contains(app.packageName)
         }
     }
 

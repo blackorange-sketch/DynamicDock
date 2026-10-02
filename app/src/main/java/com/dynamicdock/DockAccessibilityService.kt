@@ -1,9 +1,35 @@
 package com.dynamicdock
 
 import android.accessibilityservice.AccessibilityService
+import android.os.Handler
+import android.os.Looper
 import android.view.accessibility.AccessibilityEvent
 
 class DockAccessibilityService : AccessibilityService() {
+
+    private val handler =
+        Handler(Looper.getMainLooper())
+
+    private val checkLauncherWindows =
+        Runnable {
+            val visiblePackages =
+                windows
+                    ?.mapNotNull {
+                        it.root?.packageName?.toString()
+                    }
+                    ?.toSet()
+                    ?: emptySet()
+
+            android.util.Log.d(
+                "DynamicDockWindows",
+                "Launcher check visiblePackages=$visiblePackages"
+            )
+
+            DockService.updateVisiblePackages(
+                visiblePackages
+            )
+        }
+
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
 
@@ -41,6 +67,19 @@ class DockAccessibilityService : AccessibilityService() {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
         ) {
             return
+        }
+
+        if (
+            packageName == "com.zte.mifavor.launcher"
+        ) {
+            handler.removeCallbacks(
+                checkLauncherWindows
+            )
+
+            handler.postDelayed(
+                checkLauncherWindows,
+                500
+            )
         }
 
         DockService.updateActivePackage(
