@@ -545,13 +545,11 @@ class DockService : Service() {
                 ).apply {
 
                     gravity =
-                        Gravity.TOP or Gravity.LEFT
-
-                    if (settings.dockPosition == "right") {
-                        x =
-                            resources.displayMetrics.widthPixels -
-                                containerWidth
-                    }
+                        if (settings.dockPosition == "right") {
+                            Gravity.TOP or Gravity.RIGHT
+                        } else {
+                            Gravity.TOP or Gravity.LEFT
+                        }
 
                     val screenHeight =
                         resources.displayMetrics.heightPixels
