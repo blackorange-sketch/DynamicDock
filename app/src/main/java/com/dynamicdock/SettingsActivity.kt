@@ -233,6 +233,7 @@ class SettingsActivity : Activity() {
             suffix = " dp"
         ) { progress ->
             settings.hideHandleLengthDp = progress
+            DockService.instance?.refreshHideHandle()
         }
 
         addSlider(
@@ -244,6 +245,7 @@ class SettingsActivity : Activity() {
             suffix = " dp"
         ) { progress ->
             settings.hideHandleThicknessDp = progress
+            DockService.instance?.refreshHideHandle()
         }
 
         addSlider(
@@ -255,6 +257,7 @@ class SettingsActivity : Activity() {
             suffix = " dp"
         ) { progress ->
             settings.hideHandleMarginDp = progress
+            DockService.instance?.refreshHideHandle()
         }
 
         scrollView.addView(layout)

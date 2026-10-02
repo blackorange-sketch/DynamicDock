@@ -459,6 +459,17 @@ class DockService : Service() {
         appContainer.visibility = View.GONE
         isDockHidden = true
 
+        createHideHandle()
+    }
+
+    private fun createHideHandle() {
+        hideHandle?.let { handle ->
+            try {
+                windowManager.removeView(handle)
+            } catch (_: Exception) {
+            }
+        }
+
         val settings = DockSettings(this)
 
         val isVertical =
@@ -474,73 +485,94 @@ class DockService : Service() {
         val touchSize =
             dp(24)
 
-        hideHandle = View(this).apply {
-            setBackgroundColor(Color.TRANSPARENT)
-            isClickable = true
-            setOnClickListener {
-                showDock()
+        val container =
+            android.widget.FrameLayout(this).apply {
+                setBackgroundColor(Color.TRANSPARENT)
+                isClickable = true
+
+                setOnClickListener {
+                    showDock()
+                }
             }
 
-            foreground = null
-        }
+        val visibleHandle =
+            View(this).apply {
+                setBackgroundColor(Color.WHITE)
+            }
 
-        val handleParams = WindowManager.LayoutParams(
-            if (isVertical) touchSize else handleLength,
-            if (isVertical) handleLength else touchSize,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity =
+        val visibleParams =
+            android.widget.FrameLayout.LayoutParams(
+                if (isVertical)
+                    handleThickness
+                else
+                    handleLength,
+                if (isVertical)
+                    handleLength
+                else
+                    handleThickness
+            ).apply {
+                gravity = Gravity.CENTER
+            }
+
+        container.addView(
+            visibleHandle,
+            visibleParams
+        )
+
+        hideHandle = container
+
+        val handleParams =
+            WindowManager.LayoutParams(
+                if (isVertical)
+                    touchSize
+                else
+                    handleLength,
+                if (isVertical)
+                    handleLength
+                else
+                    touchSize,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity =
+                    when (settings.dockPosition) {
+                        "left" ->
+                            Gravity.CENTER_VERTICAL or Gravity.LEFT
+
+                        "right" ->
+                            Gravity.CENTER_VERTICAL or Gravity.RIGHT
+
+                        else ->
+                            Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                    }
+
                 when (settings.dockPosition) {
                     "left" ->
-                        Gravity.CENTER_VERTICAL or Gravity.LEFT
+                        x = dp(settings.hideHandleMarginDp)
 
                     "right" ->
-                        Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                        x = -dp(settings.hideHandleMarginDp)
 
                     else ->
-                        Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                        y = -dp(settings.hideHandleMarginDp)
                 }
-
-            when (settings.dockPosition) {
-                "left" ->
-                    x = dp(settings.hideHandleMarginDp)
-
-                "right" ->
-                    x = -dp(settings.hideHandleMarginDp)
-
-                else ->
-                    y = -dp(settings.hideHandleMarginDp)
             }
-        }
 
         hideHandleParams = handleParams
 
         windowManager.addView(
-            hideHandle,
+            container,
             handleParams
         )
+    }
 
-        hideHandle?.post {
-            val drawable = android.graphics.drawable.GradientDrawable().apply {
-                setColor(Color.WHITE)
-
-                if (isVertical) {
-                    setSize(
-                        handleThickness,
-                        handleLength
-                    )
-                } else {
-                    setSize(
-                        handleLength,
-                        handleThickness
-                    )
-                }
-            }
-
-            hideHandle?.background = drawable
+    fun refreshHideHandle() {
+        if (!isDockHidden) {
+            return
         }
+
+        createHideHandle()
     }
 
     private fun showDock() {
