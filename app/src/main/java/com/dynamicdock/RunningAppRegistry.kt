@@ -317,10 +317,7 @@ class RunningAppRegistry(
 
         val selected =
             apps.filter {
-                !it.pinned &&
-                    selectedPackages.contains(
-                        it.packageName
-                    )
+                !it.pinned
             }
 
         return pinned +
