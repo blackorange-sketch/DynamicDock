@@ -458,34 +458,38 @@ class DockService : Service() {
             )
 
             if (isVertical) {
-                appContainer.post {
-                    val currentHeight =
-                        appContainer.height
+                appContainer.requestLayout()
 
-                    val screenHeight =
-                        resources.displayMetrics.heightPixels
+                appContainer.postOnAnimation {
+                    appContainer.postOnAnimation {
+                        val currentHeight =
+                            appContainer.height
 
-                    val maxY =
-                        (
-                            screenHeight -
-                                currentHeight
-                        ).coerceAtLeast(0)
+                        val screenHeight =
+                            resources.displayMetrics.heightPixels
 
-                    val percent =
-                        settings.verticalPositionPercent
-                            .coerceIn(0, 100)
+                        val maxY =
+                            (
+                                screenHeight -
+                                    currentHeight
+                            ).coerceAtLeast(0)
 
-                    params.y =
-                        (
-                            maxY *
-                                percent /
-                                100f
-                        ).toInt()
+                        val percent =
+                            settings.verticalPositionPercent
+                                .coerceIn(0, 100)
 
-                    windowManager.updateViewLayout(
-                        appContainer,
-                        params
-                    )
+                        params.y =
+                            (
+                                maxY *
+                                    percent /
+                                    100f
+                            ).toInt()
+
+                        windowManager.updateViewLayout(
+                            appContainer,
+                            params
+                        )
+                    }
                 }
             }
         }
