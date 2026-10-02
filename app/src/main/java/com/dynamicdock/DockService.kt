@@ -441,24 +441,7 @@ class DockService : Service() {
                     dp(settings.dockHeightDp)
 
                 params.height =
-                    dp(settings.dockLengthDp)
-
-                val screenHeight =
-                    resources.displayMetrics.heightPixels
-
-                val dockHeight =
-                    dp(settings.dockLengthDp)
-
-                val maxY =
-                    (screenHeight - dockHeight)
-                        .coerceAtLeast(0)
-
-                val percent =
-                    settings.verticalPositionPercent
-                        .coerceIn(0, 100)
-
-                params.y =
-                    (maxY * percent / 100f).toInt()
+                    WindowManager.LayoutParams.WRAP_CONTENT
             } else {
                 params.width =
                     dp(settings.dockLengthDp)
@@ -473,6 +456,38 @@ class DockService : Service() {
                 appContainer,
                 params
             )
+
+            if (isVertical) {
+                appContainer.post {
+                    val currentHeight =
+                        appContainer.height
+
+                    val screenHeight =
+                        resources.displayMetrics.heightPixels
+
+                    val maxY =
+                        (
+                            screenHeight -
+                                currentHeight
+                        ).coerceAtLeast(0)
+
+                    val percent =
+                        settings.verticalPositionPercent
+                            .coerceIn(0, 100)
+
+                    params.y =
+                        (
+                            maxY *
+                                percent /
+                                100f
+                        ).toInt()
+
+                    windowManager.updateViewLayout(
+                        appContainer,
+                        params
+                    )
+                }
+            }
         }
     }
 
