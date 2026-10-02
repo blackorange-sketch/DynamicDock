@@ -341,7 +341,7 @@ class DockService : Service() {
             }
         } else {
             params.width =
-                dp(settings.dockLengthDp)
+                WindowManager.LayoutParams.WRAP_CONTENT
 
             params.height =
                 dp(settings.dockHeightDp)
@@ -585,7 +585,7 @@ class DockService : Service() {
             if (isVertical)
                 dp(settings.dockHeightDp)
             else
-                dp(settings.dockLengthDp),
+                WindowManager.LayoutParams.WRAP_CONTENT,
 
             if (isVertical)
                 WindowManager.LayoutParams.WRAP_CONTENT
