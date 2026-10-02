@@ -80,7 +80,8 @@ class DockAccessibilityService : AccessibilityService() {
         }
 
         if (
-            packageName == "com.zte.mifavor.launcher"
+            packageName == "com.zte.mifavor.launcher" &&
+            event.className?.toString() == "android.widget.ListView"
         ) {
             handler.removeCallbacks(
                 checkLauncherWindows
