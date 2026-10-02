@@ -224,6 +224,39 @@ class SettingsActivity : Activity() {
             settings.autoHideDelaySeconds = progress
         }
 
+        addSlider(
+            layout,
+            "Довжина риски",
+            settings.hideHandleLengthDp,
+            24,
+            120,
+            suffix = " dp"
+        ) { progress ->
+            settings.hideHandleLengthDp = progress
+        }
+
+        addSlider(
+            layout,
+            "Товщина риски",
+            settings.hideHandleThicknessDp,
+            2,
+            12,
+            suffix = " dp"
+        ) { progress ->
+            settings.hideHandleThicknessDp = progress
+        }
+
+        addSlider(
+            layout,
+            "Відступ риски",
+            settings.hideHandleMarginDp,
+            0,
+            24,
+            suffix = " dp"
+        ) { progress ->
+            settings.hideHandleMarginDp = progress
+        }
+
         scrollView.addView(layout)
 
         setContentView(scrollView)

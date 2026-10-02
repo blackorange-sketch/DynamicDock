@@ -116,6 +116,30 @@ class DockSettings(
                 .apply()
         }
 
+    var hideHandleMarginDp: Int
+        get() = preferences.getInt("hide_handle_margin_dp", 8)
+        set(value) {
+            preferences.edit()
+                .putInt("hide_handle_margin_dp", value)
+                .apply()
+        }
+
+    var hideHandleThicknessDp: Int
+        get() = preferences.getInt("hide_handle_thickness_dp", 4)
+        set(value) {
+            preferences.edit()
+                .putInt("hide_handle_thickness_dp", value)
+                .apply()
+        }
+
+    var hideHandleLengthDp: Int
+        get() = preferences.getInt("hide_handle_length_dp", 48)
+        set(value) {
+            preferences.edit()
+                .putInt("hide_handle_length_dp", value)
+                .apply()
+        }
+
     var reservedSpace: Boolean
         get() = preferences.getBoolean(
             "reserved_space",

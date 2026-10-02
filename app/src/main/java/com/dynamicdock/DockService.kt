@@ -472,9 +472,15 @@ class DockService : Service() {
             }
         }
 
+        val handleLength =
+            dp(settings.hideHandleLengthDp)
+
+        val handleThickness =
+            dp(settings.hideHandleThicknessDp)
+
         val handleParams = WindowManager.LayoutParams(
-            if (isVertical) dp(48) else dp(48),
-            if (isVertical) dp(48) else dp(48),
+            if (isVertical) handleThickness else handleLength,
+            if (isVertical) handleLength else handleThickness,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
@@ -490,6 +496,17 @@ class DockService : Service() {
                     else ->
                         Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                 }
+
+            when (settings.dockPosition) {
+                "left" ->
+                    x = dp(settings.hideHandleMarginDp)
+
+                "right" ->
+                    x = -dp(settings.hideHandleMarginDp)
+
+                else ->
+                    y = -dp(settings.hideHandleMarginDp)
+            }
         }
 
         hideHandleParams = handleParams
