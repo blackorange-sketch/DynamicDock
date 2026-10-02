@@ -41,6 +41,7 @@ class DockService : Service() {
         Handler(Looper.getMainLooper())
 
     private var isDockHidden = false
+    private var hideHandle: View? = null
 
     private var gestureStartX = 0f
     private var gestureStartY = 0f
@@ -435,16 +436,46 @@ class DockService : Service() {
         dockHeightDp =
             DockSettings(this).dockHeightDp
 
-        appContainer.setOnClickListener {
-            if (isDockHidden) {
-                showDock()
+        hideHandle = View(this).apply {
+            setBackgroundColor(Color.WHITE)
+            setOnClickListener {
+                if (isDockHidden) {
+                    showDock()
+                }
             }
+        }
+
+        val handleParams = WindowManager.LayoutParams(
+            if (isVertical) dp(hiddenHeightDp) else dp(48),
+            if (isVertical) dp(48) else dp(hiddenHeightDp),
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        ).apply {
+            gravity =
+                when (settings.dockPosition) {
+                    "left" ->
+                        Gravity.CENTER_VERTICAL or Gravity.LEFT
+
+                    "right" ->
+                        Gravity.CENTER_VERTICAL or Gravity.RIGHT
+
+                    else ->
+                        Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+                }
         }
 
         windowManager.addView(
             appContainer,
             params
         )
+
+        windowManager.addView(
+            hideHandle,
+            handleParams
+        )
+
+        hideHandle?.visibility = View.GONE
 
         scheduleAutoHide()
     }
@@ -479,6 +510,8 @@ class DockService : Service() {
         )
 
         isDockHidden = true
+
+        hideHandle?.visibility = View.VISIBLE
     }
 
     private fun showDock() {
@@ -514,6 +547,7 @@ class DockService : Service() {
         )
 
         isDockHidden = false
+        hideHandle?.visibility = View.GONE
 
         scheduleAutoHide()
     }
