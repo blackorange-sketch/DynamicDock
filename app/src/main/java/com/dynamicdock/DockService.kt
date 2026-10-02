@@ -649,8 +649,11 @@ class DockService : Service() {
         appContainer.post {
             appContainer.animate().cancel()
 
-            val dockWidth = appContainer.width.toFloat()
-            val dockHeight = appContainer.height.toFloat()
+            val dockWidth =
+                appContainer.width.toFloat()
+
+            val dockHeight =
+                appContainer.height.toFloat()
 
             val handleLength =
                 dp(settings.hideHandleLengthDp).toFloat()
@@ -658,15 +661,18 @@ class DockService : Service() {
             val handleThickness =
                 dp(settings.hideHandleThicknessDp).toFloat()
 
-            val margin =
-                dp(settings.hideHandleMarginDp).toFloat()
-
             if (dockWidth <= 0f || dockHeight <= 0f) {
                 isDockHidden = true
                 appContainer.visibility = View.GONE
                 createHideHandle()
                 return@post
             }
+
+            createHideHandle()
+
+            val handle = hideHandle
+
+            handle?.alpha = 0f
 
             if (isVertical) {
                 val targetScaleX =
@@ -689,16 +695,29 @@ class DockService : Service() {
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
                     .translationX(targetTranslationX)
-                    .setDuration(220)
+                    .setDuration(260)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
+                    .start()
+
+                handle?.animate()
+                    ?.alpha(1f)
+                    ?.setDuration(220)
+                    ?.setInterpolator(
+                        android.view.animation.DecelerateInterpolator()
+                    )
+                    ?.start()
+
+                appContainer.animate()
+                    .setDuration(260)
                     .withEndAction {
                         appContainer.visibility = View.GONE
                         appContainer.scaleX = 1f
                         appContainer.scaleY = 1f
                         appContainer.translationX = 0f
                         appContainer.translationY = 0f
-
                         isDockHidden = true
-                        createHideHandle()
                     }
                     .start()
             } else {
@@ -718,16 +737,29 @@ class DockService : Service() {
                     .scaleX(targetScaleX)
                     .scaleY(targetScaleY)
                     .translationY(targetTranslationY)
-                    .setDuration(220)
+                    .setDuration(260)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
+                    .start()
+
+                handle?.animate()
+                    ?.alpha(1f)
+                    ?.setDuration(220)
+                    ?.setInterpolator(
+                        android.view.animation.DecelerateInterpolator()
+                    )
+                    ?.start()
+
+                appContainer.animate()
+                    .setDuration(260)
                     .withEndAction {
                         appContainer.visibility = View.GONE
                         appContainer.scaleX = 1f
                         appContainer.scaleY = 1f
                         appContainer.translationX = 0f
                         appContainer.translationY = 0f
-
                         isDockHidden = true
-                        createHideHandle()
                     }
                     .start()
             }
