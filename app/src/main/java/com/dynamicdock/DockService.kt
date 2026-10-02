@@ -648,32 +648,126 @@ class DockService : Service() {
 
         appContainer.animate().cancel()
 
-        if (isVertical) {
-            appContainer
-                .animate()
-                .scaleX(0.02f)
-                .setDuration(200)
-                .withEndAction {
-                    appContainer.visibility = View.GONE
-                    appContainer.scaleX = 1f
+        appContainer.post {
+            val dockWidth =
+                appContainer.width.toFloat()
 
-                    isDockHidden = true
-                    createHideHandle()
-                }
-                .start()
-        } else {
-            appContainer
-                .animate()
-                .scaleY(0.02f)
-                .setDuration(200)
-                .withEndAction {
-                    appContainer.visibility = View.GONE
-                    appContainer.scaleY = 1f
+            val dockHeight =
+                appContainer.height.toFloat()
 
-                    isDockHidden = true
-                    createHideHandle()
-                }
-                .start()
+            if (dockWidth <= 0f || dockHeight <= 0f) {
+                appContainer.visibility = View.GONE
+                isDockHidden = true
+                createHideHandle()
+                return@post
+            }
+
+            val screenWidth =
+                resources.displayMetrics.widthPixels
+
+            val screenHeight =
+                resources.displayMetrics.heightPixels
+
+            val handleLength =
+                dp(settings.hideHandleLengthDp).toFloat()
+
+            val handleThickness =
+                dp(settings.hideHandleThicknessDp).toFloat()
+
+            val margin =
+                dp(settings.hideHandleMarginDp).toFloat()
+
+            if (isVertical) {
+                val pivotX =
+                    if (settings.dockPosition == "left") {
+                        margin +
+                            handleThickness / 2f
+                    } else {
+                        dockWidth -
+                            margin -
+                            handleThickness / 2f
+                    }
+
+                appContainer.pivotX =
+                    pivotX.coerceIn(0f, dockWidth)
+
+                appContainer.pivotY =
+                    dockHeight / 2f
+
+                val targetScaleX =
+                    handleThickness / dockWidth
+
+                val targetScaleY =
+                    handleLength / dockHeight
+
+                appContainer
+                    .animate()
+                    .scaleX(targetScaleX)
+                    .scaleY(targetScaleY)
+                    .setDuration(240)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
+                    .withEndAction {
+                        appContainer.visibility =
+                            View.GONE
+
+                        appContainer.scaleX = 1f
+                        appContainer.scaleY = 1f
+
+                        appContainer.pivotX =
+                            dockWidth / 2f
+
+                        appContainer.pivotY =
+                            dockHeight / 2f
+
+                        isDockHidden = true
+
+                        createHideHandle()
+                    }
+                    .start()
+            } else {
+                appContainer.pivotX =
+                    dockWidth / 2f
+
+                appContainer.pivotY =
+                    dockHeight -
+                        margin -
+                        handleThickness / 2f
+
+                val targetScaleX =
+                    handleLength / dockWidth
+
+                val targetScaleY =
+                    handleThickness / dockHeight
+
+                appContainer
+                    .animate()
+                    .scaleX(targetScaleX)
+                    .scaleY(targetScaleY)
+                    .setDuration(240)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
+                    .withEndAction {
+                        appContainer.visibility =
+                            View.GONE
+
+                        appContainer.scaleX = 1f
+                        appContainer.scaleY = 1f
+
+                        appContainer.pivotX =
+                            dockWidth / 2f
+
+                        appContainer.pivotY =
+                            dockHeight / 2f
+
+                        isDockHidden = true
+
+                        createHideHandle()
+                    }
+                    .start()
+            }
         }
     }
 
