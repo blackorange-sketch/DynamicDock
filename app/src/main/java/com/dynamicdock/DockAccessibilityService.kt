@@ -203,6 +203,24 @@ class DockAccessibilityService : AccessibilityService() {
         return false
     }
 
+    override fun onGesture(gestureId: Int): Boolean {
+        android.util.Log.d(
+            "DynamicDockGesture",
+            "gestureId=$gestureId"
+        )
+
+        return false
+    }
+
+    override fun onGesture(gestureId: Int): Boolean {
+        android.util.Log.d(
+            "DynamicDockGesture",
+            "gestureId=$gestureId"
+        )
+
+        return false
+    }
+
     override fun onInterrupt() {
     }
 }
