@@ -447,6 +447,13 @@ class DockService : Service() {
 
                 params.height =
                     WindowManager.LayoutParams.WRAP_CONTENT
+
+                params.gravity =
+                    if (settings.dockPosition == "left") {
+                        Gravity.TOP or Gravity.LEFT
+                    } else {
+                        Gravity.TOP or Gravity.RIGHT
+                    }
             } else {
                 params.width =
                     dp(settings.dockLengthDp)
@@ -593,10 +600,10 @@ class DockService : Service() {
         params.gravity =
             when (settings.dockPosition) {
                 "left" ->
-                    Gravity.CENTER_VERTICAL or Gravity.LEFT
+                    Gravity.TOP or Gravity.LEFT
 
                 "right" ->
-                    Gravity.CENTER_VERTICAL or Gravity.RIGHT
+                    Gravity.TOP or Gravity.RIGHT
 
                 else ->
                     Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
