@@ -572,7 +572,13 @@ class DockService : Service() {
         rebuildDock()
 
         appContainer.post {
-            refreshDock()
+            appContainer.requestLayout()
+            appContainer.invalidate()
+
+            windowManager.updateViewLayout(
+                appContainer,
+                appContainer.layoutParams
+            )
         }
 
         scheduleAutoHide()
