@@ -3,6 +3,7 @@ package com.dynamicdock
 import android.app.Service
 import android.app.usage.UsageStatsManager
 import android.util.Log
+import android.app.usage.UsageEvents
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -70,6 +71,28 @@ class DockService : Service() {
 
         val endTime =
             System.currentTimeMillis()
+
+        val events =
+            usageStatsManager.queryEvents(
+                endTime - 30_000,
+                endTime
+            )
+
+        val event =
+            UsageEvents.Event()
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+
+            if (
+                event.packageName == "com.instapro.android"
+            ) {
+                Log.d(
+                    "DynamicDockEvents",
+                    "Instagram event=${event.eventType} time=${event.timeStamp}"
+                )
+            }
+        }
 
         val startTime =
             endTime - 60_000
