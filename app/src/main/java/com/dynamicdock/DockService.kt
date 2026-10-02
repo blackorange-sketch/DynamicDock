@@ -547,15 +547,21 @@ class DockService : Service() {
                             Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
                     }
 
+                val margin =
+                    dp(settings.hideHandleMarginDp)
+
+                val extraSpace =
+                    (touchSize - handleThickness) / 2
+
                 when (settings.dockPosition) {
                     "left" ->
-                        x = dp(settings.hideHandleMarginDp)
+                        x = margin - extraSpace
 
                     "right" ->
-                        x = -dp(settings.hideHandleMarginDp)
+                        x = extraSpace - margin
 
                     else ->
-                        y = -dp(settings.hideHandleMarginDp)
+                        y = -(margin + extraSpace)
                 }
             }
 
