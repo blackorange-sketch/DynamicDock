@@ -70,10 +70,10 @@ class RunningAppRegistry(
         val maxDynamicApps =
             DockSettings(context).maxDynamicApps
 
-        while (
-            apps.count { !it.pinned } >
-                maxDynamicApps
-        ) {
+        var dynamicCount =
+            apps.count { !it.pinned }
+
+        while (dynamicCount > maxDynamicApps) {
             val oldestDynamicIndex =
                 apps.indexOfFirst {
                     !it.pinned
@@ -84,6 +84,7 @@ class RunningAppRegistry(
             }
 
             apps.removeAt(oldestDynamicIndex)
+            dynamicCount--
         }
     }
 
