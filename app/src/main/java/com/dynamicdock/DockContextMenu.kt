@@ -104,11 +104,106 @@ class DockContextMenu(
         val anchorX = location[0]
         val anchorY = location[1]
 
-        val anchorWidth = anchor.width
-        val anchorHeight = anchor.height
+        val anchorCenterX =
+            anchorX + anchor.width / 2
 
-        val menuWidth = buttonSize + margin * 2
-        val menuHeight = buttonSize + margin * 2
+        val anchorCenterY =
+            anchorY + anchor.height / 2
+
+        val menuWidth =
+            buttonSize + margin * 2
+
+        val menuHeight =
+            buttonSize + margin * 2
+
+        val gap = dp(6)
+        val screenMargin = dp(8)
+
+        val displayMetrics =
+            service.resources.displayMetrics
+
+        val screenWidth =
+            displayMetrics.widthPixels
+
+        val screenHeight =
+            displayMetrics.heightPixels
+
+        var menuX: Int
+        var menuY: Int
+
+        when (dockPosition) {
+
+            "bottom" -> {
+                menuX =
+                    anchorCenterX -
+                        menuWidth / 2
+
+                menuY =
+                    anchorY -
+                        menuHeight -
+                        gap
+            }
+
+            "top" -> {
+                menuX =
+                    anchorCenterX -
+                        menuWidth / 2
+
+                menuY =
+                    anchorY +
+                        anchor.height +
+                        gap
+            }
+
+            "left" -> {
+                menuX =
+                    anchorX +
+                        anchor.width +
+                        gap
+
+                menuY =
+                    anchorCenterY -
+                        menuHeight / 2
+            }
+
+            "right" -> {
+                menuX =
+                    anchorX -
+                        menuWidth -
+                        gap
+
+                menuY =
+                    anchorCenterY -
+                        menuHeight / 2
+            }
+
+            else -> {
+                menuX =
+                    anchorCenterX -
+                        menuWidth / 2
+
+                menuY =
+                    anchorY -
+                        menuHeight -
+                        gap
+            }
+        }
+
+        menuX =
+            menuX.coerceIn(
+                screenMargin,
+                screenWidth -
+                    menuWidth -
+                    screenMargin
+            )
+
+        menuY =
+            menuY.coerceIn(
+                screenMargin,
+                screenHeight -
+                    menuHeight -
+                    screenMargin
+            )
 
         val params = WindowManager.LayoutParams(
             menuWidth,
@@ -119,87 +214,11 @@ class DockContextMenu(
             android.graphics.PixelFormat.TRANSLUCENT
         )
 
-        when (dockPosition) {
+        params.gravity =
+            Gravity.TOP or Gravity.LEFT
 
-            "bottom" -> {
-                params.gravity =
-                    Gravity.TOP or Gravity.LEFT
-
-                params.x =
-                    anchorX +
-                        (anchorWidth - menuWidth) / 2
-
-                params.y =
-                    anchorY -
-                        menuHeight -
-                        dp(6)
-            }
-
-            "top" -> {
-                params.gravity =
-                    Gravity.TOP or Gravity.LEFT
-
-                params.x =
-                    anchorX +
-                        (anchorWidth - menuWidth) / 2
-
-                params.y =
-                    anchorY +
-                        anchorHeight +
-                        dp(6)
-            }
-
-            "left" -> {
-                params.gravity =
-                    Gravity.TOP or Gravity.LEFT
-
-                params.x =
-                    anchorX +
-                        anchorWidth +
-                        dp(6)
-
-                params.y =
-                    anchorY +
-                        (anchorHeight - menuHeight) / 2
-            }
-
-            "right" -> {
-                params.gravity =
-                    Gravity.TOP or Gravity.LEFT
-
-                params.x =
-                    anchorX -
-                        menuWidth -
-                        dp(6)
-
-                params.y =
-                    anchorY +
-                        (anchorHeight - menuHeight) / 2
-            }
-
-            else -> {
-                params.gravity =
-                    Gravity.TOP or Gravity.LEFT
-
-                params.x =
-                    anchorX +
-                        (anchorWidth - menuWidth) / 2
-
-                params.y =
-                    anchorY -
-                        menuHeight -
-                        dp(6)
-            }
-        }
-
-        container.setOnTouchListener { _, event ->
-            if (event.actionMasked == android.view.MotionEvent.ACTION_OUTSIDE) {
-                dismiss()
-                true
-            } else {
-                false
-            }
-        }
+        params.x = menuX
+        params.y = menuY
 
         menuView = container
         menuParams = params
