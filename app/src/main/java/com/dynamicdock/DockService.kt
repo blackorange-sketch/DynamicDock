@@ -542,7 +542,7 @@ class DockService : Service() {
         dockView = appContainer
 
         dockHeightDp =
-            DockSettings(this).dockHeightDp
+            settings.dockHeightDp
 
         appContainer.setOnClickListener {
             if (isDockHidden) {
