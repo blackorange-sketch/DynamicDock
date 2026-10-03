@@ -66,6 +66,7 @@ class DockService : Service() {
         }
 
     private var isDockHidden = false
+    private var dockWindowAttached = false
     private var hideHandle: View? = null
     private var hideHandleParams: WindowManager.LayoutParams? = null
 
@@ -625,6 +626,7 @@ class DockService : Service() {
             appContainer,
             params
         )
+        dockWindowAttached = true
 
         refreshDock()
                 scheduleAutoHide()
@@ -633,6 +635,37 @@ class DockService : Service() {
     fun refreshHideHandle() {
         if (isDockHidden) {
             createHideHandle()
+        }
+    }
+
+    private fun detachDockWindow() {
+        if (!dockWindowAttached) return
+
+        try {
+            windowManager.removeViewImmediate(appContainer)
+        } catch (_: Exception) {
+        }
+
+        dockWindowAttached = false
+    }
+
+    private fun attachDockWindow(): Boolean {
+        if (dockWindowAttached) return true
+
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return false
+
+        return try {
+            windowManager.addView(
+                appContainer,
+                params
+            )
+            dockWindowAttached = true
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
@@ -658,6 +691,7 @@ class DockService : Service() {
 
             if (dockWidth <= 0f || dockHeight <= 0f) {
                 appContainer.visibility = View.GONE
+                detachDockWindow()
                 isDockHidden = true
                 createHideHandle()
                 return@post
@@ -725,6 +759,8 @@ class DockService : Service() {
                         appContainer.pivotY =
                             dockHeight / 2f
 
+                        detachDockWindow()
+
                         isDockHidden = true
 
                         createHideHandle()
@@ -768,6 +804,8 @@ class DockService : Service() {
 
                         appContainer.pivotY =
                             dockHeight / 2f
+
+                        detachDockWindow()
 
                         isDockHidden = true
 
@@ -989,6 +1027,10 @@ class DockService : Service() {
 
         hideHandle = null
         hideHandleParams = null
+
+        if (!attachDockWindow()) {
+            return
+        }
 
         appContainer.visibility =
             View.INVISIBLE
@@ -1568,8 +1610,12 @@ iconContainer.addView(
 
         instance = null
 
-        dockView?.let {
-            windowManager.removeView(it)
+        if (dockWindowAttached) {
+            try {
+                windowManager.removeView(appContainer)
+            } catch (_: Exception) {
+            }
+            dockWindowAttached = false
         }
 
         dockView = null
