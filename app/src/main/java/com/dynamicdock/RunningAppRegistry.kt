@@ -15,7 +15,9 @@ class RunningAppRegistry(
             "com.dynamicdock",
             "com.android.packageinstaller",
             "com.google.android.packageinstaller",
-            "com.android.permissioncontroller"
+            "com.android.permissioncontroller",
+            "com.google.android.permissioncontroller",
+            "com.zte.zdmdaemon.install"
         )
 
     private val preferences =

@@ -1155,6 +1155,17 @@ class DockService : Service() {
 
     private fun updatePackage(packageName: String) {
 
+        if (packageName in setOf(
+            "com.dynamicdock",
+            "com.android.packageinstaller",
+            "com.google.android.packageinstaller",
+            "com.android.permissioncontroller",
+            "com.google.android.permissioncontroller",
+            "com.zte.zdmdaemon.install"
+        )) {
+            return
+        }
+
         if (packageName == this.packageName) {
             return
         }
