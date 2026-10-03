@@ -674,140 +674,18 @@ class DockService : Service() {
             return
         }
 
-        val settings = DockSettings(this)
-
-        val isVertical =
-            settings.dockPosition == "left" ||
-            settings.dockPosition == "right"
-
         appContainer.animate().cancel()
 
-        appContainer.post {
-            val dockWidth =
-                appContainer.width.toFloat()
+        appContainer.visibility = View.GONE
+        appContainer.alpha = 1f
+        appContainer.scaleX = 1f
+        appContainer.scaleY = 1f
 
-            val dockHeight =
-                appContainer.height.toFloat()
+        detachDockWindow()
 
-            if (dockWidth <= 0f || dockHeight <= 0f) {
-                appContainer.visibility = View.GONE
-                detachDockWindow()
-                isDockHidden = true
-                createHideHandle()
-                return@post
-            }
+        isDockHidden = true
 
-            val screenWidth =
-                resources.displayMetrics.widthPixels
-
-            val screenHeight =
-                resources.displayMetrics.heightPixels
-
-            val handleLength =
-                dp(settings.hideHandleLengthDp).toFloat()
-
-            val handleThickness =
-                dp(settings.hideHandleThicknessDp).toFloat()
-
-            val margin =
-                dp(settings.hideHandleMarginDp).toFloat()
-
-            if (isVertical) {
-                val pivotX =
-                    if (settings.dockPosition == "left") {
-                        margin +
-                            handleThickness / 2f
-                    } else {
-                        dockWidth -
-                            margin -
-                            handleThickness / 2f
-                    }
-
-                appContainer.pivotX =
-                    pivotX.coerceIn(0f, dockWidth)
-
-                appContainer.pivotY =
-                    dockHeight / 2f
-
-                val targetScaleX =
-                    handleThickness / dockWidth
-
-                val targetScaleY =
-                    handleLength / dockHeight
-
-                appContainer
-                    .animate()
-                    .alpha(0f)
-                    .setDuration(180)
-                    .setInterpolator(
-                        android.view.animation.AccelerateDecelerateInterpolator()
-                    )
-                    .withEndAction {
-                        appContainer.visibility =
-                            View.GONE
-
-                        detachDockWindow()
-
-                        appContainer.alpha = 1f
-                        appContainer.scaleX = 1f
-                        appContainer.scaleY = 1f
-
-                        appContainer.pivotX =
-                            dockWidth / 2f
-
-                        appContainer.pivotY =
-                            dockHeight / 2f
-
-                        isDockHidden = true
-
-                        createHideHandle()
-                    }
-                    .start()
-            } else {
-                appContainer.pivotX =
-                    dockWidth / 2f
-
-                appContainer.pivotY =
-                    dockHeight -
-                        margin -
-                        handleThickness / 2f
-
-                val targetScaleX =
-                    handleLength / dockWidth
-
-                val targetScaleY =
-                    handleThickness / dockHeight
-
-                appContainer
-                    .animate()
-                    .alpha(0f)
-                    .setDuration(180)
-                    .setInterpolator(
-                        android.view.animation.AccelerateDecelerateInterpolator()
-                    )
-                    .withEndAction {
-                        appContainer.visibility =
-                            View.GONE
-
-                        detachDockWindow()
-
-                        appContainer.alpha = 1f
-                        appContainer.scaleX = 1f
-                        appContainer.scaleY = 1f
-
-                        appContainer.pivotX =
-                            dockWidth / 2f
-
-                        appContainer.pivotY =
-                            dockHeight / 2f
-
-                        isDockHidden = true
-
-                        createHideHandle()
-                    }
-                    .start()
-            }
-        }
+        createHideHandle()
     }
 
     private fun createHideHandle() {
