@@ -195,6 +195,9 @@ class DockService : Service() {
 
     private var activePackageName: String? = null
 
+    private val appIndicators =
+        mutableMapOf<String, View>()
+
     private var dockHeightDp = 40
 
     private val hiddenHeightDp = 6
@@ -205,6 +208,17 @@ class DockService : Service() {
 
     private fun dp(value: Int): Int {
         return (value * resources.displayMetrics.density).toInt()
+    }
+
+    private fun updateActiveIndicator() {
+        appIndicators.forEach { (packageName, indicator) ->
+            indicator.alpha =
+                if (packageName == activePackageName) {
+                    1f
+                } else {
+                    0f
+                }
+        }
     }
 
     fun updateDockPosition(position: String) {
@@ -1113,7 +1127,12 @@ class DockService : Service() {
         registry.activate(runningApp)
 
         appContainer.post {
-            refreshDock()
+            if (appIndicators.containsKey(packageName)) {
+                updateActiveIndicator()
+            } else {
+                refreshDock()
+            }
+
             scheduleAutoHide()
         }
     }
@@ -1145,6 +1164,8 @@ class DockService : Service() {
     }
 
     private fun rebuildDock() {
+
+        appIndicators.clear()
 
         registry.removeUnavailable(this)
 
@@ -1397,45 +1418,53 @@ iconContainer.addView(
                 iconParams
             )
 
-            if (app.packageName == activePackageName) {
-                val indicator = View(this).apply {
-                    background =
-                        android.graphics.drawable.GradientDrawable().apply {
-                            setColor(Color.WHITE)
-                            cornerRadius = dp(100).toFloat()
-                        }
-                }
-
-                val indicatorParams =
-                    if (isVerticalDock) {
-                        android.widget.FrameLayout.LayoutParams(
-                            dp(3),
-                            dp((iconSize * 0.8f).toInt())
-                        ).apply {
-                            gravity =
-                                Gravity.CENTER_VERTICAL or
-                                    if (paddingSettings.dockPosition == "left") {
-                                        Gravity.END
-                                    } else {
-                                        Gravity.START
-                                    }
-                        }
-                    } else {
-                        android.widget.FrameLayout.LayoutParams(
-                            dp((iconSize * 0.8f).toInt()),
-                            dp(3)
-                        ).apply {
-                            gravity =
-                                Gravity.CENTER_HORIZONTAL or
-                                    Gravity.BOTTOM
-                        }
+            val indicator = View(this).apply {
+                background =
+                    android.graphics.drawable.GradientDrawable().apply {
+                        setColor(Color.WHITE)
+                        cornerRadius = dp(100).toFloat()
                     }
 
-                iconContainer.addView(
-                    indicator,
-                    indicatorParams
-                )
+                alpha =
+                    if (app.packageName == activePackageName) {
+                        1f
+                    } else {
+                        0f
+                    }
             }
+
+            val indicatorParams =
+                if (isVerticalDock) {
+                    android.widget.FrameLayout.LayoutParams(
+                        dp(3),
+                        dp((iconSize * 0.8f).toInt())
+                    ).apply {
+                        gravity =
+                            Gravity.CENTER_VERTICAL or
+                                if (paddingSettings.dockPosition == "left") {
+                                    Gravity.END
+                                } else {
+                                    Gravity.START
+                                }
+                    }
+                } else {
+                    android.widget.FrameLayout.LayoutParams(
+                        dp((iconSize * 0.8f).toInt()),
+                        dp(3)
+                    ).apply {
+                        gravity =
+                            Gravity.CENTER_HORIZONTAL or
+                                Gravity.BOTTOM
+                    }
+                }
+
+            iconContainer.addView(
+                indicator,
+                indicatorParams
+            )
+
+            appIndicators[app.packageName] =
+                indicator
 
             item.addView(
                 iconContainer,
