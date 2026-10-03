@@ -43,6 +43,7 @@ class DockService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var appContainer: LinearLayout
     private lateinit var appInfoRepository: AppInfoRepository
+    private lateinit var vibrator: Vibrator
 
     private var dockView: View? = null
 
@@ -505,6 +506,9 @@ class DockService : Service() {
         }
 
         appInfoRepository = AppInfoRepository(this)
+
+        vibrator =
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
 
         windowManager =
             getSystemService(WINDOW_SERVICE) as WindowManager
@@ -1331,14 +1335,11 @@ class DockService : Service() {
                         registry.pin(app.packageName)
                     }
 
-                    val vibrator =
-                        getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
-
                     if (vibrator.hasVibrator()) {
                         vibrator.vibrate(
-                            android.os.VibrationEffect.createOneShot(
+                            VibrationEffect.createOneShot(
                                 100,
-                                android.os.VibrationEffect.DEFAULT_AMPLITUDE
+                                VibrationEffect.DEFAULT_AMPLITUDE
                             )
                         )
                     }
