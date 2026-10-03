@@ -674,28 +674,95 @@ class DockService : Service() {
             return
         }
 
+        val settings = DockSettings(this)
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
         appContainer.animate().cancel()
 
-        appContainer
-            .animate()
-            .alpha(0f)
-            .setDuration(180)
-            .setInterpolator(
-                android.view.animation.AccelerateDecelerateInterpolator()
-            )
-            .withEndAction {
+        appContainer.post {
+            val dockWidth = appContainer.width.toFloat()
+            val dockHeight = appContainer.height.toFloat()
+
+            if (dockWidth <= 0f || dockHeight <= 0f) {
                 appContainer.visibility = View.GONE
                 detachDockWindow()
-
-                appContainer.alpha = 1f
-                appContainer.scaleX = 1f
-                appContainer.scaleY = 1f
-
                 isDockHidden = true
-
                 createHideHandle()
+                return@post
             }
-            .start()
+
+            val handleLength =
+                dp(settings.hideHandleLengthDp).toFloat()
+
+            val handleThickness =
+                dp(settings.hideHandleThicknessDp).toFloat()
+
+            appContainer.pivotX = dockWidth / 2f
+            appContainer.pivotY = dockHeight / 2f
+
+            if (isVertical) {
+                val targetScaleX =
+                    handleThickness / dockWidth
+
+                val targetScaleY =
+                    handleLength / dockHeight
+
+                appContainer
+                    .animate()
+                    .scaleX(targetScaleX)
+                    .scaleY(targetScaleY)
+                    .alpha(0f)
+                    .setDuration(180)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
+                    .withEndAction {
+                        appContainer.visibility = View.GONE
+                        detachDockWindow()
+
+                        appContainer.alpha = 1f
+                        appContainer.scaleX = 1f
+                        appContainer.scaleY = 1f
+
+                        isDockHidden = true
+
+                        createHideHandle()
+                    }
+                    .start()
+            } else {
+                val targetScaleX =
+                    handleLength / dockWidth
+
+                val targetScaleY =
+                    handleThickness / dockHeight
+
+                appContainer
+                    .animate()
+                    .scaleX(targetScaleX)
+                    .scaleY(targetScaleY)
+                    .alpha(0f)
+                    .setDuration(180)
+                    .setInterpolator(
+                        android.view.animation.AccelerateDecelerateInterpolator()
+                    )
+                    .withEndAction {
+                        appContainer.visibility = View.GONE
+                        detachDockWindow()
+
+                        appContainer.alpha = 1f
+                        appContainer.scaleX = 1f
+                        appContainer.scaleY = 1f
+
+                        isDockHidden = true
+
+                        createHideHandle()
+                    }
+                    .start()
+            }
+        }
     }
 
     private fun createHideHandle() {
