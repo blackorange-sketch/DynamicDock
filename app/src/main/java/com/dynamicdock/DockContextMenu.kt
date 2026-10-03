@@ -3,6 +3,7 @@ package com.dynamicdock
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
@@ -20,7 +21,6 @@ class DockContextMenu(
     }
 
     private var menuView: LinearLayout? = null
-    private var menuParams: WindowManager.LayoutParams? = null
 
     fun show(
         anchor: View,
@@ -32,8 +32,11 @@ class DockContextMenu(
 
         val buttonSize = dp(36)
         val margin = dp(6)
+        val gap = dp(6)
+        val screenMargin = dp(8)
 
         val button = ImageButton(service).apply {
+
             setImageResource(
                 if (action == Action.PIN) {
                     android.R.drawable.ic_menu_add
@@ -72,9 +75,16 @@ class DockContextMenu(
         }
 
         val container = LinearLayout(service).apply {
+
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setPadding(margin, margin, margin, margin)
+
+            setPadding(
+                margin,
+                margin,
+                margin,
+                margin
+            )
 
             background = GradientDrawable().apply {
                 cornerRadius = dp(14).toFloat()
@@ -98,17 +108,39 @@ class DockContextMenu(
             scaleY = 0.8f
         }
 
+        /*
+         * Receive taps outside the menu.
+         */
+        container.setOnTouchListener { _, event ->
+
+            if (
+                event.actionMasked ==
+                    MotionEvent.ACTION_OUTSIDE
+            ) {
+                dismiss()
+                true
+            } else {
+                false
+            }
+        }
+
         val location = IntArray(2)
         anchor.getLocationOnScreen(location)
 
-        val anchorX = location[0]
-        val anchorY = location[1]
+        val anchorLeft = location[0]
+        val anchorTop = location[1]
+
+        val anchorRight =
+            anchorLeft + anchor.width
+
+        val anchorBottom =
+            anchorTop + anchor.height
 
         val anchorCenterX =
-            anchorX + anchor.width / 2
+            anchorLeft + anchor.width / 2
 
         val anchorCenterY =
-            anchorY + anchor.height / 2
+            anchorTop + anchor.height / 2
 
         val menuWidth =
             buttonSize + margin * 2
@@ -116,9 +148,9 @@ class DockContextMenu(
         val menuHeight =
             buttonSize + margin * 2
 
-        val gap = dp(6)
-        val screenMargin = dp(8)
-
+        /*
+         * Get the actual display size.
+         */
         val displayMetrics =
             service.resources.displayMetrics
 
@@ -128,6 +160,9 @@ class DockContextMenu(
         val screenHeight =
             displayMetrics.heightPixels
 
+        /*
+         * Calculate the preferred position.
+         */
         var menuX: Int
         var menuY: Int
 
@@ -139,7 +174,7 @@ class DockContextMenu(
                         menuWidth / 2
 
                 menuY =
-                    anchorY -
+                    anchorTop -
                         menuHeight -
                         gap
             }
@@ -150,15 +185,13 @@ class DockContextMenu(
                         menuWidth / 2
 
                 menuY =
-                    anchorY +
-                        anchor.height +
+                    anchorBottom +
                         gap
             }
 
             "left" -> {
                 menuX =
-                    anchorX +
-                        anchor.width +
+                    anchorRight +
                         gap
 
                 menuY =
@@ -168,7 +201,7 @@ class DockContextMenu(
 
             "right" -> {
                 menuX =
-                    anchorX -
+                    anchorLeft -
                         menuWidth -
                         gap
 
@@ -183,36 +216,49 @@ class DockContextMenu(
                         menuWidth / 2
 
                 menuY =
-                    anchorY -
+                    anchorTop -
                         menuHeight -
                         gap
             }
         }
 
+        /*
+         * Keep the menu completely inside
+         * the display.
+         */
+        val maxX =
+            (screenWidth -
+                menuWidth -
+                screenMargin)
+                .coerceAtLeast(screenMargin)
+
+        val maxY =
+            (screenHeight -
+                menuHeight -
+                screenMargin)
+                .coerceAtLeast(screenMargin)
+
         menuX =
             menuX.coerceIn(
                 screenMargin,
-                screenWidth -
-                    menuWidth -
-                    screenMargin
+                maxX
             )
 
         menuY =
             menuY.coerceIn(
                 screenMargin,
-                screenHeight -
-                    menuHeight -
-                    screenMargin
+                maxY
             )
 
-        val params = WindowManager.LayoutParams(
-            menuWidth,
-            menuHeight,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-            android.graphics.PixelFormat.TRANSLUCENT
-        )
+        val params =
+            WindowManager.LayoutParams(
+                menuWidth,
+                menuHeight,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                android.graphics.PixelFormat.TRANSLUCENT
+            )
 
         params.gravity =
             Gravity.TOP or Gravity.LEFT
@@ -221,7 +267,6 @@ class DockContextMenu(
         params.y = menuY
 
         menuView = container
-        menuParams = params
 
         windowManager.addView(
             container,
@@ -237,7 +282,9 @@ class DockContextMenu(
     }
 
     fun dismiss() {
-        val view = menuView ?: return
+
+        val view =
+            menuView ?: return
 
         try {
             view.animate().cancel()
@@ -246,13 +293,14 @@ class DockContextMenu(
         }
 
         menuView = null
-        menuParams = null
     }
 
     private fun dp(value: Int): Int {
         return (
             value *
-                service.resources.displayMetrics.density
+                service.resources
+                    .displayMetrics
+                    .density
             ).toInt()
     }
 }
