@@ -676,16 +676,26 @@ class DockService : Service() {
 
         appContainer.animate().cancel()
 
-        appContainer.visibility = View.GONE
-        appContainer.alpha = 1f
-        appContainer.scaleX = 1f
-        appContainer.scaleY = 1f
+        appContainer
+            .animate()
+            .alpha(0f)
+            .setDuration(180)
+            .setInterpolator(
+                android.view.animation.AccelerateDecelerateInterpolator()
+            )
+            .withEndAction {
+                appContainer.visibility = View.GONE
+                detachDockWindow()
 
-        detachDockWindow()
+                appContainer.alpha = 1f
+                appContainer.scaleX = 1f
+                appContainer.scaleY = 1f
 
-        isDockHidden = true
+                isDockHidden = true
 
-        createHideHandle()
+                createHideHandle()
+            }
+            .start()
     }
 
     private fun createHideHandle() {
