@@ -511,6 +511,9 @@ class DockService : Service() {
         vibrator =
             getSystemService(VIBRATOR_SERVICE) as Vibrator
 
+        windowManager =
+            getSystemService(WINDOW_SERVICE) as WindowManager
+
         dockContextMenu =
             DockContextMenu(
                 service = this,
@@ -530,9 +533,6 @@ class DockService : Service() {
                 rebuildDock()
                 resetAutoHideTimer()
             }
-
-        windowManager =
-            getSystemService(WINDOW_SERVICE) as WindowManager
 
         val settings = DockSettings(this)
 
