@@ -1339,9 +1339,13 @@ class DockService : Service() {
                     android.view.MotionEvent.ACTION_UP -> {
                         val dx = event.rawX - downX
                         val dy = event.rawY - downY
-                        val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+                        val threshold = dp(80).toFloat()
 
-                        if (distance > dp(80) && !app.pinned) {
+                        if (
+                            dx * dx + dy * dy >
+                                threshold * threshold &&
+                            !app.pinned
+                        ) {
                             removeDynamicPackage(app.packageName)
                             return true
                         }
