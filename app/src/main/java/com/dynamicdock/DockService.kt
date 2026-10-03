@@ -118,6 +118,7 @@ class DockService : Service() {
 
         private var gestureTriggered = false
         private var touchStartedOnHideButton = false
+        private var gestureDockPosition = "bottom"
 
         override fun onInterceptTouchEvent(
             event: MotionEvent
@@ -129,6 +130,9 @@ class DockService : Service() {
                     gestureStartX = event.rawX
                     gestureStartY = event.rawY
                     gestureTriggered = false
+
+                    gestureDockPosition =
+                        DockSettings(this@DockService).dockPosition
 
                     val hideButton = getChildAt(0)
 
@@ -152,11 +156,8 @@ class DockService : Service() {
 
                     val threshold = dp(20)
 
-                    val position =
-                        DockSettings(this@DockService).dockPosition
-
                     val shouldHide =
-                        when (position) {
+                        when (gestureDockPosition) {
                             "bottom" ->
                                 deltaY > threshold
 
