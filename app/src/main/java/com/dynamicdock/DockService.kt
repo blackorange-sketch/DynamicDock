@@ -44,6 +44,7 @@ class DockService : Service() {
     private lateinit var appContainer: LinearLayout
     private lateinit var appInfoRepository: AppInfoRepository
     private lateinit var vibrator: Vibrator
+    private lateinit var dockContextMenu: DockContextMenu
 
     private var dockView: View? = null
 
@@ -509,6 +510,26 @@ class DockService : Service() {
 
         vibrator =
             getSystemService(VIBRATOR_SERVICE) as Vibrator
+
+        dockContextMenu =
+            DockContextMenu(
+                service = this,
+                windowManager = windowManager
+            ) { action, app ->
+
+                when (action) {
+                    DockContextMenu.Action.PIN -> {
+                        registry.pin(app.packageName)
+                    }
+
+                    DockContextMenu.Action.UNPIN -> {
+                        registry.unpin(app.packageName)
+                    }
+                }
+
+                rebuildDock()
+                resetAutoHideTimer()
+            }
 
         windowManager =
             getSystemService(WINDOW_SERVICE) as WindowManager
@@ -1329,12 +1350,6 @@ class DockService : Service() {
 
                     showDock()
 
-                    if (app.pinned) {
-                        registry.unpin(app.packageName)
-                    } else {
-                        registry.pin(app.packageName)
-                    }
-
                     if (vibrator.hasVibrator()) {
                         vibrator.vibrate(
                             VibrationEffect.createOneShot(
@@ -1344,8 +1359,24 @@ class DockService : Service() {
                         )
                     }
 
-                    rebuildDock()
+                    val action =
+                        if (app.pinned) {
+                            DockContextMenu.Action.UNPIN
+                        } else {
+                            DockContextMenu.Action.PIN
+                        }
+
+                    dockContextMenu.show(
+                        anchor = this,
+                        app = app,
+                        action = action,
+                        dockPosition = paddingSettings.dockPosition
+                    )
+
                     resetAutoHideTimer()
+
+                    true
+                }
 
 
         setOnTouchListener(object : View.OnTouchListener {
@@ -1528,6 +1559,8 @@ iconContainer.addView(
     }
 
     override fun onDestroy() {
+
+        dockContextMenu.dismiss()
 
         instance = null
 
