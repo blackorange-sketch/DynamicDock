@@ -10,6 +10,14 @@ class RunningAppRegistry(
     private val apps =
         mutableListOf<RunningApp>()
 
+    private val blacklistedPackages =
+        setOf(
+            "com.dynamicdock",
+            "com.android.packageinstaller",
+            "com.google.android.packageinstaller",
+            "com.android.permissioncontroller"
+        )
+
     private val preferences =
         context.getSharedPreferences(
             "dynamic_dock",
@@ -34,6 +42,10 @@ class RunningAppRegistry(
             ?: mutableListOf()
 
     fun activate(app: RunningApp) {
+        if (blacklistedPackages.contains(app.packageName)) {
+            return
+        }
+
         val pinned =
             pinnedPackages.contains(app.packageName)
 
