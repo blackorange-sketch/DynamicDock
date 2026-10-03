@@ -30,8 +30,8 @@ class DockContextMenu(
     ) {
         dismiss()
 
-        val buttonSize = dp(44)
-        val margin = dp(8)
+        val buttonSize = dp(36)
+        val margin = dp(6)
 
         val button = ImageButton(service).apply {
             setImageResource(
@@ -114,7 +114,8 @@ class DockContextMenu(
             menuWidth,
             menuHeight,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             android.graphics.PixelFormat.TRANSLUCENT
         )
 
@@ -188,6 +189,15 @@ class DockContextMenu(
                     anchorY -
                         menuHeight -
                         dp(6)
+            }
+        }
+
+        container.setOnTouchListener { _, event ->
+            if (event.actionMasked == android.view.MotionEvent.ACTION_OUTSIDE) {
+                dismiss()
+                true
+            } else {
+                false
             }
         }
 
