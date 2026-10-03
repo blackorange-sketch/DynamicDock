@@ -373,18 +373,24 @@ class RunningAppRegistry(
             }
         }
 
+        val appsByPackage =
+            apps.associateBy {
+                it.packageName
+            }
+
         val pinned =
             pinnedOrder.mapNotNull { packageName ->
-                apps.find {
-                    it.packageName == packageName &&
-                        it.pinned
-                }
+                appsByPackage[packageName]
+                    ?.takeIf { it.pinned }
             }
+
+        val pinnedOrderSet =
+            pinnedOrder.toSet()
 
         val remainingPinned =
             apps.filter {
                 it.pinned &&
-                    !pinnedOrder.contains(
+                    !pinnedOrderSet.contains(
                         it.packageName
                     )
             }
