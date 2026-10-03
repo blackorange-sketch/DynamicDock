@@ -1314,6 +1314,8 @@ class DockService : Service() {
                 )
             }
 
+            lateinit var iconView: ImageView
+
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
@@ -1367,7 +1369,7 @@ class DockService : Service() {
                         }
 
                     dockContextMenu.show(
-                        anchor = this,
+                        anchor = iconView,
                         app = app,
                         action = action,
                         dockPosition = paddingSettings.dockPosition
@@ -1427,10 +1429,12 @@ class DockService : Service() {
                 )
             }
 
-            val icon = ImageView(this).apply {
+            iconView = ImageView(this).apply {
                 setImageDrawable(app.icon)
                 contentDescription = app.appName
             }
+
+            val icon = iconView
 
             val iconSize =
                 paddingSettings.iconSizeDp
