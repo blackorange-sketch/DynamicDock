@@ -331,13 +331,14 @@ class RunningAppRegistry(
                 )
                 ?: emptySet()
 
+        val existingPackages =
+            apps.mapTo(mutableSetOf()) {
+                it.packageName
+            }
+
         selectedPackages.forEach { packageName ->
 
-            if (
-                !apps.any {
-                    it.packageName == packageName
-                }
-            ) {
+            if (!existingPackages.contains(packageName)) {
                 try {
                     val applicationInfo =
                         packageManager.getApplicationInfo(
