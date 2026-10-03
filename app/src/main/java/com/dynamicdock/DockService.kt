@@ -1229,9 +1229,7 @@ class DockService : Service() {
                     )
                 }
 
-                val isVertical =
-                    paddingSettings.dockPosition == "left" ||
-                    paddingSettings.dockPosition == "right"
+                val isVertical = isVerticalDock
 
                 val separatorParams =
                     if (isVertical) {
