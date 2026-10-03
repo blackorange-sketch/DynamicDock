@@ -142,6 +142,14 @@ class DockContextMenu(
         val anchorCenterY =
             anchorTop + anchor.height / 2
 
+        android.util.Log.d(
+            "DockContextMenu",
+            "anchor: x=$anchorLeft y=$anchorTop " +
+                "w=${anchor.width} h=${anchor.height} " +
+                "centerY=$anchorCenterY " +
+                "dock=$dockPosition"
+        )
+
         val menuWidth =
             buttonSize + margin * 2
 
