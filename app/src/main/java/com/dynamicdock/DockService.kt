@@ -77,8 +77,11 @@ class DockService : Service() {
 
                 val threshold = dp(20)
 
+                val settings =
+                    DockSettings(this)
+
                 val position =
-                    DockSettings(this).dockPosition
+                    settings.dockPosition
 
                 when (position) {
 
@@ -1226,8 +1229,8 @@ class DockService : Service() {
                 }
 
                 val isVertical =
-                    DockSettings(this).dockPosition == "left" ||
-                    DockSettings(this).dockPosition == "right"
+                    paddingSettings.dockPosition == "left" ||
+                    paddingSettings.dockPosition == "right"
 
                 val separatorParams =
                     if (isVertical) {
@@ -1359,7 +1362,7 @@ class DockService : Service() {
             }
 
             val iconSize =
-                DockSettings(this).iconSizeDp
+                paddingSettings.iconSizeDp
 
             val iconContainer =
                 android.widget.FrameLayout(this)
@@ -1441,7 +1444,7 @@ iconContainer.addView(
 
 
 
-            if (DockSettings(this).showAppLabels) {
+            if (paddingSettings.showAppLabels) {
                 val name = TextView(this).apply {
                     text = app.appName
                     textSize = 10f
