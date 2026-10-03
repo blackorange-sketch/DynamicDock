@@ -44,6 +44,7 @@ class DockService : Service() {
     private lateinit var appContainer: LinearLayout
     private lateinit var appInfoRepository: AppInfoRepository
     private lateinit var vibrator: Vibrator
+    private lateinit var dockContextMenu: DockContextMenu
 
     private var dockView: View? = null
 
@@ -512,6 +513,26 @@ class DockService : Service() {
 
         windowManager =
             getSystemService(WINDOW_SERVICE) as WindowManager
+
+        dockContextMenu =
+            DockContextMenu(
+                service = this,
+                windowManager = windowManager
+            ) { action, app ->
+
+                when (action) {
+                    DockContextMenu.Action.PIN -> {
+                        registry.pin(app.packageName)
+                    }
+
+                    DockContextMenu.Action.UNPIN -> {
+                        registry.unpin(app.packageName)
+                    }
+                }
+
+                rebuildDock()
+                resetAutoHideTimer()
+            }
 
         val settings = DockSettings(this)
 
@@ -1293,6 +1314,8 @@ class DockService : Service() {
                 )
             }
 
+            lateinit var iconView: ImageView
+
             val item = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
@@ -1329,12 +1352,6 @@ class DockService : Service() {
 
                     showDock()
 
-                    if (app.pinned) {
-                        registry.unpin(app.packageName)
-                    } else {
-                        registry.pin(app.packageName)
-                    }
-
                     if (vibrator.hasVibrator()) {
                         vibrator.vibrate(
                             VibrationEffect.createOneShot(
@@ -1344,51 +1361,80 @@ class DockService : Service() {
                         )
                     }
 
-                    rebuildDock()
+                    val action =
+                        if (app.pinned) {
+                            DockContextMenu.Action.UNPIN
+                        } else {
+                            DockContextMenu.Action.PIN
+                        }
+
+                    dockContextMenu.show(
+                        anchor = iconView,
+                        app = app,
+                        action = action,
+                        dockPosition = paddingSettings.dockPosition
+                    )
+
                     resetAutoHideTimer()
 
-
-        setOnTouchListener(object : View.OnTouchListener {
-            private var downX = 0f
-            private var downY = 0f
-
-            override fun onTouch(
-                v: View,
-                event: android.view.MotionEvent
-            ): Boolean {
-                when (event.actionMasked) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        downX = event.rawX
-                        downY = event.rawY
-                    }
-
-                    android.view.MotionEvent.ACTION_UP -> {
-                        val dx = event.rawX - downX
-                        val dy = event.rawY - downY
-                        val threshold = dp(80).toFloat()
-
-                        if (
-                            dx * dx + dy * dy >
-                                threshold * threshold &&
-                            !app.pinned
-                        ) {
-                            removeDynamicPackage(app.packageName)
-                            return true
-                        }
-                    }
-                }
-
-                return false
-            }
-        })
                     true
                 }
+
+                setOnTouchListener(
+                    object : View.OnTouchListener {
+
+                        private var downX = 0f
+                        private var downY = 0f
+
+                        override fun onTouch(
+                            v: View,
+                            event: android.view.MotionEvent
+                        ): Boolean {
+
+                            when (event.actionMasked) {
+
+                                android.view.MotionEvent.ACTION_DOWN -> {
+                                    downX = event.rawX
+                                    downY = event.rawY
+                                }
+
+                                android.view.MotionEvent.ACTION_UP -> {
+
+                                    val dx =
+                                        event.rawX - downX
+
+                                    val dy =
+                                        event.rawY - downY
+
+                                    val threshold =
+                                        dp(80).toFloat()
+
+                                    if (
+                                        dx * dx + dy * dy >
+                                            threshold * threshold &&
+                                        !app.pinned
+                                    ) {
+                                        removeDynamicPackage(
+                                            app.packageName
+                                        )
+
+                                        return true
+                                    }
+                                }
+                            }
+
+                            return false
+                        }
+                    }
+                )
             }
 
-            val icon = ImageView(this).apply {
+            iconView = ImageView(this).apply {
                 setImageDrawable(app.icon)
                 contentDescription = app.appName
             }
+
+            val icon = iconView
 
             val iconSize =
                 paddingSettings.iconSizeDp
@@ -1528,6 +1574,8 @@ iconContainer.addView(
     }
 
     override fun onDestroy() {
+
+        dockContextMenu.dismiss()
 
         instance = null
 
