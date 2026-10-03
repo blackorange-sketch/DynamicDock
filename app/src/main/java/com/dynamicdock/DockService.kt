@@ -373,81 +373,85 @@ class DockService : Service() {
 
     fun refreshDock() {
         appContainer.post {
-            registry.trimDynamicAppsToLimit()
-            rebuildDock()
+            refreshDockInternal()
+        }
+    }
 
-            val params =
-                appContainer.layoutParams
-                    as? WindowManager.LayoutParams
-                    ?: return@post
+    private fun refreshDockInternal() {
+        registry.trimDynamicAppsToLimit()
+        rebuildDock()
 
-            val settings = DockSettings(this)
+        val params =
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
+                ?: return
 
-            val isVertical =
-                settings.dockPosition == "left" ||
-                settings.dockPosition == "right"
+        val settings = DockSettings(this)
 
-            if (isVertical) {
-                params.width =
-                    dp(settings.dockHeightDp)
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
 
-                params.height =
-                    WindowManager.LayoutParams.WRAP_CONTENT
+        if (isVertical) {
+            params.width =
+                dp(settings.dockHeightDp)
 
-                params.gravity =
-                    if (settings.dockPosition == "left") {
-                        Gravity.TOP or Gravity.LEFT
-                    } else {
-                        Gravity.TOP or Gravity.RIGHT
-                    }
-            } else {
-                params.width =
-                    dp(settings.dockLengthDp)
+            params.height =
+                WindowManager.LayoutParams.WRAP_CONTENT
 
-                params.height =
-                    dp(settings.dockHeightDp)
+            params.gravity =
+                if (settings.dockPosition == "left") {
+                    Gravity.TOP or Gravity.LEFT
+                } else {
+                    Gravity.TOP or Gravity.RIGHT
+                }
+        } else {
+            params.width =
+                dp(settings.dockLengthDp)
 
-                params.y = 0
-            }
+            params.height =
+                dp(settings.dockHeightDp)
 
-            windowManager.updateViewLayout(
-                appContainer,
-                params
-            )
+            params.y = 0
+        }
 
-            if (isVertical) {
-                appContainer.requestLayout()
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
 
+        if (isVertical) {
+            appContainer.requestLayout()
+
+            appContainer.postOnAnimation {
                 appContainer.postOnAnimation {
-                    appContainer.postOnAnimation {
-                        val currentHeight =
-                            appContainer.height
+                    val currentHeight =
+                        appContainer.height
 
-                        val screenHeight =
-                            resources.displayMetrics.heightPixels
+                    val screenHeight =
+                        resources.displayMetrics.heightPixels
 
-                        val maxY =
-                            (
-                                screenHeight -
-                                    currentHeight
-                            ).coerceAtLeast(0)
+                    val maxY =
+                        (
+                            screenHeight -
+                                currentHeight
+                        ).coerceAtLeast(0)
 
-                        val percent =
-                            settings.verticalPositionPercent
-                                .coerceIn(0, 100)
+                    val percent =
+                        settings.verticalPositionPercent
+                            .coerceIn(0, 100)
 
-                        params.y =
-                            (
-                                maxY *
-                                    percent /
-                                    100f
-                            ).toInt()
+                    params.y =
+                        (
+                            maxY *
+                                percent /
+                                100f
+                        ).toInt()
 
-                        windowManager.updateViewLayout(
-                            appContainer,
-                            params
-                        )
-                    }
+                    windowManager.updateViewLayout(
+                        appContainer,
+                        params
+                    )
                 }
             }
         }
@@ -1130,7 +1134,7 @@ class DockService : Service() {
             if (appIndicators.containsKey(packageName)) {
                 updateActiveIndicator()
             } else {
-                refreshDock()
+                refreshDockInternal()
             }
 
             scheduleAutoHide()
@@ -1145,7 +1149,7 @@ class DockService : Service() {
         }
 
         appContainer.post {
-            refreshDock()
+            refreshDockInternal()
             scheduleAutoHide()
         }
     }
@@ -1158,7 +1162,7 @@ class DockService : Service() {
         }
 
         appContainer.post {
-            refreshDock()
+            refreshDockInternal()
             scheduleAutoHide()
         }
     }
