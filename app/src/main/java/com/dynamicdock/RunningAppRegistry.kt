@@ -51,15 +51,23 @@ class RunningAppRegistry(
         val pinned =
             pinnedPackages.contains(app.packageName)
 
-        apps.removeAll {
-            it.packageName == app.packageName
-        }
+        val appIndex =
+            apps.indexOfFirst {
+                it.packageName == app.packageName
+            }
 
-        apps.add(
-            app.copy(
-                pinned = pinned
+        if (appIndex == -1) {
+            apps.add(
+                app.copy(
+                    pinned = pinned
+                )
             )
-        )
+        } else {
+            apps[appIndex] =
+                app.copy(
+                    pinned = pinned
+                )
+        }
 
         if (!pinned) {
             trimDynamicAppsToLimit()
