@@ -88,17 +88,21 @@ class RunningAppRegistry(
     }
 
     fun removeDynamic(packageName: String): Boolean {
-        val app = apps.find {
-            it.packageName == packageName
-        } ?: return false
+        val appIndex =
+            apps.indexOfFirst {
+                it.packageName == packageName
+            }
 
-        if (app.pinned) {
+        if (appIndex == -1) {
             return false
         }
 
-        return apps.removeAll {
-            it.packageName == packageName
+        if (apps[appIndex].pinned) {
+            return false
         }
+
+        apps.removeAt(appIndex)
+        return true
     }
 
     fun pin(packageName: String) {
