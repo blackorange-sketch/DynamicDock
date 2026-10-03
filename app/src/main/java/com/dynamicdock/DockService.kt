@@ -737,10 +737,8 @@ class DockService : Service() {
 
                 appContainer
                     .animate()
-                    .scaleX(targetScaleX)
-                    .scaleY(targetScaleY)
-                    .alpha(0.05f)
-                    .setDuration(240)
+                    .alpha(0f)
+                    .setDuration(180)
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
                     )
@@ -748,8 +746,9 @@ class DockService : Service() {
                         appContainer.visibility =
                             View.GONE
 
-                        appContainer.alpha = 1f
+                        detachDockWindow()
 
+                        appContainer.alpha = 1f
                         appContainer.scaleX = 1f
                         appContainer.scaleY = 1f
 
@@ -758,8 +757,6 @@ class DockService : Service() {
 
                         appContainer.pivotY =
                             dockHeight / 2f
-
-                        detachDockWindow()
 
                         isDockHidden = true
 
@@ -783,10 +780,8 @@ class DockService : Service() {
 
                 appContainer
                     .animate()
-                    .scaleX(targetScaleX)
-                    .scaleY(targetScaleY)
-                    .alpha(0.05f)
-                    .setDuration(240)
+                    .alpha(0f)
+                    .setDuration(180)
                     .setInterpolator(
                         android.view.animation.AccelerateDecelerateInterpolator()
                     )
@@ -794,8 +789,9 @@ class DockService : Service() {
                         appContainer.visibility =
                             View.GONE
 
-                        appContainer.alpha = 1f
+                        detachDockWindow()
 
+                        appContainer.alpha = 1f
                         appContainer.scaleX = 1f
                         appContainer.scaleY = 1f
 
@@ -804,8 +800,6 @@ class DockService : Service() {
 
                         appContainer.pivotY =
                             dockHeight / 2f
-
-                        detachDockWindow()
 
                         isDockHidden = true
 
