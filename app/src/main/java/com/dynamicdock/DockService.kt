@@ -1378,42 +1378,53 @@ class DockService : Service() {
                     true
                 }
 
+                setOnTouchListener(
+                    object : View.OnTouchListener {
 
-        setOnTouchListener(object : View.OnTouchListener {
-            private var downX = 0f
-            private var downY = 0f
+                        private var downX = 0f
+                        private var downY = 0f
 
-            override fun onTouch(
-                v: View,
-                event: android.view.MotionEvent
-            ): Boolean {
-                when (event.actionMasked) {
-                    android.view.MotionEvent.ACTION_DOWN -> {
-                        downX = event.rawX
-                        downY = event.rawY
-                    }
+                        override fun onTouch(
+                            v: View,
+                            event: android.view.MotionEvent
+                        ): Boolean {
 
-                    android.view.MotionEvent.ACTION_UP -> {
-                        val dx = event.rawX - downX
-                        val dy = event.rawY - downY
-                        val threshold = dp(80).toFloat()
+                            when (event.actionMasked) {
 
-                        if (
-                            dx * dx + dy * dy >
-                                threshold * threshold &&
-                            !app.pinned
-                        ) {
-                            removeDynamicPackage(app.packageName)
-                            return true
+                                android.view.MotionEvent.ACTION_DOWN -> {
+                                    downX = event.rawX
+                                    downY = event.rawY
+                                }
+
+                                android.view.MotionEvent.ACTION_UP -> {
+
+                                    val dx =
+                                        event.rawX - downX
+
+                                    val dy =
+                                        event.rawY - downY
+
+                                    val threshold =
+                                        dp(80).toFloat()
+
+                                    if (
+                                        dx * dx + dy * dy >
+                                            threshold * threshold &&
+                                        !app.pinned
+                                    ) {
+                                        removeDynamicPackage(
+                                            app.packageName
+                                        )
+
+                                        return true
+                                    }
+                                }
+                            }
+
+                            return false
                         }
                     }
-                }
-
-                return false
-            }
-        })
-                    true
-                }
+                )
             }
 
             val icon = ImageView(this).apply {
