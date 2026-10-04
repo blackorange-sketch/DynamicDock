@@ -221,14 +221,54 @@ class AppSelectionActivity : Activity() {
         ).toInt()
     }
 
+    private sealed class DisplayItem {
+        data class Header(val title: String) : DisplayItem()
+        data class App(val info: ApplicationInfo) : DisplayItem()
+    }
+
     private inner class AppAdapter : BaseAdapter() {
 
-        override fun getCount(): Int {
-            return allApps.size
+        private fun buildItems(): List<DisplayItem> {
+            val pinned = allApps.filter {
+                selectedApps.contains(it.packageName)
+            }
+
+            val available = allApps.filter {
+                !selectedApps.contains(it.packageName)
+            }
+
+            val items = mutableListOf<DisplayItem>()
+
+            if (pinned.isNotEmpty()) {
+                items.add(DisplayItem.Header("Закріплені"))
+                pinned.forEach {
+                    items.add(DisplayItem.App(it))
+                }
+            }
+
+            if (available.isNotEmpty()) {
+                items.add(DisplayItem.Header("Доступні програми"))
+                available.forEach {
+                    items.add(DisplayItem.App(it))
+                }
+            }
+
+            return items
         }
 
-        override fun getItem(position: Int): ApplicationInfo {
-            return allApps[position]
+        private var items: List<DisplayItem> = buildItems()
+
+        override fun notifyDataSetChanged() {
+            items = buildItems()
+            super.notifyDataSetChanged()
+        }
+
+        override fun getCount(): Int {
+            return items.size
+        }
+
+        override fun getItem(position: Int): Any {
+            return items[position]
         }
 
         override fun getItemId(position: Int): Long {
@@ -241,126 +281,147 @@ class AppSelectionActivity : Activity() {
             parent: ViewGroup
         ): View {
 
-            val app = allApps[position]
-            val pm = packageManager
+            when (val item = items[position]) {
 
-            val row = LinearLayout(
-                this@AppSelectionActivity
-            ).apply {
-
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-
-                setPadding(
-                    dp(14),
-                    dp(10),
-                    dp(10),
-                    dp(10)
-                )
-
-                background = roundedBackground(
-                    rowColor,
-                    dp(12)
-                )
-
-                isClickable = true
-                isFocusable = true
-
-                setOnClickListener {
-                    toggleApp(app.packageName)
+                is DisplayItem.Header -> {
+                    return TextView(
+                        this@AppSelectionActivity
+                    ).apply {
+                        text = item.title
+                        textSize = 14f
+                        setTextColor(secondaryTextColor)
+                        setPadding(
+                            dp(4),
+                            dp(14),
+                            dp(4),
+                            dp(6)
+                        )
+                        isClickable = false
+                    }
                 }
-            }
 
-            val icon = ImageView(
-                this@AppSelectionActivity
-            ).apply {
-                setImageDrawable(
-                    pm.getApplicationIcon(app)
-                )
-            }
+                is DisplayItem.App -> {
+                    val app = item.info
+                    val pm = packageManager
 
-            row.addView(
-                icon,
-                LinearLayout.LayoutParams(
-                    dp(42),
-                    dp(42)
-                ).apply {
-                    rightMargin = dp(14)
-                }
-            )
+                    val row = LinearLayout(
+                        this@AppSelectionActivity
+                    ).apply {
 
-            val textContainer = LinearLayout(
-                this@AppSelectionActivity
-            ).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER_VERTICAL
-            }
+                        orientation = LinearLayout.HORIZONTAL
+                        gravity = Gravity.CENTER_VERTICAL
 
-            val appName = TextView(
-                this@AppSelectionActivity
-            ).apply {
-                text = pm.getApplicationLabel(app).toString()
-                textSize = 16f
-                setTextColor(primaryTextColor)
-                maxLines = 1
-                ellipsize = TextUtils.TruncateAt.END
-            }
+                        setPadding(
+                            dp(14),
+                            dp(10),
+                            dp(10),
+                            dp(10)
+                        )
 
-            val packageName = TextView(
-                this@AppSelectionActivity
-            ).apply {
-                text = app.packageName
-                textSize = 12f
-                setTextColor(secondaryTextColor)
-                maxLines = 1
-                ellipsize = TextUtils.TruncateAt.END
-            }
+                        background = roundedBackground(
+                            rowColor,
+                            dp(12)
+                        )
 
-            textContainer.addView(appName)
-            textContainer.addView(packageName)
+                        isClickable = true
+                        isFocusable = true
 
-            row.addView(
-                textContainer,
-                LinearLayout.LayoutParams(
-                    0,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    1f
-                )
-            )
+                        setOnClickListener {
+                            toggleApp(app.packageName)
+                        }
+                    }
 
-            val checkBox = CheckBox(
-                this@AppSelectionActivity
-            ).apply {
+                    val icon = ImageView(
+                        this@AppSelectionActivity
+                    ).apply {
+                        setImageDrawable(
+                            pm.getApplicationIcon(app)
+                        )
+                    }
 
-                isChecked =
-                    selectedApps.contains(app.packageName)
-
-                isClickable = false
-                isFocusable = false
-
-                buttonTintList = ColorStateList(
-                    arrayOf(
-                        intArrayOf(
-                            android.R.attr.state_checked
-                        ),
-                        intArrayOf()
-                    ),
-                    intArrayOf(
-                        accentColor,
-                        Color.rgb(120, 120, 120)
+                    row.addView(
+                        icon,
+                        LinearLayout.LayoutParams(
+                            dp(42),
+                            dp(42)
+                        ).apply {
+                            rightMargin = dp(14)
+                        }
                     )
-                )
+
+                    val textContainer = LinearLayout(
+                        this@AppSelectionActivity
+                    ).apply {
+                        orientation = LinearLayout.VERTICAL
+                        gravity = Gravity.CENTER_VERTICAL
+                    }
+
+                    val appName = TextView(
+                        this@AppSelectionActivity
+                    ).apply {
+                        text = pm.getApplicationLabel(app).toString()
+                        textSize = 16f
+                        setTextColor(primaryTextColor)
+                        maxLines = 1
+                        ellipsize = TextUtils.TruncateAt.END
+                    }
+
+                    val packageName = TextView(
+                        this@AppSelectionActivity
+                    ).apply {
+                        text = app.packageName
+                        textSize = 12f
+                        setTextColor(secondaryTextColor)
+                        maxLines = 1
+                        ellipsize = TextUtils.TruncateAt.END
+                    }
+
+                    textContainer.addView(appName)
+                    textContainer.addView(packageName)
+
+                    row.addView(
+                        textContainer,
+                        LinearLayout.LayoutParams(
+                            0,
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            1f
+                        )
+                    )
+
+                    val checkBox = CheckBox(
+                        this@AppSelectionActivity
+                    ).apply {
+                        isChecked =
+                            selectedApps.contains(app.packageName)
+
+                        isClickable = false
+                        isFocusable = false
+
+                        buttonTintList = ColorStateList(
+                            arrayOf(
+                                intArrayOf(
+                                    android.R.attr.state_checked
+                                ),
+                                intArrayOf()
+                            ),
+                            intArrayOf(
+                                accentColor,
+                                Color.rgb(120, 120, 120)
+                            )
+                        )
+                    }
+
+                    row.addView(
+                        checkBox,
+                        LinearLayout.LayoutParams(
+                            dp(48),
+                            dp(48)
+                        )
+                    )
+
+                    return row
+                }
             }
-
-            row.addView(
-                checkBox,
-                LinearLayout.LayoutParams(
-                    dp(48),
-                    dp(48)
-                )
-            )
-
-            return row
         }
     }
 }
