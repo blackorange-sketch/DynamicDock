@@ -1,4 +1,9 @@
-package com.dynamicdock
+import re
+
+# ==========================================
+# 1. Повний перезапис DockService.kt (чистий код)
+# ==========================================
+service_code = """package com.dynamicdock
 
 import android.app.Service
 import android.content.Intent
@@ -209,7 +214,7 @@ class DockService : Service() {
         )
 
         val closeBtn = TextView(this).apply {
-            text = "×" // × символ
+            text = "\u00d7" // × символ
             textSize = 20f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
@@ -562,3 +567,78 @@ class DockService : Service() {
         super.onDestroy()
     }
 }
+"""
+
+with open('app/src/main/java/com/dynamicdock/DockService.kt', 'w', encoding='utf-8') as f:
+    f.write(service_code)
+print("✓ DockService.kt переписано")
+
+# ==========================================
+# 2. Виправлення AppSelectionActivity.kt
+# ==========================================
+file_sel = 'app/src/main/java/com/dynamicdock/AppSelectionActivity.kt'
+with open(file_sel, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Видаляємо setSelected
+content = re.sub(r'.*setSelected.*\n?', '', content)
+
+# Замінюємо refreshDock на правильний виклик через companion object
+content = content.replace('DockService.instance?.refreshDock()', 'DockService.refreshDock()')
+
+with open(file_sel, 'w', encoding='utf-8') as f:
+    f.write(content)
+print("✓ AppSelectionActivity.kt виправлено")
+
+# ==========================================
+# 3. Виправлення SettingsActivity.kt
+# ==========================================
+file_set = 'app/src/main/java/com/dynamicdock/SettingsActivity.kt'
+with open(file_set, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Додаємо параметр max до слайдерів зміщення меню
+# Шукаємо addSlider(..., settings.menuYOffset, ...) без max
+content = re.sub(
+    r'(addSlider\([^)]*?,\s*settings\.menu[YX]Offset,\s*-?\d+)\)',
+    r'\1, 200)',
+    content
+)
+
+# Видаляємо застарілі посилання
+content = re.sub(r'.*dockLengthDp.*\n?', '', content)
+content = re.sub(r'.*updateDockLength.*\n?', '', content)
+
+with open(file_set, 'w', encoding='utf-8') as f:
+    f.write(content)
+print("✓ SettingsActivity.kt виправлено")
+
+# ==========================================
+# 4. Перевірка DockSettings.kt
+# ==========================================
+file_dock = 'app/src/main/java/com/dynamicdock/DockSettings.kt'
+with open(file_dock, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Переконаємось, що є поля menuXOffset і menuYOffset
+if 'menuXOffset' not in content:
+    # Додаємо перед останньою дужкою класу
+    last_brace = content.rfind('}')
+    if last_brace != -1:
+        addition = '''
+    var menuXOffset: Int
+        get() = preferences.getInt("menu_x_offset", 0)
+        set(value) { preferences.edit().putInt("menu_x_offset", value).apply() }
+
+    var menuYOffset: Int
+        get() = preferences.getInt("menu_y_offset", 0)
+        set(value) { preferences.edit().putInt("menu_y_offset", value).apply() }
+'''
+        content = content[:last_brace] + addition + content[last_brace:]
+        with open(file_dock, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print("✓ DockSettings.kt: додано поля зміщення меню")
+else:
+    print("✓ DockSettings.kt вже містить поля зміщення меню")
+
+print("\n✅ ВСІ ФАЙЛИ ГОТОВІ ДО ЗБІРКИ!")
