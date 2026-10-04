@@ -109,6 +109,7 @@ class DockService : Service() {
                 ?: return
 
         val settings = DockSettings(this)
+        settings.dockPosition = position
         val isVertical = position == "left" || position == "right"
 
         appContainer.animate().cancel()
