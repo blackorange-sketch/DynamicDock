@@ -35,9 +35,10 @@ class DockSettings(context: Context) {
         get() = preferences.getBoolean("auto_hide", true)
         set(value) { preferences.edit().putBoolean("auto_hide", value).apply() }
 
-    var autoHideDelaySeconds: Long
-        get() = preferences.getLong("auto_hide_delay_seconds", 5L)
-        set(value) { preferences.edit().putLong("auto_hide_delay_seconds", value).apply() }
+    // Змінено Long на Int, щоб уникнути конфліктів у SettingsActivity
+    var autoHideDelaySeconds: Int
+        get() = preferences.getInt("auto_hide_delay_seconds", 5)
+        set(value) { preferences.edit().putInt("auto_hide_delay_seconds", value).apply() }
 
     var hideHandleLengthDp: Int
         get() = preferences.getInt("hide_handle_length_dp", 60)
