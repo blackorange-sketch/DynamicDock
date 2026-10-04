@@ -154,7 +154,7 @@ class DockService : Service() {
         appContainer = LinearLayout(this).apply {
             orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setBackgroundResource(R.drawable.dock_background)
+            setBackgroundColor(Color.TRANSPARENT)
             visibility = View.INVISIBLE
         }
 
