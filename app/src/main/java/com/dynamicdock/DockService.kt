@@ -523,7 +523,13 @@ class DockService : Service() {
     }
 
     private fun updatePackage(pkg: String) {
-        if (pkg == packageName || pkg.startsWith("com.android.") || pkg.startsWith("com.google.")) return
+        if (
+            pkg == packageName ||
+            pkg == "com.android.systemui" ||
+            pkg == "com.google.android.inputmethod.latin" ||
+            pkg == "com.google.android.googlequicksearchbox" ||
+            pkg == "com.zte.mifavor.launcher"
+        ) return
         activePackageName = pkg
         val info = AppInfoRepository(this).getAppInfo(pkg)
         registry.activate(RunningApp(info.packageName, info.appName, info.icon))
