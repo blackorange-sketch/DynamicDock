@@ -209,7 +209,7 @@ class DockService : Service() {
         )
 
         val closeBtn = TextView(this).apply {
-            text = "\u00d7" // × символ
+            text = "\u00d7"
             textSize = 20f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
