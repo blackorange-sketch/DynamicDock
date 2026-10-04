@@ -136,6 +136,12 @@ class DockService : Service() {
             else -> (screenHeight - currentHeight).coerceAtLeast(0)
         }
 
+        appContainer.orientation =
+            if (position == "left" || position == "right")
+                LinearLayout.VERTICAL
+            else
+                LinearLayout.HORIZONTAL
+
         rebuildDock()
 
         appContainer.post {
@@ -728,16 +734,8 @@ class DockService : Service() {
                 else
                     Gravity.TOP or Gravity.RIGHT
 
-            val maxY =
-                (resources.displayMetrics.heightPixels - appContainer.height)
-                    .coerceAtLeast(0)
-
-            params.y =
-                (maxY *
-                    settings.verticalPositionPercent
-                        .coerceIn(0, 100) /
-                    100f
-                ).toInt()
+            // Y is calculated only after the dock has been measured.
+            params.y = 0
         } else {
             params.width = WindowManager.LayoutParams.WRAP_CONTENT
             params.height = dp(settings.dockHeightDp)
@@ -789,6 +787,26 @@ class DockService : Service() {
                 isHidden = false
                 scheduleAutoHide()
                 return@post
+            }
+
+            if (settings.dockPosition == "left" ||
+                settings.dockPosition == "right"
+            ) {
+                val maxY =
+                    (resources.displayMetrics.heightPixels - appContainer.height)
+                        .coerceAtLeast(0)
+
+                params.y =
+                    (
+                        maxY *
+                            settings.verticalPositionPercent.coerceIn(0, 100) /
+                            100f
+                    ).toInt()
+
+                try {
+                    windowManager.updateViewLayout(appContainer, params)
+                } catch (_: Exception) {
+                }
             }
 
             val handleLength =
