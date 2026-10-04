@@ -65,12 +65,13 @@ class DockContextMenu(
 
         val location = IntArray(2)
         anchor.getLocationOnScreen(location)
-        
+
         val anchorLeft = location[0]
         val anchorTop = location[1]
         val anchorRight = anchorLeft + anchor.width
         val anchorBottom = anchorTop + anchor.height
         val anchorCenterX = anchorLeft + anchor.width / 2
+        val anchorCenterY = anchorTop + anchor.height / 2
 
         val menuWidth = buttonSize + margin * 2
         val menuHeight = buttonSize + margin * 2
@@ -93,11 +94,11 @@ class DockContextMenu(
             }
             "left" -> {
                 menuX = anchorRight + gap
-                menuY = anchorTop + (anchor.height - menuHeight) / 2
+                menuY = anchorCenterY - menuHeight / 2
             }
             "right" -> {
                 menuX = anchorLeft - menuWidth - gap
-                menuY = anchorTop + (anchor.height - menuHeight) / 2
+                menuY = anchorCenterY - menuHeight / 2
             }
             else -> {
                 menuX = anchorCenterX - menuWidth / 2
@@ -105,16 +106,16 @@ class DockContextMenu(
             }
         }
 
-        val maxX = (screenWidth - menuWidth - screenMargin).coerceAtLeast(screenMargin)
-        val maxY = (screenHeight - menuHeight - screenMargin).coerceAtLeast(screenMargin)
-        menuX = menuX.coerceIn(screenMargin, maxX)
-        menuY = menuY.coerceIn(screenMargin, maxY)
-
         try {
             val settings = DockSettings(service)
             menuX += settings.menuXOffset
             menuY += settings.menuYOffset
         } catch (_: Exception) {}
+
+        val maxX = (screenWidth - menuWidth - screenMargin).coerceAtLeast(screenMargin)
+        val maxY = (screenHeight - menuHeight - screenMargin).coerceAtLeast(screenMargin)
+        menuX = menuX.coerceIn(screenMargin, maxX)
+        menuY = menuY.coerceIn(screenMargin, maxY)
 
         val params = WindowManager.LayoutParams(
             menuWidth, menuHeight,
