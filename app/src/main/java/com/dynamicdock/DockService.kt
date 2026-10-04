@@ -521,8 +521,33 @@ private fun showDock() {
 
     val lp = appContainer.layoutParams as WindowManager.LayoutParams
 
+    appContainer.background =
+        getDrawable(R.drawable.dock_background)
+
+    rebuildDock()
+
     if (isVertical) {
-        lp.width = dp(settings.dockHeightDp)
+        val dockWidth = dp(settings.dockHeightDp)
+
+        appContainer.measure(
+            View.MeasureSpec.makeMeasureSpec(
+                dockWidth,
+                View.MeasureSpec.EXACTLY
+            ),
+            View.MeasureSpec.makeMeasureSpec(
+                resources.displayMetrics.heightPixels,
+                View.MeasureSpec.AT_MOST
+            )
+        )
+
+        val dockHeight = appContainer.measuredHeight
+        val screenHeight = resources.displayMetrics.heightPixels
+        val maxY = (screenHeight - dockHeight).coerceAtLeast(0)
+
+        val pct =
+            settings.verticalPositionPercent.coerceIn(0, 100)
+
+        lp.width = dockWidth
         lp.height = WindowManager.LayoutParams.WRAP_CONTENT
         lp.gravity =
             when (settings.dockPosition) {
@@ -531,6 +556,7 @@ private fun showDock() {
                 else -> Gravity.TOP or Gravity.LEFT
             }
         lp.x = 0
+        lp.y = (maxY * pct / 100f).toInt()
     } else {
         lp.width = WindowManager.LayoutParams.WRAP_CONTENT
         lp.height = dp(settings.dockHeightDp)
@@ -544,61 +570,20 @@ private fun showDock() {
 
     windowManager.updateViewLayout(appContainer, lp)
 
-    appContainer.background =
-        getDrawable(R.drawable.dock_background)
-
-    rebuildDock()
-
     appContainer.visibility = View.VISIBLE
     appContainer.alpha = 0f
     appContainer.scaleX = 0.8f
     appContainer.scaleY = 0.8f
 
-    if (isVertical) {
-        appContainer.post {
-            val h = appContainer.height
-
-            if (h > 0) {
-                val currentLp =
-                    appContainer.layoutParams as WindowManager.LayoutParams
-
-                val maxH =
-                    (resources.displayMetrics.heightPixels - h)
-                        .coerceAtLeast(0)
-
-                val pct =
-                    settings.verticalPositionPercent.coerceIn(0, 100)
-
-                currentLp.y =
-                    (maxH * pct / 100f).toInt()
-
-                windowManager.updateViewLayout(
-                    appContainer,
-                    currentLp
-                )
-            }
-
-            appContainer.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(200)
-                .withEndAction {
-                    resetAutoHide()
-                }
-                .start()
+    appContainer.animate()
+        .alpha(1f)
+        .scaleX(1f)
+        .scaleY(1f)
+        .setDuration(200)
+        .withEndAction {
+            resetAutoHide()
         }
-    } else {
-        appContainer.animate()
-            .alpha(1f)
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(200)
-            .withEndAction {
-                resetAutoHide()
-            }
-            .start()
-    }
+        .start()
 }
 
 private fun scheduleAutoHide() {
