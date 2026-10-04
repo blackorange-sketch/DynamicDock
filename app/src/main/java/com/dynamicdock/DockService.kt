@@ -514,12 +514,13 @@ class DockService : Service() {
         c.animate().alpha(1f).setDuration(150).start()
     }
 
-    private fun scheduleAutoHide() {
+        private fun scheduleAutoHide() {
         handler.removeCallbacks(autoHideRunnable)
         val settings = DockSettings(this)
         if (settings.autoHide) {
             handler.postDelayed(autoHideRunnable, settings.autoHideDelaySeconds * 1000L)
         }
+    }
     }
 
     private fun resetAutoHide() {
