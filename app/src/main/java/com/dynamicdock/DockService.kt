@@ -719,10 +719,6 @@ class DockService : Service() {
             appContainer.layoutParams as? WindowManager.LayoutParams
                 ?: return
 
-        val isVertical =
-            settings.dockPosition == "left" ||
-            settings.dockPosition == "right"
-
         appContainer.orientation =
             if (isVertical)
                 LinearLayout.VERTICAL
