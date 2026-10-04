@@ -88,22 +88,23 @@ class DockService : Service() {
     }
 
     fun updateDockHeight(heightDp: Int) {
-        val params = appContainer.layoutParams as? WindowManager.LayoutParams ?: return
         val settings = DockSettings(this)
-        val isVertical = settings.dockPosition == "left" || settings.dockPosition == "right"
-        
-        if (isVertical) {
-            params.width = dp(heightDp)
-        } else {
-            params.height = dp(heightDp)
+        settings.dockHeightDp = heightDp
+
+        if (!dockWindowAttached || isHidden) return
+
+        appContainer.post {
+            if (!dockWindowAttached || isHidden) return@post
+            rebuildDock()
+            appContainer.post {
+                if (!dockWindowAttached || isHidden) return@post
+                applyDockSettingsLayout()
+            }
         }
-        windowManager.updateViewLayout(appContainer, params)
-        rebuildDock()
     }
 
     fun updateDockPosition(position: String) {
         val settings = DockSettings(this)
-        val oldPosition = settings.dockPosition
         settings.dockPosition = position
 
         if (isHidden || !dockWindowAttached) {
@@ -111,30 +112,8 @@ class DockService : Service() {
         }
 
         appContainer.animate().cancel()
-
-        val params =
-            appContainer.layoutParams as? WindowManager.LayoutParams
-                ?: return
-
-        val screenWidth = resources.displayMetrics.widthPixels
-        val screenHeight = resources.displayMetrics.heightPixels
-
-        val currentWidth = appContainer.width
-        val currentHeight = appContainer.height
-
-        val currentX = when (oldPosition) {
-            "left" -> 0
-            "right" -> (screenWidth - currentWidth).coerceAtLeast(0)
-            else -> ((screenWidth - currentWidth) / 2).coerceAtLeast(0)
-        }
-
-        val currentY = when (oldPosition) {
-            "left", "right" -> {
-                val maxY = (screenHeight - currentHeight).coerceAtLeast(0)
-                (maxY * settings.verticalPositionPercent.coerceIn(0, 100) / 100f).toInt()
-            }
-            else -> (screenHeight - currentHeight).coerceAtLeast(0)
-        }
+        appContainer.translationX = 0f
+        appContainer.translationY = 0f
 
         appContainer.orientation =
             if (position == "left" || position == "right")
@@ -146,110 +125,19 @@ class DockService : Service() {
 
         appContainer.post {
             if (!dockWindowAttached || isHidden) return@post
-
-            val width = appContainer.width
-            val height = appContainer.height
-
-            if (width <= 0 || height <= 0) return@post
-
-            val target = getDockScreenPosition(position, width, height)
-
-            val dx = target.first - currentX
-            val dy = target.second - currentY
-
-            if (dx == 0 && dy == 0) {
-                applyDockLayout(position)
-                return@post
-            }
-
-            appContainer.translationX = 0f
-            appContainer.translationY = 0f
-
-            ValueAnimator.ofFloat(0f, 1f).apply {
-                duration = 350L
-                interpolator =
-                    android.view.animation.DecelerateInterpolator()
-
-                addUpdateListener { animator ->
-                    if (!dockWindowAttached || isHidden) {
-                        cancel()
-                        return@addUpdateListener
-                    }
-
-                    val progress = animator.animatedValue as Float
-                    appContainer.translationX = dx * progress
-                    appContainer.translationY = dy * progress
-                }
-
-                addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        if (!dockWindowAttached || isHidden) return
-
-                        applyDockLayout(position)
-                        appContainer.translationX = 0f
-                        appContainer.translationY = 0f
-                    }
-                })
-            }.start()
+            applyDockSettingsLayout()
         }
     }
 
-    private fun getDockScreenPosition(
-        position: String,
-        width: Int,
-        height: Int
-    ): Pair<Int, Int> {
+
+
+    private fun applyDockSettingsLayout() {
+        if (!dockWindowAttached) return
+
         val settings = DockSettings(this)
-
-        val screenWidth = resources.displayMetrics.widthPixels
-        val screenHeight = resources.displayMetrics.heightPixels
-
-        return when (position) {
-            "left" -> {
-                val maxY = (screenHeight - height).coerceAtLeast(0)
-                val y =
-                    (maxY *
-                        settings.verticalPositionPercent
-                            .coerceIn(0, 100) /
-                        100f
-                    ).toInt()
-
-                0 to y
-            }
-
-            "right" -> {
-                val maxY = (screenHeight - height).coerceAtLeast(0)
-                val x = (screenWidth - width).coerceAtLeast(0)
-                val y =
-                    (maxY *
-                        settings.verticalPositionPercent
-                            .coerceIn(0, 100) /
-                        100f
-                    ).toInt()
-
-                x to y
-            }
-
-            else -> {
-                val x =
-                    ((screenWidth - width) / 2)
-                        .coerceAtLeast(0)
-
-                val y =
-                    (screenHeight - height)
-                        .coerceAtLeast(0)
-
-                x to y
-            }
-        }
-    }
-
-    private fun applyDockLayout(position: String) {
-        val settings = DockSettings(this)
-
+        val position = settings.dockPosition
         val isVertical =
-            position == "left" ||
-            position == "right"
+            position == "left" || position == "right"
 
         val params =
             appContainer.layoutParams
@@ -264,8 +152,7 @@ class DockService : Service() {
 
         if (isVertical) {
             params.width = dp(settings.dockHeightDp)
-            params.height =
-                WindowManager.LayoutParams.WRAP_CONTENT
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT
 
             params.gravity =
                 if (position == "left")
@@ -288,7 +175,6 @@ class DockService : Service() {
         } else {
             params.width =
                 WindowManager.LayoutParams.WRAP_CONTENT
-
             params.height =
                 dp(settings.dockHeightDp)
 
@@ -318,23 +204,47 @@ class DockService : Service() {
             return
         }
 
-        applyDockLayout(settings.dockPosition)
+        settings.verticalPositionPercent =
+            percent.coerceIn(0, 100)
+
+        if (!dockWindowAttached || isHidden) return
+
+        appContainer.post {
+            if (!dockWindowAttached || isHidden) return@post
+            applyDockSettingsLayout()
+        }
     }
 
     private fun adjustPosition() {
         if (!dockWindowAttached || isHidden) return
 
-        val settings = DockSettings(this)
-        applyDockLayout(settings.dockPosition)
-        appContainer.visibility = View.VISIBLE
+        appContainer.post {
+            if (!dockWindowAttached || isHidden) return@post
+            applyDockSettingsLayout()
+            appContainer.visibility = View.VISIBLE
+        }
     }
 
     fun updateIconSize(sizeDp: Int) {
         rebuildDock()
+
+        if (!dockWindowAttached || isHidden) return
+
+        appContainer.post {
+            if (!dockWindowAttached || isHidden) return@post
+            applyDockSettingsLayout()
+        }
     }
 
     fun updatePadding() {
         rebuildDock()
+
+        if (!dockWindowAttached || isHidden) return
+
+        appContainer.post {
+            if (!dockWindowAttached || isHidden) return@post
+            applyDockSettingsLayout()
+        }
     }
 
     fun refreshHideHandle() {
@@ -717,7 +627,9 @@ class DockService : Service() {
         params: WindowManager.LayoutParams
     ) {
         val settings = DockSettings(this)
-        val isVertical = position == "left" || position == "right"
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
 
         appContainer.orientation =
             if (isVertical)
@@ -729,20 +641,18 @@ class DockService : Service() {
             params.width = dp(settings.dockHeightDp)
             params.height = WindowManager.LayoutParams.WRAP_CONTENT
             params.gravity =
-                if (position == "left")
+                if (settings.dockPosition == "left")
                     Gravity.TOP or Gravity.LEFT
                 else
                     Gravity.TOP or Gravity.RIGHT
-
-            // Y is calculated only after the dock has been measured.
-            params.y = 0
         } else {
             params.width = WindowManager.LayoutParams.WRAP_CONTENT
             params.height = dp(settings.dockHeightDp)
             params.gravity =
                 Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            params.y = 0
         }
+
+        params.y = 0
     }
 
     private fun showDock() {
@@ -764,7 +674,8 @@ class DockService : Service() {
         hideHandleParams = null
 
         val params =
-            appContainer.layoutParams as? WindowManager.LayoutParams
+            appContainer.layoutParams
+                as? WindowManager.LayoutParams
                 ?: return
 
         configureDockLayout(settings.dockPosition, params)
@@ -776,6 +687,10 @@ class DockService : Service() {
         appContainer.visibility = View.INVISIBLE
 
         appContainer.post {
+            if (!dockWindowAttached) return@post
+
+            applyDockSettingsLayout()
+
             val dockWidth = appContainer.width.toFloat()
             val dockHeight = appContainer.height.toFloat()
 
@@ -787,26 +702,6 @@ class DockService : Service() {
                 isHidden = false
                 scheduleAutoHide()
                 return@post
-            }
-
-            if (settings.dockPosition == "left" ||
-                settings.dockPosition == "right"
-            ) {
-                val maxY =
-                    (resources.displayMetrics.heightPixels - appContainer.height)
-                        .coerceAtLeast(0)
-
-                params.y =
-                    (
-                        maxY *
-                            settings.verticalPositionPercent.coerceIn(0, 100) /
-                            100f
-                    ).toInt()
-
-                try {
-                    windowManager.updateViewLayout(appContainer, params)
-                } catch (_: Exception) {
-                }
             }
 
             val handleLength =
