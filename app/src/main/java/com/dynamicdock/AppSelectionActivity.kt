@@ -2,89 +2,86 @@ package com.dynamicdock
 
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AbsListView
 import android.widget.BaseAdapter
+import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
-import org.json.JSONArray
 
 class AppSelectionActivity : Activity() {
 
-    private lateinit var listView: ListView
-    private lateinit var adapter: AppListAdapter
-    private lateinit var selectedCountText: TextView
-
     private val selectedApps = linkedSetOf<String>()
-    private lateinit var allApps: List<AppItem>
+    private val allApps = mutableListOf<ApplicationInfo>()
+    private lateinit var adapter: AppAdapter
 
     private val backgroundColor = Color.rgb(18, 18, 18)
-    private val cardColor = Color.rgb(30, 30, 30)
-    private val selectedColor = Color.rgb(45, 45, 45)
+    private val rowColor = Color.rgb(30, 30, 30)
     private val primaryTextColor = Color.WHITE
-    private val secondaryTextColor = Color.rgb(170, 170, 170)
-    private val accentColor = Color.rgb(80, 140, 255)
+    private val secondaryTextColor = Color.rgb(150, 150, 150)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        selectedApps.addAll(loadPinnedPackages())
-        allApps = getAllInstalledApps()
+        val savedPackages = intent.getStringArrayExtra("SELECTED_PACKAGES")
+            ?.toSet()
+            ?: emptySet()
 
-        buildUi()
-    }
+        selectedApps.addAll(savedPackages)
 
-    private fun buildUi() {
+        loadApps()
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(backgroundColor)
-        }
-
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(18), dp(20), dp(12))
+            setPadding(dp(16), dp(12), dp(16), dp(12))
         }
 
         val title = TextView(this).apply {
             text = "Програми Dock"
+            textSize = 24f
             setTextColor(primaryTextColor)
-            textSize = 22f
-            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, dp(4), 0, dp(16))
         }
-
-        selectedCountText = TextView(this).apply {
-            setTextColor(secondaryTextColor)
-            textSize = 14f
-            setPadding(0, dp(5), 0, 0)
-        }
-
-        header.addView(title)
-        header.addView(selectedCountText)
 
         root.addView(
-            header,
+            title,
             LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
         )
 
-        listView = ListView(this).apply {
-            divider = null
-            dividerHeight = 0
-            clipToPadding = false
-            setPadding(dp(10), dp(4), dp(10), dp(8))
-            cacheColorHint = Color.TRANSPARENT
+        val description = TextView(this).apply {
+            text = "Виберіть програми, які завжди будуть закріплені в Dock."
+            textSize = 14f
+            setTextColor(secondaryTextColor)
+            setPadding(0, 0, 0, dp(12))
         }
 
-        adapter = AppListAdapter(allApps)
+        root.addView(
+            description,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+
+        val listView = ListView(this).apply {
+            divider = null
+            dividerHeight = dp(6)
+            clipToPadding = false
+            setPadding(0, 0, 0, dp(8))
+        }
+
+        adapter = AppAdapter()
         listView.adapter = adapter
 
         listView.setOnItemClickListener { _, _, position, _ ->
@@ -94,54 +91,55 @@ class AppSelectionActivity : Activity() {
         root.addView(
             listView,
             LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
                 0,
                 1f
             )
         )
 
-        val bottomBar = LinearLayout(this).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(10), dp(16), dp(14))
-        }
-
         val doneButton = TextView(this).apply {
             text = "Готово"
             textSize = 16f
-            setTextColor(Color.WHITE)
             gravity = Gravity.CENTER
-            setTypeface(null, android.graphics.Typeface.BOLD)
-            setPadding(dp(20), dp(12), dp(20), dp(12))
+            setTextColor(primaryTextColor)
 
-            background = GradientDrawable().apply {
-                setColor(accentColor)
-                cornerRadius = dp(12).toFloat()
-            }
+            background = roundedBackground(
+                Color.rgb(45, 45, 45),
+                dp(12)
+            )
+
+            setPadding(0, dp(14), 0, dp(14))
 
             setOnClickListener {
                 finishWithResult()
             }
         }
 
-        bottomBar.addView(
+        root.addView(
             doneButton,
             LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
-
-        root.addView(
-            bottomBar,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
         )
 
         setContentView(root)
+    }
 
-        updateSelectedCount()
+    private fun loadApps() {
+        val pm = packageManager
+
+        allApps.clear()
+
+        val apps = pm.getInstalledApplications(0)
+            .filter {
+                pm.getLaunchIntentForPackage(it.packageName) != null
+            }
+            .sortedBy {
+                pm.getApplicationLabel(it).toString().lowercase()
+            }
+
+        allApps.addAll(apps)
     }
 
     private fun toggleApp(packageName: String) {
@@ -152,16 +150,6 @@ class AppSelectionActivity : Activity() {
         }
 
         adapter.notifyDataSetChanged()
-        updateSelectedCount()
-    }
-
-    private fun updateSelectedCount() {
-        selectedCountText.text =
-            if (selectedApps.isEmpty()) {
-                "Немає закріплених програм"
-            } else {
-                "Закріплено: ${selectedApps.size}"
-            }
     }
 
     private fun finishWithResult() {
@@ -176,67 +164,26 @@ class AppSelectionActivity : Activity() {
         finish()
     }
 
-    private fun loadPinnedPackages(): Set<String> {
-        val prefs = getSharedPreferences(
-            "dynamic_dock_registry",
-            MODE_PRIVATE
-        )
-
-        val jsonString =
-            prefs.getString("pinned_apps_json", "[]") ?: "[]"
-
-        return try {
-            val jsonArray = JSONArray(jsonString)
-
-            buildSet {
-                for (i in 0 until jsonArray.length()) {
-                    add(jsonArray.getString(i))
-                }
-            }
-        } catch (e: Exception) {
-            emptySet()
+    private fun roundedBackground(
+        color: Int,
+        radius: Int
+    ): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = radius.toFloat()
         }
     }
 
-    private fun getAllInstalledApps(): List<AppItem> {
-        val pm = packageManager
-
-        val intent = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
-        }
-
-        val resolveInfos = pm.queryIntentActivities(intent, 0)
-
-        return resolveInfos
-            .mapNotNull { info ->
-                try {
-                    AppItem(
-                        packageName = info.activityInfo.packageName,
-                        appName = info.loadLabel(pm).toString(),
-                        icon = info.loadIcon(pm)
-                    )
-                } catch (e: Exception) {
-                    null
-                }
-            }
-            .distinctBy { it.packageName }
-            .sortedBy { it.appName.lowercase() }
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
     }
 
-    data class AppItem(
-        val packageName: String,
-        val appName: String,
-        val icon: android.graphics.drawable.Drawable
-    )
+    private inner class AppAdapter : BaseAdapter() {
 
-    inner class AppListAdapter(
-        private val list: List<AppItem>
-    ) : BaseAdapter() {
+        override fun getCount(): Int = allApps.size
 
-        override fun getCount(): Int = list.size
-
-        override fun getItem(position: Int): AppItem =
-            list[position]
+        override fun getItem(position: Int): ApplicationInfo =
+            allApps[position]
 
         override fun getItemId(position: Int): Long =
             position.toLong()
@@ -244,52 +191,30 @@ class AppSelectionActivity : Activity() {
         override fun getView(
             position: Int,
             convertView: View?,
-            parent: ViewGroup?
+            parent: ViewGroup
         ): View {
-            val item = list[position]
-            val selected = selectedApps.contains(item.packageName)
+            val app = allApps[position]
+            val pm = packageManager
 
-            val row = convertView as? LinearLayout
-                ?: createRow()
-
-            val icon = row.getChildAt(0) as ImageView
-            val textContainer = row.getChildAt(1) as LinearLayout
-            val name = textContainer.getChildAt(0) as TextView
-            val packageText = textContainer.getChildAt(1) as TextView
-            val check = row.getChildAt(2) as TextView
-
-            icon.setImageDrawable(item.icon)
-
-            name.text = item.appName
-            packageText.text = item.packageName
-
-            if (selected) {
-                row.background = createRoundedBackground(selectedColor)
-                check.text = "✓"
-                check.setTextColor(accentColor)
-            } else {
-                row.background = createRoundedBackground(cardColor)
-                check.text = "○"
-                check.setTextColor(secondaryTextColor)
-            }
-
-            return row
-        }
-
-        private fun createRow(): LinearLayout {
             val row = LinearLayout(this@AppSelectionActivity).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
+
                 setPadding(
                     dp(14),
                     dp(10),
-                    dp(14),
+                    dp(10),
                     dp(10)
+                )
+
+                background = roundedBackground(
+                    rowColor,
+                    dp(12)
                 )
             }
 
             val icon = ImageView(this@AppSelectionActivity).apply {
-                scaleType = ImageView.ScaleType.FIT_CENTER
+                setImageDrawable(pm.getApplicationIcon(app))
             }
 
             row.addView(
@@ -297,74 +222,68 @@ class AppSelectionActivity : Activity() {
                 LinearLayout.LayoutParams(
                     dp(42),
                     dp(42)
-                )
+                ).apply {
+                    rightMargin = dp(14)
+                }
             )
 
             val textContainer = LinearLayout(this@AppSelectionActivity).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(14), 0, dp(8), 0)
             }
 
-            val name = TextView(this@AppSelectionActivity).apply {
-                setTextColor(primaryTextColor)
+            val appName = TextView(this@AppSelectionActivity).apply {
+                text = pm.getApplicationLabel(app).toString()
                 textSize = 16f
+                setTextColor(primaryTextColor)
                 maxLines = 1
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }
 
-            val packageText = TextView(this@AppSelectionActivity).apply {
+            val packageName = TextView(this@AppSelectionActivity).apply {
+                text = app.packageName
+                textSize = 12f
                 setTextColor(secondaryTextColor)
-                textSize = 11f
                 maxLines = 1
                 ellipsize = android.text.TextUtils.TruncateAt.END
-                setPadding(0, dp(2), 0, 0)
             }
 
-            textContainer.addView(name)
-            textContainer.addView(packageText)
+            textContainer.addView(appName)
+            textContainer.addView(packageName)
 
             row.addView(
                 textContainer,
                 LinearLayout.LayoutParams(
                     0,
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                     1f
                 )
             )
 
-            val check = TextView(this@AppSelectionActivity).apply {
-                textSize = 24f
-                gravity = Gravity.CENTER
-                minWidth = dp(32)
+            val checkBox = CheckBox(this@AppSelectionActivity).apply {
+                isChecked = selectedApps.contains(app.packageName)
+                isClickable = false
+                buttonTintList = android.content.res.ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_checked),
+                        intArrayOf()
+                    ),
+                    intArrayOf(
+                        Color.rgb(100, 180, 255),
+                        Color.rgb(120, 120, 120)
+                    )
+                )
             }
 
             row.addView(
-                check,
+                checkBox,
                 LinearLayout.LayoutParams(
-                    dp(36),
+                    dp(48),
                     dp(48)
                 )
             )
 
-            val params = AbsListView.LayoutParams(
-                AbsListView.LayoutParams.MATCH_PARENT,
-                dp(64)
-            )
-
-            row.layoutParams = params
-
             return row
         }
     }
-
-    private fun createRoundedBackground(color: Int): GradientDrawable {
-        return GradientDrawable().apply {
-            setColor(color)
-            cornerRadius = dp(12).toFloat()
-        }
-    }
-
-    private fun dp(value: Int): Int =
-        (value * resources.displayMetrics.density).toInt()
 }
