@@ -543,6 +543,7 @@ class DockService : Service() {
     }
 
     windowManager.addView(bar, p)
+    bar.post { android.util.Log.d("DynamicDock", "HANDLE ACTUAL SIZE: ${bar.width}x${bar.height}, params=${p.width}x${p.height}") }
     hideHandle = bar
 
     bar.alpha = 0f
