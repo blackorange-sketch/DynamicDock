@@ -1,412 +1,149 @@
 package com.dynamicdock
 
 import android.content.Context
+import org.json.JSONArray
+import org.json.JSONException
 
-class RunningAppRegistry(
-    context: Context
-) {
-    private val context = context
+class RunningAppRegistry(private val context: Context) {
 
-    private val apps =
-        mutableListOf<RunningApp>()
+    private val prefs = context.getSharedPreferences("dynamic_dock_registry", Context.MODE_PRIVATE)
+    // Список усіх додатків (закріплені + динамічні)
+    private var apps: MutableList<RunningApp> = mutableListOf()
 
-    private val blacklistedPackages =
-        setOf(
-            "com.dynamicdock",
-            "com.android.packageinstaller",
-            "com.google.android.packageinstaller",
-            "com.android.permissioncontroller",
-            "com.google.android.permissioncontroller",
-            "com.zte.zdmdaemon.install"
-        )
+    init {
+        loadPinnedApps()
+    }
 
-    private val preferences =
-        context.getSharedPreferences(
-            "dynamic_dock",
-            Context.MODE_PRIVATE
-        )
+    fun getApps(): List<RunningApp> = apps.toList()
 
-    private val pinnedPackages =
-        preferences.getStringSet(
-            "pinned_packages",
-            emptySet()
-        )?.toMutableSet()
-            ?: mutableSetOf()
-
-    private val pinnedOrder =
-        preferences.getString(
-            "pinned_order",
-            ""
-        )
-            ?.split("|")
-            ?.filter { it.isNotBlank() }
-            ?.toMutableList()
-            ?: mutableListOf()
-
+    /**
+     * Додає або оновлює динамічний додаток
+     */
     fun activate(app: RunningApp) {
-        if (blacklistedPackages.contains(app.packageName)) {
-            return
-        }
-
-        val pinned =
-            pinnedPackages.contains(app.packageName)
-
-        val appIndex =
-            apps.indexOfFirst {
-                it.packageName == app.packageName
+        val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
+        
+        if (existingIndex != -1) {
+            val current = apps[existingIndex]
+            if (!current.pinned) {
+                // Оновлюємо дані динамічного додатка, переміщуємо на початок
+                apps.removeAt(existingIndex)
+                apps.add(0, app.copy(pinned = false))
+            } else {
+                // Закріплений додаток залишається на місці, тільки оновлюємо метадані
+                apps[existingIndex] = app.copy(pinned = true)
             }
-
-        if (appIndex == -1) {
-            apps.add(
-                app.copy(
-                    pinned = pinned
-                )
-            )
         } else {
-            apps[appIndex] =
-                app.copy(
-                    pinned = pinned
-                )
+            // Новий динамічний додаток
+            apps.add(0, app.copy(pinned = false))
         }
-
-        if (!pinned) {
-            trimDynamicAppsToLimit()
-        }
-    }
-
-    fun trimDynamicAppsToLimit() {
-        val maxDynamicApps =
-            DockSettings(context).maxDynamicApps
-
-        var dynamicCount =
-            apps.count { !it.pinned }
-
-        while (dynamicCount > maxDynamicApps) {
-            val oldestDynamicIndex =
-                apps.indexOfFirst {
-                    !it.pinned
-                }
-
-            if (oldestDynamicIndex == -1) {
-                break
-            }
-
-            apps.removeAt(oldestDynamicIndex)
-            dynamicCount--
-        }
-    }
-
-    fun removeDynamic(packageName: String): Boolean {
-        val appIndex =
-            apps.indexOfFirst {
-                it.packageName == packageName
-            }
-
-        if (appIndex == -1) {
-            return false
-        }
-
-        if (apps[appIndex].pinned) {
-            return false
-        }
-
-        apps.removeAt(appIndex)
-        return true
+        
+        trimDynamicAppsToLimit()
+        saveState()
     }
 
     fun pin(packageName: String) {
-        pinnedPackages.add(packageName)
-
-        if (!pinnedOrder.contains(packageName)) {
-            pinnedOrder.add(packageName)
-        }
-
-        savePinned()
-
-        val index =
-            apps.indexOfFirst {
-                it.packageName == packageName
-            }
-
+        val index = apps.indexOfFirst { it.packageName == packageName }
         if (index != -1) {
-            apps[index] =
-                apps[index].copy(
-                    pinned = true
-                )
+            val app = apps[index]
+            apps.removeAt(index)
+            
+            // Знаходимо місце для вставки серед закріплених (на початок списку непотрібних або в кінець закріплених)
+            // Логіка: закріплені завжди йдуть першими
+            val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
+            if (firstUnpinnedIndex == -1) {
+                apps.add(app.copy(pinned = true))
+            } else {
+                apps.add(firstUnpinnedIndex, app.copy(pinned = true))
+            }
+            saveState()
         }
     }
 
     fun unpin(packageName: String) {
-        pinnedPackages.remove(packageName)
-        pinnedOrder.remove(packageName)
-
-        savePinned()
-
-        val index =
-            apps.indexOfFirst {
-                it.packageName == packageName
-            }
-
+        val index = apps.indexOfFirst { it.packageName == packageName }
         if (index != -1) {
-            apps[index] =
-                apps[index].copy(
-                    pinned = false
-                )
+            val app = apps[index]
+            apps.removeAt(index)
+            // Ставимо в кінець як динамічний
+            apps.add(app.copy(pinned = false))
+            saveState()
         }
     }
 
-    fun isSelected(packageName: String): Boolean {
-        return preferences
-            .getStringSet(
-                "selected_packages",
-                emptySet()
-            )
-            ?.contains(packageName)
-            ?: false
+    fun removeDynamic(packageName: String): Boolean {
+        val index = apps.indexOfFirst { it.packageName == packageName && !it.pinned }
+        if (index != -1) {
+            apps.removeAt(index)
+            return true
+        }
+        return false
     }
 
-    fun setSelected(
-        packageName: String,
-        selected: Boolean
-    ) {
-        val selectedPackages =
-            preferences
-                .getStringSet(
-                    "selected_packages",
-                    emptySet()
-                )
-                ?.toMutableSet()
-                ?: mutableSetOf()
+    fun swapApps(pkg1: String, pkg2: String) {
+        val idx1 = apps.indexOfFirst { it.packageName == pkg1 }
+        val idx2 = apps.indexOfFirst { it.packageName == pkg2 }
+        
+        if (idx1 != -1 && idx2 != -1) {
+            val temp = apps[idx1]
+            apps[idx1] = apps[idx2]
+            apps[idx2] = temp
+            saveState()
+        }
+    }
 
-        if (selected) {
-            selectedPackages.add(packageName)
-
-            if (
-                !apps.any {
-                    it.packageName == packageName
-                }
-            ) {
-                try {
-                    val packageManager =
-                        context.packageManager
-
-                    val applicationInfo =
-                        packageManager.getApplicationInfo(
-                            packageName,
-                            0
-                        )
-
-                    val appName =
-                        packageManager
-                            .getApplicationLabel(
-                                applicationInfo
-                            )
-                            .toString()
-
-                    val icon =
-                        packageManager.getApplicationIcon(
-                            applicationInfo
-                        )
-
-                    apps.add(
-                        RunningApp(
-                            packageName = packageName,
-                            appName = appName,
-                            icon = icon,
-                            pinned = pinnedPackages.contains(
-                                packageName
-                            )
-                        )
-                    )
-                } catch (e: Exception) {
-                    // Application is no longer available.
-                }
-            }
-        } else {
-            selectedPackages.remove(packageName)
-
-            if (!pinnedPackages.contains(packageName)) {
-                apps.removeAll {
-                    it.packageName == packageName
+    fun trimDynamicAppsToLimit() {
+        val settings = DockSettings(context)
+        val limit = settings.maxDynamicApps
+        
+        var dynamicCount = 0
+        for (i in apps.indices.reversed()) {
+            if (!apps[i].pinned) {
+                dynamicCount++
+                if (dynamicCount > limit) {
+                    apps.removeAt(i)
                 }
             }
         }
-
-        preferences.edit()
-            .putStringSet(
-                "selected_packages",
-                selectedPackages
-            )
-            .apply()
     }
 
-    private fun savePinned() {
-        preferences.edit()
-            .putStringSet(
-                "pinned_packages",
-                pinnedPackages
-            )
-            .putString(
-                "pinned_order",
-                pinnedOrder.joinToString("|")
-            )
-            .apply()
-    }
-
-    fun restorePinned(context: Context) {
-        pinnedPackages.forEach { packageName ->
-            if (apps.any { it.packageName == packageName }) {
-                return@forEach
-            }
-
-            try {
-                val packageManager =
-                    context.packageManager
-
-                val applicationInfo =
-                    packageManager.getApplicationInfo(
-                        packageName,
-                        0
-                    )
-
-                val appName =
-                    packageManager
-                        .getApplicationLabel(
-                            applicationInfo
-                        )
-                        .toString()
-
-                val icon =
-                    packageManager.getApplicationIcon(
-                        applicationInfo
-                    )
-
-                apps.add(
-                    RunningApp(
-                        packageName = packageName,
-                        appName = appName,
-                        icon = icon,
-                        pinned = true
-                    )
-                )
-            } catch (e: Exception) {
-                // Application is no longer available.
+    fun removeMissingDynamicApps(visiblePackages: Set<String>) {
+        val iterator = apps.iterator()
+        while (iterator.hasNext()) {
+            val app = iterator.next()
+            if (!app.pinned && app.packageName !in visiblePackages) {
+                iterator.remove()
             }
         }
     }
 
-    fun removeMissingDynamicApps(visiblePackages: Set<String>): Boolean {
-        return apps.removeAll { app ->
-            !app.pinned &&
-                !isSelected(app.packageName) &&
-                !visiblePackages.contains(app.packageName)
+    fun restorePinned(serviceContext: Context) {
+        loadPinnedApps()
+    }
+
+    private fun loadPinnedApps() {
+        val jsonStr = prefs.getString("pinned_apps_json", "[]") ?: "[]"
+        try {
+            val jsonArray = JSONArray(jsonStr)
+            val newPinned = mutableListOf<RunningApp>()
+            
+            for (i in 0 until jsonArray.length()) {
+                val pkg = jsonArray.getString(i)
+                // Іконку та назву довантажимо пізніше через Repository у Service
+                // Тут створюємо заглушку з pinned=true
+                newPinned.add(RunningApp(packageName = pkg, appName = "", icon = null, pinned = true))
+            }
+            
+            apps.clear()
+            apps.addAll(newPinned)
+            
+        } catch (e: JSONException) {
+            e.printStackTrace()
         }
     }
 
-    fun removeUnavailable(context: Context) {
-        val packageManager =
-            context.packageManager
-
-        apps.removeAll { app ->
-            if (app.pinned) {
-                false
-            } else {
-                packageManager.getLaunchIntentForPackage(
-                    app.packageName
-                ) == null
-            }
-        }
-    }
-
-    fun getApps(): List<RunningApp> {
-
-        val packageManager =
-            context.packageManager
-
-        val selectedPackages =
-            preferences
-                .getStringSet(
-                    "selected_packages",
-                    emptySet()
-                )
-                ?: emptySet()
-
-        val existingPackages =
-            apps.mapTo(mutableSetOf()) {
-                it.packageName
-            }
-
-        selectedPackages.forEach { packageName ->
-
-            if (!existingPackages.contains(packageName)) {
-                try {
-                    val applicationInfo =
-                        packageManager.getApplicationInfo(
-                            packageName,
-                            0
-                        )
-
-                    val appName =
-                        packageManager
-                            .getApplicationLabel(
-                                applicationInfo
-                            )
-                            .toString()
-
-                    val icon =
-                        packageManager.getApplicationIcon(
-                            applicationInfo
-                        )
-
-                    apps.add(
-                        RunningApp(
-                            packageName = packageName,
-                            appName = appName,
-                            icon = icon,
-                            pinned = pinnedPackages.contains(
-                                packageName
-                            )
-                        )
-                    )
-                } catch (e: Exception) {
-                    // Application is no longer available.
-                }
-            }
-        }
-
-        val appsByPackage =
-            apps.associateBy {
-                it.packageName
-            }
-
-        val pinned =
-            pinnedOrder.mapNotNull { packageName ->
-                appsByPackage[packageName]
-                    ?.takeIf { it.pinned }
-            }
-
-        val pinnedOrderSet =
-            pinnedOrder.toSet()
-
-        val remainingPinned =
-            apps.filter {
-                it.pinned &&
-                    !pinnedOrderSet.contains(
-                        it.packageName
-                    )
-            }
-
-        val selected =
-            apps.filter {
-                !it.pinned
-            }
-
-        return pinned +
-            remainingPinned +
-            selected
-    }
-
-    fun clear() {
-        apps.clear()
+    private fun saveState() {
+        val pinnedPackages = apps.filter { it.pinned }.map { it.packageName }
+        val jsonArray = JSONArray(pinnedPackages)
+        prefs.edit().putString("pinned_apps_json", jsonArray.toString()).apply()
     }
 }
