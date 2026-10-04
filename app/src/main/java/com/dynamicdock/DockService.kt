@@ -554,21 +554,54 @@ private fun showDock() {
     appContainer.scaleX = 0.8f
     appContainer.scaleY = 0.8f
 
-    adjustPosition()
+    if (isVertical) {
+        appContainer.post {
+            val h = appContainer.height
 
-    appContainer.animate()
-        .alpha(1f)
-        .scaleX(1f)
-        .scaleY(1f)
-        .setDuration(200)
-        .withEndAction {
-            resetAutoHide()
+            if (h > 0) {
+                val currentLp =
+                    appContainer.layoutParams as WindowManager.LayoutParams
+
+                val maxH =
+                    (resources.displayMetrics.heightPixels - h)
+                        .coerceAtLeast(0)
+
+                val pct =
+                    settings.verticalPositionPercent.coerceIn(0, 100)
+
+                currentLp.y =
+                    (maxH * pct / 100f).toInt()
+
+                windowManager.updateViewLayout(
+                    appContainer,
+                    currentLp
+                )
+            }
+
+            appContainer.animate()
+                .alpha(1f)
+                .scaleX(1f)
+                .scaleY(1f)
+                .setDuration(200)
+                .withEndAction {
+                    resetAutoHide()
+                }
+                .start()
         }
-        .start()
+    } else {
+        appContainer.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(200)
+            .withEndAction {
+                resetAutoHide()
+            }
+            .start()
+    }
 }
 
-
-    private fun scheduleAutoHide() {
+private fun scheduleAutoHide() {
         handler.removeCallbacks(autoHideRunnable)
         val settings = DockSettings(this)
         if (settings.autoHide) {
