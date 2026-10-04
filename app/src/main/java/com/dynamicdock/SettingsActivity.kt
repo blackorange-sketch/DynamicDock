@@ -95,7 +95,6 @@ class SettingsActivity : Activity() {
                 ?.refreshHideHandle()
         }
 
-                    DockService.instance
         }
 
         val verticalPositionLabel = addSlider(
