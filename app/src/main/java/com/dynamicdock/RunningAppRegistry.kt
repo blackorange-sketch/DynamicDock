@@ -27,7 +27,13 @@ class RunningAppRegistry(private val context: Context) {
                 apps[existingIndex] = app.copy(pinned = true)
             }
         } else {
-            apps.add(0, app.copy(pinned = false))
+            val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
+
+            if (firstUnpinnedIndex == -1) {
+                apps.add(app.copy(pinned = false))
+            } else {
+                apps.add(firstUnpinnedIndex, app.copy(pinned = false))
+            }
         }
         
         trimDynamicAppsToLimit()
@@ -55,7 +61,15 @@ class RunningAppRegistry(private val context: Context) {
         if (index != -1) {
             val app = apps[index]
             apps.removeAt(index)
-            apps.add(app.copy(pinned = false))
+
+            val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
+
+            if (firstUnpinnedIndex == -1) {
+                apps.add(app.copy(pinned = false))
+            } else {
+                apps.add(firstUnpinnedIndex, app.copy(pinned = false))
+            }
+
             saveState()
         }
     }
