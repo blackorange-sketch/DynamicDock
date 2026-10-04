@@ -15,12 +15,12 @@ import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 
-class SettingsActivity : Activity()
+class SettingsActivity : Activity() {
 
     companion object {
         private const val REQUEST_APP_SELECTION = 1001
     }
- {
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
