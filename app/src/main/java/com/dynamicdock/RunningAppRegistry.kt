@@ -7,7 +7,6 @@ import org.json.JSONException
 class RunningAppRegistry(private val context: Context) {
 
     private val prefs = context.getSharedPreferences("dynamic_dock_registry", Context.MODE_PRIVATE)
-    // Список усіх додатків (закріплені + динамічні)
     private var apps: MutableList<RunningApp> = mutableListOf()
 
     init {
@@ -16,24 +15,18 @@ class RunningAppRegistry(private val context: Context) {
 
     fun getApps(): List<RunningApp> = apps.toList()
 
-    /**
-     * Додає або оновлює динамічний додаток
-     */
     fun activate(app: RunningApp) {
         val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
         
         if (existingIndex != -1) {
             val current = apps[existingIndex]
             if (!current.pinned) {
-                // Оновлюємо дані динамічного додатка, переміщуємо на початок
                 apps.removeAt(existingIndex)
                 apps.add(0, app.copy(pinned = false))
             } else {
-                // Закріплений додаток залишається на місці, тільки оновлюємо метадані
                 apps[existingIndex] = app.copy(pinned = true)
             }
         } else {
-            // Новий динамічний додаток
             apps.add(0, app.copy(pinned = false))
         }
         
@@ -47,8 +40,6 @@ class RunningAppRegistry(private val context: Context) {
             val app = apps[index]
             apps.removeAt(index)
             
-            // Знаходимо місце для вставки серед закріплених (на початок списку непотрібних або в кінець закріплених)
-            // Логіка: закріплені завжди йдуть першими
             val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
             if (firstUnpinnedIndex == -1) {
                 apps.add(app.copy(pinned = true))
@@ -64,7 +55,6 @@ class RunningAppRegistry(private val context: Context) {
         if (index != -1) {
             val app = apps[index]
             apps.removeAt(index)
-            // Ставимо в кінець як динамічний
             apps.add(app.copy(pinned = false))
             saveState()
         }
@@ -128,8 +118,7 @@ class RunningAppRegistry(private val context: Context) {
             
             for (i in 0 until jsonArray.length()) {
                 val pkg = jsonArray.getString(i)
-                // Іконку та назву довантажимо пізніше через Repository у Service
-                // Тут створюємо заглушку з pinned=true
+                // Icon is null initially, will be loaded by Service later
                 newPinned.add(RunningApp(packageName = pkg, appName = "", icon = null, pinned = true))
             }
             
