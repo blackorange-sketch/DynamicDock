@@ -115,18 +115,36 @@ class RunningAppRegistry(private val context: Context) {
 
     private fun loadPinnedApps() {
         val jsonStr = prefs.getString("pinned_apps_json", "[]") ?: "[]"
+
         try {
             val jsonArray = JSONArray(jsonStr)
             val newPinned = mutableListOf<RunningApp>()
-            
+            val packageManager = context.packageManager
+
             for (i in 0 until jsonArray.length()) {
                 val pkg = jsonArray.getString(i)
-                newPinned.add(RunningApp(packageName = pkg, appName = "", icon = null, pinned = true))
+
+                try {
+                    val appInfo = packageManager.getApplicationInfo(pkg, 0)
+                    val appName = packageManager.getApplicationLabel(appInfo).toString()
+                    val icon = packageManager.getApplicationIcon(appInfo)
+
+                    newPinned.add(
+                        RunningApp(
+                            packageName = pkg,
+                            appName = appName,
+                            icon = icon,
+                            pinned = true
+                        )
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
-            
+
             apps.clear()
             apps.addAll(newPinned)
-            
+
         } catch (e: JSONException) {
             e.printStackTrace()
         }
