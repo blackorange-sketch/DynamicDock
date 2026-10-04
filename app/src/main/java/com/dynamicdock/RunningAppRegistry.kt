@@ -235,21 +235,17 @@ class RunningAppRegistry(private val context: Context) {
     }
 
     fun setPinnedPackages(packages: List<String>) {
-        val packageSet = packages.toSet()
-
-        apps = apps.map { app ->
-            app.copy(
-                pinned = packageSet.contains(app.packageName)
-            )
-        }.toMutableList()
-
-        val existingPackages =
-            apps.map { it.packageName }.toSet()
-
         val packageManager = context.packageManager
 
+        val existingApps = apps.associateBy { it.packageName }
+
+        val pinned = mutableListOf<RunningApp>()
+
         for (pkg in packages) {
-            if (pkg in existingPackages) {
+            val existing = existingApps[pkg]
+
+            if (existing != null) {
+                pinned.add(existing.copy(pinned = true))
                 continue
             }
 
@@ -265,7 +261,7 @@ class RunningAppRegistry(private val context: Context) {
                 val icon =
                     packageManager.getApplicationIcon(appInfo)
 
-                apps.add(
+                pinned.add(
                     RunningApp(
                         packageName = pkg,
                         appName = appName,
@@ -278,8 +274,11 @@ class RunningAppRegistry(private val context: Context) {
             }
         }
 
-        val pinned = apps.filter { it.pinned }
-        val dynamic = apps.filter { !it.pinned }
+        val pinnedPackages = packages.toSet()
+
+        val dynamic = apps.filter {
+            !it.pinned && it.packageName !in pinnedPackages
+        }
 
         apps = (pinned + dynamic).toMutableList()
 
