@@ -258,14 +258,19 @@ class DockService : Service() {
                 }
 
                 setOnLongClickListener {
+                    val wasHidden = isHidden
                     showDock()
+
                     if (vibrator.hasVibrator()) {
                         vibrator.vibrate(VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE))
                     }
+
                     val act = if (app.pinned) DockContextMenu.Action.UNPIN else DockContextMenu.Action.PIN
-                    iconImg.post {
+
+                    iconImg.postDelayed({
                         contextMenu.show(iconImg, app, act, settings.dockPosition)
-                    }
+                    }, if (wasHidden) 260L else 0L)
+
                     resetAutoHide()
                     true
                 }
