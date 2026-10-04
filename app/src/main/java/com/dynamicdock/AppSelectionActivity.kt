@@ -36,12 +36,35 @@ class AppSelectionActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val savedPackages =
-            intent.getStringArrayExtra("SELECTED_PACKAGES")
-                ?.toSet()
-                ?: emptySet()
+        val savedPackages = intent
+            .getStringArrayExtra("SELECTED_PACKAGES")
+            ?.toSet()
 
-        selectedApps.addAll(savedPackages)
+        if (savedPackages != null) {
+            selectedApps.addAll(savedPackages)
+        } else {
+            val prefs = getSharedPreferences(
+                "dynamic_dock_registry",
+                MODE_PRIVATE
+            )
+
+            val json = prefs.getString(
+                "pinned_apps_json",
+                "[]"
+            ) ?: "[]"
+
+            try {
+                val array = org.json.JSONArray(json)
+
+                for (i in 0 until array.length()) {
+                    selectedApps.add(
+                        array.getString(i)
+                    )
+                }
+            } catch (e: org.json.JSONException) {
+                e.printStackTrace()
+            }
+        }
 
         loadApps()
 
