@@ -95,8 +95,6 @@ class SettingsActivity : Activity() {
                 ?.refreshHideHandle()
         }
 
-        }
-
         val verticalPositionLabel = addSlider(
             layout,
             "Положення по вертикалі",
