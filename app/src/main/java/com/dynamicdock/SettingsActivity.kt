@@ -95,14 +95,7 @@ class SettingsActivity : Activity() {
                 ?.refreshHideHandle()
         }
 
-        val lengthLabel = addSlider(
-            layout,
-            "Довжина Dock",
-            160,
-            600
-        ) { progress ->
-
-            DockService.instance
+                    DockService.instance
         }
 
         val verticalPositionLabel = addSlider(
