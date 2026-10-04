@@ -422,6 +422,13 @@ class DockService : Service() {
         }.start()
     }
 
+    fun refreshHideHandle() {
+        if (!isHidden) return
+
+        isHidden = false
+        hideDock()
+    }
+
     private fun hideDock() {
     if (isHidden) return
 
