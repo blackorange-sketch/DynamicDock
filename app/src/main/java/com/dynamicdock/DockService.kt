@@ -715,6 +715,47 @@ class DockService : Service() {
         hideHandle = null
         hideHandleParams = null
 
+        val params =
+            appContainer.layoutParams as? WindowManager.LayoutParams
+                ?: return
+
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        appContainer.orientation =
+            if (isVertical)
+                LinearLayout.VERTICAL
+            else
+                LinearLayout.HORIZONTAL
+
+        if (isVertical) {
+            params.width = dp(settings.dockHeightDp)
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT
+            params.gravity =
+                if (settings.dockPosition == "left")
+                    Gravity.TOP or Gravity.LEFT
+                else
+                    Gravity.TOP or Gravity.RIGHT
+
+            val maxY =
+                (resources.displayMetrics.heightPixels - appContainer.height)
+                    .coerceAtLeast(0)
+
+            params.y =
+                (maxY *
+                    settings.verticalPositionPercent
+                        .coerceIn(0, 100) /
+                    100f
+                ).toInt()
+        } else {
+            params.width = WindowManager.LayoutParams.WRAP_CONTENT
+            params.height = dp(settings.dockHeightDp)
+            params.gravity =
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            params.y = 0
+        }
+
         if (!attachDockWindow()) {
             return
         }
