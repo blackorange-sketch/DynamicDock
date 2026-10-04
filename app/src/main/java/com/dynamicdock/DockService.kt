@@ -453,47 +453,26 @@ class DockService : Service() {
 
     private fun createHandle() {
         val settings = DockSettings(this)
+
         val len = dp(settings.hideHandleLengthDp)
         val thick = dp(settings.hideHandleThicknessDp)
         val mgn = dp(settings.hideHandleMarginDp)
-
-        val c = FrameLayout(this).apply {
-            setBackgroundColor(Color.TRANSPARENT)
-        }
-
-        val bar = View(this).apply {
-            isClickable = true
-            setOnClickListener { showDock() }
-
-            background = GradientDrawable().apply {
-                setColor(Color.WHITE)
-                cornerRadius = dp(100).toFloat()
-            }
-        }
 
         val isVert =
             settings.dockPosition == "left" ||
             settings.dockPosition == "right"
 
-        if (isVert) {
-            val lpBar = FrameLayout.LayoutParams(thick, len).apply {
-                gravity =
-                    if (settings.dockPosition == "left")
-                        Gravity.START or Gravity.CENTER_VERTICAL
-                    else
-                        Gravity.END or Gravity.CENTER_VERTICAL
-
-                leftMargin =
-                    if (settings.dockPosition == "left") mgn else 0
-
-                rightMargin =
-                    if (settings.dockPosition == "right") mgn else 0
+        val bar = View(this).apply {
+            setBackgroundColor(Color.WHITE)
+            isClickable = true
+            setOnClickListener {
+                showDock()
             }
+        }
 
-            c.addView(bar, lpBar)
-
-            val p = WindowManager.LayoutParams(
-                mgn + dp(24),
+        val p = if (isVert) {
+            WindowManager.LayoutParams(
+                thick,
                 len
             ).apply {
                 type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
@@ -506,6 +485,8 @@ class DockService : Service() {
                     else
                         Gravity.TOP or Gravity.LEFT
 
+                x = mgn
+
                 val screenH = resources.displayMetrics.heightPixels
                 val maxY = (screenH - len).coerceAtLeast(0)
 
@@ -515,42 +496,28 @@ class DockService : Service() {
                     100f
                 ).toInt()
             }
-
-            windowManager.addView(c, p)
-            hideHandle = c
-
         } else {
-            val lpBar = FrameLayout.LayoutParams(
+            WindowManager.LayoutParams(
                 len,
                 thick
-            ).apply {
-                gravity =
-                    Gravity.CENTER_HORIZONTAL or
-                    Gravity.BOTTOM
-
-                bottomMargin = mgn
-            }
-
-            c.addView(bar, lpBar)
-
-            val p = WindowManager.LayoutParams(
-                len,
-                mgn + dp(24)
             ).apply {
                 type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
                 flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 format = PixelFormat.TRANSLUCENT
+
                 gravity =
                     Gravity.BOTTOM or
                     Gravity.CENTER_HORIZONTAL
-            }
 
-            windowManager.addView(c, p)
-            hideHandle = c
+                y = mgn
+            }
         }
 
-        c.alpha = 0f
-        c.animate()
+        windowManager.addView(bar, p)
+        hideHandle = bar
+
+        bar.alpha = 0f
+        bar.animate()
             .alpha(1f)
             .setDuration(150)
             .start()
