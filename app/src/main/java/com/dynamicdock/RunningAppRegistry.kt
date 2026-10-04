@@ -17,6 +17,37 @@ class RunningAppRegistry(private val context: Context) {
 
     fun getApps(): List<RunningApp> = apps.toList()
 
+    fun getPinnedApps(): List<RunningApp> {
+        return apps.filter { it.pinned }
+    }
+
+    fun movePinnedApp(packageName: String, direction: Int): Boolean {
+        val pinned = apps.filter { it.pinned }.toMutableList()
+        val index = pinned.indexOfFirst { it.packageName == packageName }
+
+        if (index == -1) {
+            return false
+        }
+
+        val newIndex = index + direction
+
+        if (newIndex < 0 || newIndex >= pinned.size) {
+            return false
+        }
+
+        val temp = pinned[index]
+        pinned[index] = pinned[newIndex]
+        pinned[newIndex] = temp
+
+        val dynamic = apps.filter { !it.pinned }
+
+        apps = (pinned + dynamic).toMutableList()
+
+        saveState()
+
+        return true
+    }
+
     fun activate(app: RunningApp) {
         val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
 

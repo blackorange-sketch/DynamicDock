@@ -38,7 +38,7 @@ class AppSelectionActivity : Activity() {
 
         val savedPackages = intent
             .getStringArrayExtra("SELECTED_PACKAGES")
-            ?.toSet()
+            ?.toList()
 
         if (savedPackages != null) {
             selectedApps.addAll(savedPackages)
@@ -179,6 +179,33 @@ class AppSelectionActivity : Activity() {
         allApps.addAll(apps)
     }
 
+    private fun moveSelectedApp(
+        packageName: String,
+        direction: Int
+    ) {
+        val list = selectedApps.toMutableList()
+        val index = list.indexOf(packageName)
+
+        if (index == -1) {
+            return
+        }
+
+        val newIndex = index + direction
+
+        if (newIndex < 0 || newIndex >= list.size) {
+            return
+        }
+
+        val temp = list[index]
+        list[index] = list[newIndex]
+        list[newIndex] = temp
+
+        selectedApps.clear()
+        selectedApps.addAll(list)
+
+        adapter.notifyDataSetChanged()
+    }
+
     private fun toggleApp(packageName: String) {
         if (selectedApps.contains(packageName)) {
             selectedApps.remove(packageName)
@@ -229,34 +256,34 @@ class AppSelectionActivity : Activity() {
     private inner class AppAdapter : BaseAdapter() {
 
         private fun buildItems(): List<DisplayItem> {
-            val pinned = allApps.filter {
-                selectedApps.contains(it.packageName)
-            }
+        val items = mutableListOf<DisplayItem>()
 
-            val available = allApps.filter {
-                !selectedApps.contains(it.packageName)
-            }
-
-            val items = mutableListOf<DisplayItem>()
-
-            if (pinned.isNotEmpty()) {
-                items.add(DisplayItem.Header("Закріплені"))
-                pinned.forEach {
-                    items.add(DisplayItem.App(it))
-                }
-            }
-
-            if (available.isNotEmpty()) {
-                items.add(DisplayItem.Header("Доступні програми"))
-                available.forEach {
-                    items.add(DisplayItem.App(it))
-                }
-            }
-
-            return items
+        val pinned = selectedApps.mapNotNull { packageName ->
+            allApps.find { it.packageName == packageName }
         }
 
-        private var items: List<DisplayItem> = buildItems()
+        val available = allApps.filter {
+            !selectedApps.contains(it.packageName)
+        }
+
+        if (pinned.isNotEmpty()) {
+            items.add(DisplayItem.Header("Закріплені"))
+            pinned.forEach {
+                items.add(DisplayItem.App(it))
+            }
+        }
+
+        if (available.isNotEmpty()) {
+            items.add(DisplayItem.Header("Доступні програми"))
+            available.forEach {
+                items.add(DisplayItem.App(it))
+            }
+        }
+
+        return items
+    }
+
+    private var items: List<DisplayItem> = buildItems()
 
         override fun notifyDataSetChanged() {
             items = buildItems()
@@ -418,6 +445,53 @@ class AppSelectionActivity : Activity() {
                             dp(48)
                         )
                     )
+
+                    if (selectedApps.contains(app.packageName)) {
+
+                        val upButton = Button(
+                            this@AppSelectionActivity
+                        ).apply {
+                            text = "↑"
+                            textSize = 18f
+                            setTextColor(primaryTextColor)
+                            setPadding(0, 0, 0, 0)
+                            minWidth = 0
+                            minimumWidth = 0
+                            minHeight = 0
+                            minimumHeight = 0
+
+                            setOnClickListener {
+                                moveSelectedApp(app.packageName, -1)
+                            }
+                        }
+
+                        val downButton = Button(
+                            this@AppSelectionActivity
+                        ).apply {
+                            text = "↓"
+                            textSize = 18f
+                            setTextColor(primaryTextColor)
+                            setPadding(0, 0, 0, 0)
+                            minWidth = 0
+                            minimumWidth = 0
+                            minHeight = 0
+                            minimumHeight = 0
+
+                            setOnClickListener {
+                                moveSelectedApp(app.packageName, 1)
+                            }
+                        }
+
+                        row.addView(
+                            upButton,
+                            LinearLayout.LayoutParams(dp(40), dp(40))
+                        )
+
+                        row.addView(
+                            downButton,
+                            LinearLayout.LayoutParams(dp(40), dp(40))
+                        )
+                    }
 
                     return row
                 }
