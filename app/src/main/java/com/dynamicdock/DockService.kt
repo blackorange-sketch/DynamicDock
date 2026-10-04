@@ -66,10 +66,10 @@ class DockService : Service() {
         }
 
         setupContainer()
-        refreshUI()
+        refreshDock() // Викликаємо public метод
     }
 
-    // --- ПУБЛІЧНІ МЕТОДИ ДЛЯ НАЛАШТУВАНЬ (викликаються з SettingsActivity) ---
+    // --- ПУБЛІЧНІ МЕТОДИ ДЛЯ НАЛАШТУВАНЬ ---
 
     fun refreshDock() {
         appContainer.post {

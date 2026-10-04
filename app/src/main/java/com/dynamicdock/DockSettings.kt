@@ -165,3 +165,12 @@ class DockSettings(
                 .apply()
         }
 }
+
+    var menuXOffset: Int
+        get() = preferences.getInt("menu_x_offset", 0)
+        set(value) { preferences.edit().putInt("menu_x_offset", value).apply() }
+
+    var menuYOffset: Int
+        get() = preferences.getInt("menu_y_offset", 0)
+        set(value) { preferences.edit().putInt("menu_y_offset", value).apply() }
+}
