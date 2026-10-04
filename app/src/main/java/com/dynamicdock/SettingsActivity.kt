@@ -184,11 +184,12 @@ class SettingsActivity : Activity() {
             text = "Програми Dock"
 
             setOnClickListener {
-                startActivity(
+                startActivityForResult(
                     android.content.Intent(
                         this@SettingsActivity,
                         AppSelectionActivity::class.java
-                    )
+                    ),
+                    REQUEST_APP_SELECTION
                 )
             }
         }
@@ -442,6 +443,24 @@ class SettingsActivity : Activity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
         )
+    }
+
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: android.content.Intent?
+    ) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_APP_SELECTION && resultCode == RESULT_OK) {
+            val packages = data
+                ?.getStringArrayExtra("SELECTED_PACKAGES")
+                ?.toList()
+                ?: emptyList()
+
+            RunningAppRegistry(this).setPinnedPackages(packages)
+            DockService.instance?.refreshDock()
+        }
     }
 
     private fun dp(value: Int): Int {

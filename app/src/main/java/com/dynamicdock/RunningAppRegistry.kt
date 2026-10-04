@@ -164,6 +164,45 @@ class RunningAppRegistry(private val context: Context) {
         }
     }
 
+    fun setPinnedPackages(packages: List<String>) {
+        val packageSet = packages.toSet()
+
+        apps = apps.map { app ->
+            app.copy(pinned = packageSet.contains(app.packageName))
+        }.toMutableList()
+
+        val existingPackages = apps.map { it.packageName }.toSet()
+        val packageManager = context.packageManager
+
+        for (pkg in packages) {
+            if (pkg in existingPackages) continue
+
+            try {
+                val appInfo = packageManager.getApplicationInfo(pkg, 0)
+                val appName = packageManager.getApplicationLabel(appInfo).toString()
+                val icon = packageManager.getApplicationIcon(appInfo)
+
+                apps.add(
+                    RunningApp(
+                        packageName = pkg,
+                        appName = appName,
+                        icon = icon,
+                        pinned = true
+                    )
+                )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+
+        val pinned = apps.filter { it.pinned }
+        val dynamic = apps.filter { !it.pinned }
+
+        apps = (pinned + dynamic).toMutableList()
+
+        saveState()
+    }
+
     private fun saveState() {
         val pinnedPackages = apps.filter { it.pinned }.map { it.packageName }
         val jsonArray = JSONArray(pinnedPackages)
