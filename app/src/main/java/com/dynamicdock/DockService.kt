@@ -45,7 +45,6 @@ class DockService : Service() {
     private var hideHandleParams: WindowManager.LayoutParams? = null
     private val handler = Handler(Looper.getMainLooper())
     private val autoHideRunnable = Runnable { hideDock() }
-    private var dockPositionAnimator: android.animation.ValueAnimator? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -94,6 +93,7 @@ class DockService : Service() {
         } else {
             params.height = dp(heightDp)
         }
+        windowManager.updateViewLayout(appContainer, params)
         rebuildDock()
     }
 
@@ -105,35 +105,12 @@ class DockService : Service() {
         val settings = DockSettings(this)
         val isVertical = position == "left" || position == "right"
 
-        dockPositionAnimator?.cancel()
+        val oldLocation = IntArray(2)
+        appContainer.getLocationOnScreen(oldLocation)
 
-        if (!dockWindowAttached) {
-            appContainer.orientation =
-                if (isVertical) {
-                    LinearLayout.VERTICAL
-                } else {
-                    LinearLayout.HORIZONTAL
-                }
-
-            if (isVertical) {
-                params.width = dp(settings.dockHeightDp)
-                params.height = WindowManager.LayoutParams.WRAP_CONTENT
-                params.gravity =
-                    if (position == "left") {
-                        Gravity.TOP or Gravity.LEFT
-                    } else {
-                        Gravity.TOP or Gravity.RIGHT
-                    }
-            } else {
-                params.width = WindowManager.LayoutParams.WRAP_CONTENT
-                params.height = dp(settings.dockHeightDp)
-                params.gravity =
-                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                params.y = 0
-            }
-
-            return
-        }
+        appContainer.animate().cancel()
+        appContainer.translationX = 0f
+        appContainer.translationY = 0f
 
         appContainer.orientation =
             if (isVertical) {
@@ -150,158 +127,98 @@ class DockService : Service() {
             params.height = dp(settings.dockHeightDp)
         }
 
-        /*
-         * Keep the current gravity while the new dimensions are applied.
-         * This prevents WindowManager from immediately jumping the dock
-         * to the new corner.
-         */
-        windowManager.updateViewLayout(appContainer, params)
         rebuildDock()
 
-        appContainer.post {
-            val currentLocation = IntArray(2)
-            appContainer.getLocationOnScreen(currentLocation)
-
-            val currentLeft = currentLocation[0]
-            val currentTop = currentLocation[1]
-            val currentRight = currentLeft + appContainer.width
-            val currentBottom = currentTop + appContainer.height
-
-            val screenWidth = resources.displayMetrics.widthPixels
-            val screenHeight = resources.displayMetrics.heightPixels
-
-            appContainer.measure(
-                View.MeasureSpec.makeMeasureSpec(
-                    resources.displayMetrics.widthPixels,
-                    View.MeasureSpec.AT_MOST
-                ),
-                View.MeasureSpec.makeMeasureSpec(
-                    resources.displayMetrics.heightPixels,
-                    View.MeasureSpec.AT_MOST
-                )
+        appContainer.measure(
+            View.MeasureSpec.makeMeasureSpec(
+                resources.displayMetrics.widthPixels,
+                View.MeasureSpec.AT_MOST
+            ),
+            View.MeasureSpec.makeMeasureSpec(
+                resources.displayMetrics.heightPixels,
+                View.MeasureSpec.AT_MOST
             )
+        )
 
-            val newWidth = appContainer.measuredWidth
-            val newHeight = appContainer.measuredHeight
+        val newWidth = appContainer.measuredWidth
+        val newHeight = appContainer.measuredHeight
 
-            val targetGravity =
-                if (isVertical) {
-                    if (position == "left") {
-                        Gravity.TOP or Gravity.LEFT
-                    } else {
-                        Gravity.TOP or Gravity.RIGHT
-                    }
-                } else {
-                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-                }
+        val screenWidth = resources.displayMetrics.widthPixels
+        val screenHeight = resources.displayMetrics.heightPixels
 
-            /*
-             * Convert the current absolute screen position into offsets
-             * for the new gravity. This makes the gravity change visually
-             * invisible.
-             */
-            params.gravity = targetGravity
+        val maxY =
+            (screenHeight - newHeight)
+                .coerceAtLeast(0)
 
-            val startX: Int
-            val startY: Int
-
+        val targetY =
             if (isVertical) {
-                startX =
-                    if (position == "left") {
-                        currentLeft
-                    } else {
-                        screenWidth - currentRight
-                    }
-
-                startY = currentTop
+                (
+                    maxY *
+                        settings.verticalPositionPercent
+                            .coerceIn(0, 100) /
+                        100f
+                ).toInt()
             } else {
-                startX =
-                    currentLeft -
-                        (screenWidth - newWidth) / 2
-
-                startY =
-                    screenHeight - currentBottom
+                0
             }
 
-            val maxY =
-                (screenHeight - newHeight)
-                    .coerceAtLeast(0)
-
-            val targetX = 0
-            val targetY =
-                if (isVertical) {
-                    (
-                        maxY *
-                            settings.verticalPositionPercent
-                                .coerceIn(0, 100) /
-                            100f
-                    ).toInt()
-                } else {
+        val targetLeft =
+            if (isVertical) {
+                if (position == "left") {
                     0
+                } else {
+                    screenWidth - newWidth
                 }
-
-            params.x = startX
-            params.y = startY
-
-            windowManager.updateViewLayout(
-                appContainer,
-                params
-            )
-
-            val animator =
-                android.animation.ValueAnimator.ofFloat(0f, 1f)
-
-            animator.duration = 300L
-
-            animator.interpolator =
-                android.view.animation.DecelerateInterpolator()
-
-            animator.addUpdateListener {
-                val progress = it.animatedValue as Float
-
-                params.x =
-                    (startX +
-                        (targetX - startX) * progress)
-                        .toInt()
-
-                params.y =
-                    (startY +
-                        (targetY - startY) * progress)
-                        .toInt()
-
-                try {
-                    windowManager.updateViewLayout(
-                        appContainer,
-                        params
-                    )
-                } catch (_: Exception) {
-                }
+            } else {
+                (screenWidth - newWidth) / 2
             }
 
-            animator.addListener(
-                object : android.animation.AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(
-                        animation: android.animation.Animator
-                    ) {
-                params.x = targetX
-                params.y = targetY
+        val targetTop =
+            if (isVertical) {
+                targetY
+            } else {
+                screenHeight - newHeight
+            }
 
-                try {
-                    windowManager.updateViewLayout(
-                        appContainer,
-                        params
-                    )
-                } catch (_: Exception) {
-                }
+        val offsetX =
+            oldLocation[0] - targetLeft
 
-                        adjustPosition()
-                    }
+        val offsetY =
+            oldLocation[1] - targetTop
+
+        params.gravity =
+            if (isVertical) {
+                if (position == "left") {
+                    Gravity.TOP or Gravity.LEFT
+                } else {
+                    Gravity.TOP or Gravity.RIGHT
                 }
+            } else {
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            }
+
+        params.x = 0
+        params.y = targetY
+
+        appContainer.translationX = offsetX.toFloat()
+        appContainer.translationY = offsetY.toFloat()
+
+        windowManager.updateViewLayout(
+            appContainer,
+            params
+        )
+
+        appContainer.animate()
+            .translationX(0f)
+            .translationY(0f)
+            .setDuration(300L)
+            .setInterpolator(
+                android.view.animation.DecelerateInterpolator()
             )
-
-            dockPositionAnimator = animator
-            animator.start()
-        }
+            .withEndAction {
+                adjustPosition()
+            }
+            .start()
     }
 
     fun updateVerticalPosition(percent: Int) {
