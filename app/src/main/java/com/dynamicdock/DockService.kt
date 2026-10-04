@@ -488,7 +488,7 @@ class DockService : Service() {
             settings.dockPosition == "right"
 
         val bar = View(this).apply {
-            setBackgroundColor(Color.WHITE)
+            setBackgroundColor(Color.TRANSPARENT)
             isClickable = true
             setOnClickListener {
                 showDock()
