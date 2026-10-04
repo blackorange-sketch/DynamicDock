@@ -56,7 +56,18 @@ class RunningAppRegistry(private val context: Context) {
 
             if (!current.pinned) {
                 apps.removeAt(existingIndex)
-                apps.add(0, app.copy(pinned = false))
+
+                val firstUnpinnedIndex =
+                    apps.indexOfFirst { !it.pinned }
+
+                if (firstUnpinnedIndex == -1) {
+                    apps.add(app.copy(pinned = false))
+                } else {
+                    apps.add(
+                        firstUnpinnedIndex,
+                        app.copy(pinned = false)
+                    )
+                }
             } else {
                 apps[existingIndex] = app.copy(pinned = true)
             }
