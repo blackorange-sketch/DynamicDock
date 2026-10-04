@@ -154,7 +154,7 @@ class DockService : Service() {
         appContainer = LinearLayout(this).apply {
             orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.TRANSPARENT)
+            setBackgroundResource(R.drawable.dock_background)
             visibility = View.INVISIBLE
         }
 
@@ -477,76 +477,80 @@ class DockService : Service() {
     }
 
     private fun createHandle() {
-        val settings = DockSettings(this)
+    val settings = DockSettings(this)
 
-        val len = dp(settings.hideHandleLengthDp)
-        val thick = dp(settings.hideHandleThicknessDp)
-        val mgn = dp(settings.hideHandleMarginDp)
+    val len = dp(settings.hideHandleLengthDp)
+    val thick = dp(settings.hideHandleThicknessDp)
+    val mgn = dp(settings.hideHandleMarginDp)
 
-        val isVert =
-            settings.dockPosition == "left" ||
-            settings.dockPosition == "right"
+    val isVert =
+        settings.dockPosition == "left" ||
+        settings.dockPosition == "right"
 
-        val bar = View(this).apply {
-            setBackgroundColor(Color.TRANSPARENT)
-            isClickable = true
-            setOnClickListener {
-                showDock()
-            }
+    val bar = View(this).apply {
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            setColor(Color.argb(180, 255, 255, 255))
+            cornerRadius = (thick / 2f)
         }
-
-        val p = if (isVert) {
-            WindowManager.LayoutParams(
-                thick,
-                len
-            ).apply {
-                type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                format = PixelFormat.TRANSLUCENT
-
-                gravity =
-                    if (settings.dockPosition == "right")
-                        Gravity.TOP or Gravity.RIGHT
-                    else
-                        Gravity.TOP or Gravity.LEFT
-
-                x = mgn
-
-                val screenH = resources.displayMetrics.heightPixels
-                val maxY = (screenH - len).coerceAtLeast(0)
-
-                y = (
-                    maxY *
-                    settings.verticalPositionPercent /
-                    100f
-                ).toInt()
-            }
-        } else {
-            WindowManager.LayoutParams(
-                len,
-                thick
-            ).apply {
-                type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                format = PixelFormat.TRANSLUCENT
-
-                gravity =
-                    Gravity.BOTTOM or
-                    Gravity.CENTER_HORIZONTAL
-
-                y = mgn
-            }
+        isClickable = true
+        setOnClickListener {
+            showDock()
         }
-
-        windowManager.addView(bar, p)
-        hideHandle = bar
-
-        bar.alpha = 0f
-        bar.animate()
-            .alpha(1f)
-            .setDuration(150)
-            .start()
     }
+
+    val p = if (isVert) {
+        WindowManager.LayoutParams(
+            thick,
+            len
+        ).apply {
+            type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            format = PixelFormat.TRANSLUCENT
+
+            gravity =
+                if (settings.dockPosition == "right")
+                    Gravity.TOP or Gravity.RIGHT
+                else
+                    Gravity.TOP or Gravity.LEFT
+
+            x = mgn
+
+            val screenH = resources.displayMetrics.heightPixels
+            val maxY = (screenH - len).coerceAtLeast(0)
+
+            y = (
+                maxY *
+                settings.verticalPositionPercent /
+                100f
+            ).toInt()
+        }
+    } else {
+        WindowManager.LayoutParams(
+            len,
+            thick
+        ).apply {
+            type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+            format = PixelFormat.TRANSLUCENT
+
+            gravity =
+                Gravity.BOTTOM or
+                Gravity.CENTER_HORIZONTAL
+
+            y = mgn
+        }
+    }
+
+    windowManager.addView(bar, p)
+    hideHandle = bar
+
+    bar.alpha = 0f
+    bar.animate()
+        .alpha(1f)
+        .setDuration(150)
+        .start()
+}
 
     private fun scheduleAutoHide() {
         handler.removeCallbacks(autoHideRunnable)
