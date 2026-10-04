@@ -2,8 +2,6 @@ package com.dynamicdock
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity
-import android.app.AppOpsManager
-import android.os.Process
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
@@ -63,46 +61,15 @@ class MainActivity : Activity() {
             }
         }
 
-        val usageAccessButton = Button(this).apply {
-            text = "Дозвіл Usage Access"
-
-            setOnClickListener {
-                startActivity(
-                    Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                )
-            }
-        }
-
         layout.addView(title)
         layout.addView(overlayButton)
         layout.addView(settingsButton)
-        layout.addView(usageAccessButton)
 
         setContentView(layout)
 
         if (!isAccessibilityEnabled()) {
             checkAccessibilityPermission()
         }
-
-        if (!isUsageAccessEnabled()) {
-            startActivity(
-                Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-            )
-        }
-    }
-
-    private fun isUsageAccessEnabled(): Boolean {
-        val appOps =
-            getSystemService(APP_OPS_SERVICE) as AppOpsManager
-
-        val mode =
-            appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                packageName
-            )
-
-        return mode == AppOpsManager.MODE_ALLOWED
     }
 
     private fun checkAccessibilityPermission() {
@@ -147,14 +114,6 @@ class MainActivity : Activity() {
                     it.name
                 ) == expectedComponent
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        if (isAccessibilityEnabled()) {
-            // Accessibility already enabled.
         }
     }
 }
