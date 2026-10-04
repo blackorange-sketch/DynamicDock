@@ -96,14 +96,17 @@ class RunningAppRegistry(private val context: Context) {
         }
     }
 
-    fun removeMissingDynamicApps(visiblePackages: Set<String>) {
+    fun removeMissingDynamicApps(visiblePackages: Set<String>): Boolean {
+        var changed = false
         val iterator = apps.iterator()
         while (iterator.hasNext()) {
             val app = iterator.next()
             if (!app.pinned && app.packageName !in visiblePackages) {
                 iterator.remove()
+                changed = true
             }
         }
+        return changed
     }
 
     fun restorePinned(serviceContext: Context) {
