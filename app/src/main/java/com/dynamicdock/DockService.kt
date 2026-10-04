@@ -69,6 +69,11 @@ class DockService : Service() {
         refreshDock()
     }
 
+    fun reloadPinnedApps() {
+        registry.reloadPinnedApps()
+        refreshDock()
+    }
+
     fun refreshDock() {
         appContainer.post {
             rebuildDock()

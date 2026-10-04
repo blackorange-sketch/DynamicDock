@@ -464,6 +464,7 @@ class SettingsActivity : Activity() {
                 ?: emptyList()
 
             RunningAppRegistry(this).setPinnedPackages(packages)
+            DockService.instance?.reloadPinnedApps()
             DockService.instance?.refreshDock()
         }
     }

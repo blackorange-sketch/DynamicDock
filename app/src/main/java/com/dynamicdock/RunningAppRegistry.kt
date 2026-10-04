@@ -6,7 +6,9 @@ import org.json.JSONException
 
 class RunningAppRegistry(private val context: Context) {
 
-    private val prefs = context.getSharedPreferences("dynamic_dock_registry", Context.MODE_PRIVATE)
+    private val prefs =
+        context.getSharedPreferences("dynamic_dock_registry", Context.MODE_PRIVATE)
+
     private var apps: MutableList<RunningApp> = mutableListOf()
 
     init {
@@ -17,9 +19,10 @@ class RunningAppRegistry(private val context: Context) {
 
     fun activate(app: RunningApp) {
         val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
-        
+
         if (existingIndex != -1) {
             val current = apps[existingIndex]
+
             if (!current.pinned) {
                 apps.removeAt(existingIndex)
                 apps.add(0, app.copy(pinned = false))
@@ -35,29 +38,33 @@ class RunningAppRegistry(private val context: Context) {
                 apps.add(firstUnpinnedIndex, app.copy(pinned = false))
             }
         }
-        
+
         trimDynamicAppsToLimit()
         saveState()
     }
 
     fun pin(packageName: String) {
         val index = apps.indexOfFirst { it.packageName == packageName }
+
         if (index != -1) {
             val app = apps[index]
             apps.removeAt(index)
-            
+
             val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
+
             if (firstUnpinnedIndex == -1) {
                 apps.add(app.copy(pinned = true))
             } else {
                 apps.add(firstUnpinnedIndex, app.copy(pinned = true))
             }
+
             saveState()
         }
     }
 
     fun unpin(packageName: String) {
         val index = apps.indexOfFirst { it.packageName == packageName }
+
         if (index != -1) {
             val app = apps[index]
             apps.removeAt(index)
@@ -75,18 +82,23 @@ class RunningAppRegistry(private val context: Context) {
     }
 
     fun removeDynamic(packageName: String): Boolean {
-        val index = apps.indexOfFirst { it.packageName == packageName && !it.pinned }
+        val index = apps.indexOfFirst {
+            it.packageName == packageName && !it.pinned
+        }
+
         if (index != -1) {
             apps.removeAt(index)
+            saveState()
             return true
         }
+
         return false
     }
 
     fun swapApps(pkg1: String, pkg2: String) {
         val idx1 = apps.indexOfFirst { it.packageName == pkg1 }
         val idx2 = apps.indexOfFirst { it.packageName == pkg2 }
-        
+
         if (idx1 != -1 && idx2 != -1) {
             val temp = apps[idx1]
             apps[idx1] = apps[idx2]
@@ -98,11 +110,13 @@ class RunningAppRegistry(private val context: Context) {
     fun trimDynamicAppsToLimit() {
         val settings = DockSettings(context)
         val limit = settings.maxDynamicApps
-        
+
         var dynamicCount = 0
+
         for (i in apps.indices.reversed()) {
             if (!apps[i].pinned) {
                 dynamicCount++
+
                 if (dynamicCount > limit) {
                     apps.removeAt(i)
                 }
@@ -110,16 +124,25 @@ class RunningAppRegistry(private val context: Context) {
         }
     }
 
-    fun removeMissingDynamicApps(visiblePackages: Set<String>): Boolean {
+    fun removeMissingDynamicApps(
+        visiblePackages: Set<String>
+    ): Boolean {
         var changed = false
         val iterator = apps.iterator()
+
         while (iterator.hasNext()) {
             val app = iterator.next()
+
             if (!app.pinned && app.packageName !in visiblePackages) {
                 iterator.remove()
                 changed = true
             }
         }
+
+        if (changed) {
+            saveState()
+        }
+
         return changed
     }
 
@@ -127,8 +150,13 @@ class RunningAppRegistry(private val context: Context) {
         loadPinnedApps()
     }
 
+    fun reloadPinnedApps() {
+        loadPinnedApps()
+    }
+
     private fun loadPinnedApps() {
-        val jsonStr = prefs.getString("pinned_apps_json", "[]") ?: "[]"
+        val jsonStr =
+            prefs.getString("pinned_apps_json", "[]") ?: "[]"
 
         try {
             val jsonArray = JSONArray(jsonStr)
@@ -139,9 +167,16 @@ class RunningAppRegistry(private val context: Context) {
                 val pkg = jsonArray.getString(i)
 
                 try {
-                    val appInfo = packageManager.getApplicationInfo(pkg, 0)
-                    val appName = packageManager.getApplicationLabel(appInfo).toString()
-                    val icon = packageManager.getApplicationIcon(appInfo)
+                    val appInfo =
+                        packageManager.getApplicationInfo(pkg, 0)
+
+                    val appName =
+                        packageManager
+                            .getApplicationLabel(appInfo)
+                            .toString()
+
+                    val icon =
+                        packageManager.getApplicationIcon(appInfo)
 
                     newPinned.add(
                         RunningApp(
@@ -156,8 +191,12 @@ class RunningAppRegistry(private val context: Context) {
                 }
             }
 
+            val dynamic =
+                apps.filter { !it.pinned }
+
             apps.clear()
             apps.addAll(newPinned)
+            apps.addAll(dynamic)
 
         } catch (e: JSONException) {
             e.printStackTrace()
@@ -168,19 +207,32 @@ class RunningAppRegistry(private val context: Context) {
         val packageSet = packages.toSet()
 
         apps = apps.map { app ->
-            app.copy(pinned = packageSet.contains(app.packageName))
+            app.copy(
+                pinned = packageSet.contains(app.packageName)
+            )
         }.toMutableList()
 
-        val existingPackages = apps.map { it.packageName }.toSet()
+        val existingPackages =
+            apps.map { it.packageName }.toSet()
+
         val packageManager = context.packageManager
 
         for (pkg in packages) {
-            if (pkg in existingPackages) continue
+            if (pkg in existingPackages) {
+                continue
+            }
 
             try {
-                val appInfo = packageManager.getApplicationInfo(pkg, 0)
-                val appName = packageManager.getApplicationLabel(appInfo).toString()
-                val icon = packageManager.getApplicationIcon(appInfo)
+                val appInfo =
+                    packageManager.getApplicationInfo(pkg, 0)
+
+                val appName =
+                    packageManager
+                        .getApplicationLabel(appInfo)
+                        .toString()
+
+                val icon =
+                    packageManager.getApplicationIcon(appInfo)
 
                 apps.add(
                     RunningApp(
@@ -204,8 +256,18 @@ class RunningAppRegistry(private val context: Context) {
     }
 
     private fun saveState() {
-        val pinnedPackages = apps.filter { it.pinned }.map { it.packageName }
+        val pinnedPackages =
+            apps
+                .filter { it.pinned }
+                .map { it.packageName }
+
         val jsonArray = JSONArray(pinnedPackages)
-        prefs.edit().putString("pinned_apps_json", jsonArray.toString()).apply()
+
+        prefs.edit()
+            .putString(
+                "pinned_apps_json",
+                jsonArray.toString()
+            )
+            .apply()
     }
 }
