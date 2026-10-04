@@ -66,7 +66,7 @@ class DockService : Service() {
         }
 
         setupContainer()
-        refreshDock() // Викликаємо public метод
+        refreshDock()
     }
 
     // --- ПУБЛІЧНІ МЕТОДИ ДЛЯ НАЛАШТУВАНЬ ---
@@ -396,18 +396,18 @@ class DockService : Service() {
         val isVert = settings.dockPosition in listOf("left","right")
         if (isVert) {
             c.addView(bar, FrameLayout.LayoutParams(thick, len).apply { 
-                gravity = if (settings.dockPosition=="left") Gravity.START|Gravity.CENTER_VERTICAL else Gravity.END|Gravity.CENTER_VERTICAL
+                gravity = if (settings.dockPosition=="left") Gravity.START or Gravity.CENTER_VERTICAL else Gravity.END or Gravity.CENTER_VERTICAL
                 leftMargin = if (settings.dockPosition=="left") mgn else 0; rightMargin = if (settings.dockPosition=="right") mgn else 0
             })
             val p = WindowManager.LayoutParams(mgn+dp(24), len, WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT).apply {
-                gravity = if (settings.dockPosition=="right") Gravity.TOP|Gravity.RIGHT else Gravity.TOP|Gravity.LEFT
+                gravity = if (settings.dockPosition=="right") Gravity.TOP or Gravity.RIGHT else Gravity.TOP or Gravity.LEFT
                 y = ((resources.displayMetrics.heightPixels-len)*settings.verticalPositionPercent/100f).toInt()
             }
             windowManager.addView(c, p); hideHandle = c
         } else {
-            c.addView(bar, FrameLayout.LayoutParams(len, thick).apply { gravity = Gravity.CENTER_HORIZONTAL|Gravity.BOTTOM; bottomMargin = mgn })
+            c.addView(bar, FrameLayout.LayoutParams(len, thick).apply { gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM; bottomMargin = mgn })
             val p = WindowManager.LayoutParams(len, mgn+dp(24), WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT).apply {
-                gravity = Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL
+                gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
             }
             windowManager.addView(c, p); hideHandle = c
         }

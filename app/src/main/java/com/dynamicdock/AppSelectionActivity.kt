@@ -95,7 +95,6 @@ class AppSelectionActivity : Activity() {
                 )
 
                 setOnCheckedChangeListener { _, checked ->
-                    registry.setSelected(
                         app.packageName,
                         checked
                     )

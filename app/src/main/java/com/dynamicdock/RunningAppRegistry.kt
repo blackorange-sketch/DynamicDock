@@ -118,7 +118,6 @@ class RunningAppRegistry(private val context: Context) {
             
             for (i in 0 until jsonArray.length()) {
                 val pkg = jsonArray.getString(i)
-                // Icon is null initially, will be loaded by Service later
                 newPinned.add(RunningApp(packageName = pkg, appName = "", icon = null, pinned = true))
             }
             

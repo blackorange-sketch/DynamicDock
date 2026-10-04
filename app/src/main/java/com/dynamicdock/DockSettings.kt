@@ -35,7 +35,6 @@ class DockSettings(context: Context) {
         get() = preferences.getBoolean("auto_hide", true)
         set(value) { preferences.edit().putBoolean("auto_hide", value).apply() }
 
-    // Змінено Long на Int, щоб уникнути конфліктів у SettingsActivity
     var autoHideDelaySeconds: Int
         get() = preferences.getInt("auto_hide_delay_seconds", 5)
         set(value) { preferences.edit().putInt("auto_hide_delay_seconds", value).apply() }
@@ -60,7 +59,6 @@ class DockSettings(context: Context) {
         get() = preferences.getInt("max_dynamic_apps", 5)
         set(value) { preferences.edit().putInt("max_dynamic_apps", value).apply() }
 
-    // Додаємо зміщення меню
     var menuXOffset: Int
         get() = preferences.getInt("menu_x_offset", 0)
         set(value) { preferences.edit().putInt("menu_x_offset", value).apply() }
