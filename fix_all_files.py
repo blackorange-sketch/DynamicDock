@@ -1,4 +1,39 @@
-package com.dynamicdock
+import os
+import sys
+
+# Визначаємо корінь проєкту динамічно
+project_root = None
+current_dir = os.getcwd()
+
+# Шукаємо папку DynamicDock або просто перевіряємо структуру
+if os.path.exists(os.path.join(current_dir, "app", "src", "main", "java", "com", "dynamicdock")):
+    project_root = current_dir
+elif os.path.exists(os.path.join(current_dir, "..", "DynamicDock", "app")):
+    project_root = os.path.abspath(os.path.join(current_dir, "..", "DynamicDock"))
+else:
+    # Спроба знайти через HOME
+    home = os.path.expanduser("~")
+    possible_paths = [
+        os.path.join(home, "DynamicDock"),
+        os.path.join(home, "storage", "shared", "DynamicDock")
+    ]
+    for p in possible_paths:
+        if os.path.exists(os.path.join(p, "app", "src", "main", "java", "com", "dynamicdock")):
+            project_root = p
+            break
+
+if not project_root:
+    print("❌ НЕ ЗНАЙДЕНО ПРОЄКТ! Будь ласка, перейди в папку ~/DynamicDock перед запуском.")
+    sys.exit(1)
+
+print(f"✅ Знайдено проєкт у: {project_root}")
+
+base_path = os.path.join(project_root, "app", "src", "main", "java", "com", "dynamicdock")
+
+# ==========================================
+# 1. DockService.kt (Чистий код без злитих рядків)
+# ==========================================
+service_code = '''package com.dynamicdock
 
 import android.app.Service
 import android.content.Intent
@@ -209,7 +244,7 @@ class DockService : Service() {
         )
 
         val closeBtn = TextView(this).apply {
-            text = "\u00d7" // × символ
+            text = "\\u00d7" // × символ
             textSize = 20f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
@@ -562,3 +597,447 @@ class DockService : Service() {
         super.onDestroy()
     }
 }
+'''
+
+with open(os.path.join(base_path, "DockService.kt"), "w", encoding="utf-8") as f:
+    f.write(service_code)
+print("✓ DockService.kt оновлено")
+
+# ==========================================
+# 2. DockContextMenu.kt
+# ==========================================
+context_menu_code = '''package com.dynamicdock
+
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
+import android.view.WindowManager
+import android.widget.ImageButton
+import android.widget.LinearLayout
+
+class DockContextMenu(
+    private val service: DockService,
+    private val windowManager: WindowManager,
+    private val onAction: (Action, RunningApp) -> Unit
+) {
+
+    enum class Action { PIN, UNPIN }
+
+    private var menuView: LinearLayout? = null
+
+    fun show(anchor: View, app: RunningApp, action: Action, dockPosition: String) {
+        dismiss()
+
+        val buttonSize = dp(28)
+        val margin = dp(4)
+        val gap = dp(12)
+        val screenMargin = dp(8)
+
+        val button = ImageButton(service).apply {
+            setImageResource(if (action == Action.PIN) android.R.drawable.ic_menu_add else android.R.drawable.ic_menu_close_clear_cancel)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(Color.argb(220, 45, 45, 45))
+                setStroke(dp(1), Color.argb(180, 255, 255, 255))
+            }
+            setColorFilter(android.graphics.PorterDuffColorFilter(Color.WHITE, android.graphics.PorterDuff.Mode.SRC_IN))
+            setOnClickListener {
+                onAction(action, app)
+                dismiss()
+            }
+        }
+
+        val container = LinearLayout(service).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER
+            setPadding(margin, margin, margin, margin)
+            background = GradientDrawable().apply {
+                cornerRadius = dp(10).toFloat()
+                setColor(Color.argb(235, 25, 25, 25))
+                setStroke(dp(1), Color.argb(130, 255, 255, 255))
+            }
+            addView(button, LinearLayout.LayoutParams(buttonSize, buttonSize))
+            alpha = 0f
+            scaleX = 0.8f
+            scaleY = 0.8f
+        }
+
+        container.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_OUTSIDE) {
+                dismiss()
+                true
+            } else false
+        }
+
+        val location = IntArray(2)
+        anchor.getLocationOnScreen(location)
+        
+        val anchorLeft = location[0]
+        val anchorTop = location[1]
+        val anchorRight = anchorLeft + anchor.width
+        val anchorBottom = anchorTop + anchor.height
+        val anchorCenterX = anchorLeft + anchor.width / 2
+
+        val menuWidth = buttonSize + margin * 2
+        val menuHeight = buttonSize + margin * 2
+
+        val displayMetrics = service.resources.displayMetrics
+        val screenWidth = displayMetrics.widthPixels
+        val screenHeight = displayMetrics.heightPixels
+
+        var menuX: Int
+        var menuY: Int
+
+        when (dockPosition) {
+            "bottom" -> {
+                menuX = anchorCenterX - menuWidth / 2
+                menuY = anchorTop - menuHeight - gap
+            }
+            "top" -> {
+                menuX = anchorCenterX - menuWidth / 2
+                menuY = anchorBottom + gap
+            }
+            "left" -> {
+                menuX = anchorRight + gap
+                menuY = anchorTop + (anchor.height - menuHeight) / 2
+            }
+            "right" -> {
+                menuX = anchorLeft - menuWidth - gap
+                menuY = anchorTop + (anchor.height - menuHeight) / 2
+            }
+            else -> {
+                menuX = anchorCenterX - menuWidth / 2
+                menuY = anchorTop - menuHeight - gap
+            }
+        }
+
+        val maxX = (screenWidth - menuWidth - screenMargin).coerceAtLeast(screenMargin)
+        val maxY = (screenHeight - menuHeight - screenMargin).coerceAtLeast(screenMargin)
+        menuX = menuX.coerceIn(screenMargin, maxX)
+        menuY = menuY.coerceIn(screenMargin, maxY)
+
+        try {
+            val settings = DockSettings(service)
+            menuX += settings.menuXOffset
+            menuY += settings.menuYOffset
+        } catch (_: Exception) {}
+
+        val params = WindowManager.LayoutParams(
+            menuWidth, menuHeight,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+            android.graphics.PixelFormat.TRANSLUCENT
+        )
+        params.gravity = Gravity.TOP or Gravity.LEFT
+        params.x = menuX
+        params.y = menuY
+        
+        menuView = container
+        windowManager.addView(container, params)
+
+        container.animate()
+            .alpha(1f).scaleX(1f).scaleY(1f)
+            .setDuration(120).start()
+    }
+
+    fun dismiss() {
+        val view = menuView ?: return
+        try {
+            view.animate().cancel()
+            windowManager.removeView(view)
+        } catch (_: Exception) {}
+        menuView = null
+    }
+
+    private fun dp(value: Int): Int = (value * service.resources.displayMetrics.density).toInt()
+}
+'''
+
+with open(os.path.join(base_path, "DockContextMenu.kt"), "w", encoding="utf-8") as f:
+    f.write(context_menu_code)
+print("✓ DockContextMenu.kt оновлено")
+
+# ==========================================
+# 3. DockSettings.kt (Гарантуємо наявність offset)
+# ==========================================
+settings_code = '''package com.dynamicdock
+
+import android.content.Context
+import android.content.SharedPreferences
+
+class DockSettings(context: Context) {
+
+    private val preferences: SharedPreferences = context.getSharedPreferences("dynamic_dock_settings", Context.MODE_PRIVATE)
+
+    var dockPosition: String
+        get() = preferences.getString("dock_position", "bottom") ?: "bottom"
+        set(value) { preferences.edit().putString("dock_position", value).apply() }
+
+    var dockHeightDp: Int
+        get() = preferences.getInt("dock_height_dp", 40)
+        set(value) { preferences.edit().putInt("dock_height_dp", value).apply() }
+
+    var iconSizeDp: Int
+        get() = preferences.getInt("icon_size_dp", 32)
+        set(value) { preferences.edit().putInt("icon_size_dp", value).apply() }
+
+    var horizontalPaddingDp: Int
+        get() = preferences.getInt("horizontal_padding_dp", 8)
+        set(value) { preferences.edit().putInt("horizontal_padding_dp", value).apply() }
+
+    var verticalPaddingDp: Int
+        get() = preferences.getInt("vertical_padding_dp", 4)
+        set(value) { preferences.edit().putInt("vertical_padding_dp", value).apply() }
+
+    var showAppLabels: Boolean
+        get() = preferences.getBoolean("show_app_labels", false)
+        set(value) { preferences.edit().putBoolean("show_app_labels", value).apply() }
+
+    var autoHide: Boolean
+        get() = preferences.getBoolean("auto_hide", true)
+        set(value) { preferences.edit().putBoolean("auto_hide", value).apply() }
+
+    var autoHideDelaySeconds: Int
+        get() = preferences.getInt("auto_hide_delay_seconds", 5)
+        set(value) { preferences.edit().putInt("auto_hide_delay_seconds", value).apply() }
+
+    var hideHandleLengthDp: Int
+        get() = preferences.getInt("hide_handle_length_dp", 60)
+        set(value) { preferences.edit().putInt("hide_handle_length_dp", value).apply() }
+
+    var hideHandleThicknessDp: Int
+        get() = preferences.getInt("hide_handle_thickness_dp", 6)
+        set(value) { preferences.edit().putInt("hide_handle_thickness_dp", value).apply() }
+
+    var hideHandleMarginDp: Int
+        get() = preferences.getInt("hide_handle_margin_dp", 8)
+        set(value) { preferences.edit().putInt("hide_handle_margin_dp", value).apply() }
+
+    var verticalPositionPercent: Int
+        get() = preferences.getInt("vertical_position_percent", 50)
+        set(value) { preferences.edit().putInt("vertical_position_percent", value).apply() }
+
+    var maxDynamicApps: Int
+        get() = preferences.getInt("max_dynamic_apps", 5)
+        set(value) { preferences.edit().putInt("max_dynamic_apps", value).apply() }
+
+    var menuXOffset: Int
+        get() = preferences.getInt("menu_x_offset", 0)
+        set(value) { preferences.edit().putInt("menu_x_offset", value).apply() }
+
+    var menuYOffset: Int
+        get() = preferences.getInt("menu_y_offset", 0)
+        set(value) { preferences.edit().putInt("menu_y_offset", value).apply() }
+}
+'''
+
+with open(os.path.join(base_path, "DockSettings.kt"), "w", encoding="utf-8") as f:
+    f.write(settings_code)
+print("✓ DockSettings.kt оновлено")
+
+# ==========================================
+# 4. RunningAppRegistry.kt
+# ==========================================
+registry_code = '''package com.dynamicdock
+
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONException
+
+class RunningAppRegistry(private val context: Context) {
+
+    private val prefs = context.getSharedPreferences("dynamic_dock_registry", Context.MODE_PRIVATE)
+    private var apps: MutableList<RunningApp> = mutableListOf()
+
+    init {
+        loadPinnedApps()
+    }
+
+    fun getApps(): List<RunningApp> = apps.toList()
+
+    fun activate(app: RunningApp) {
+        val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
+        
+        if (existingIndex != -1) {
+            val current = apps[existingIndex]
+            if (!current.pinned) {
+                apps.removeAt(existingIndex)
+                apps.add(0, app.copy(pinned = false))
+            } else {
+                apps[existingIndex] = app.copy(pinned = true)
+            }
+        } else {
+            apps.add(0, app.copy(pinned = false))
+        }
+        
+        trimDynamicAppsToLimit()
+        saveState()
+    }
+
+    fun pin(packageName: String) {
+        val index = apps.indexOfFirst { it.packageName == packageName }
+        if (index != -1) {
+            val app = apps[index]
+            apps.removeAt(index)
+            
+            val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
+            if (firstUnpinnedIndex == -1) {
+                apps.add(app.copy(pinned = true))
+            } else {
+                apps.add(firstUnpinnedIndex, app.copy(pinned = true))
+            }
+            saveState()
+        }
+    }
+
+    fun unpin(packageName: String) {
+        val index = apps.indexOfFirst { it.packageName == packageName }
+        if (index != -1) {
+            val app = apps[index]
+            apps.removeAt(index)
+            apps.add(app.copy(pinned = false))
+            saveState()
+        }
+    }
+
+    fun removeDynamic(packageName: String): Boolean {
+        val index = apps.indexOfFirst { it.packageName == packageName && !it.pinned }
+        if (index != -1) {
+            apps.removeAt(index)
+            return true
+        }
+        return false
+    }
+
+    fun swapApps(pkg1: String, pkg2: String) {
+        val idx1 = apps.indexOfFirst { it.packageName == pkg1 }
+        val idx2 = apps.indexOfFirst { it.packageName == pkg2 }
+        
+        if (idx1 != -1 && idx2 != -1) {
+            val temp = apps[idx1]
+            apps[idx1] = apps[idx2]
+            apps[idx2] = temp
+            saveState()
+        }
+    }
+
+    fun trimDynamicAppsToLimit() {
+        val settings = DockSettings(context)
+        val limit = settings.maxDynamicApps
+        
+        var dynamicCount = 0
+        for (i in apps.indices.reversed()) {
+            if (!apps[i].pinned) {
+                dynamicCount++
+                if (dynamicCount > limit) {
+                    apps.removeAt(i)
+                }
+            }
+        }
+    }
+
+    fun removeMissingDynamicApps(visiblePackages: Set<String>) {
+        val iterator = apps.iterator()
+        while (iterator.hasNext()) {
+            val app = iterator.next()
+            if (!app.pinned && app.packageName !in visiblePackages) {
+                iterator.remove()
+            }
+        }
+    }
+
+    fun restorePinned(serviceContext: Context) {
+        loadPinnedApps()
+    }
+
+    private fun loadPinnedApps() {
+        val jsonStr = prefs.getString("pinned_apps_json", "[]") ?: "[]"
+        try {
+            val jsonArray = JSONArray(jsonStr)
+            val newPinned = mutableListOf<RunningApp>()
+            
+            for (i in 0 until jsonArray.length()) {
+                val pkg = jsonArray.getString(i)
+                newPinned.add(RunningApp(packageName = pkg, appName = "", icon = null, pinned = true))
+            }
+            
+            apps.clear()
+            apps.addAll(newPinned)
+            
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveState() {
+        val pinnedPackages = apps.filter { it.pinned }.map { it.packageName }
+        val jsonArray = JSONArray(pinnedPackages)
+        prefs.edit().putString("pinned_apps_json", jsonArray.toString()).apply()
+    }
+}
+'''
+
+with open(os.path.join(base_path, "RunningAppRegistry.kt"), "w", encoding="utf-8") as f:
+    f.write(registry_code)
+print("✓ RunningAppRegistry.kt оновлено")
+
+# ==========================================
+# 5. RunningApp.kt
+# ==========================================
+running_app_code = '''package com.dynamicdock
+
+import android.graphics.drawable.Drawable
+
+data class RunningApp(
+    val packageName: String,
+    val appName: String,
+    val icon: Drawable?,
+    val pinned: Boolean = false
+)
+'''
+
+with open(os.path.join(base_path, "RunningApp.kt"), "w", encoding="utf-8") as f:
+    f.write(running_app_code)
+print("✓ RunningApp.kt оновлено")
+
+# ==========================================
+# 6. Fix AppSelectionActivity.kt (видалити setSelected)
+# ==========================================
+sel_file = os.path.join(base_path, "AppSelectionActivity.kt")
+if os.path.exists(sel_file):
+    with open(sel_file, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+    
+    new_lines = []
+    for line in lines:
+        if "setSelected" not in line:
+            new_lines.append(line)
+    
+    with open(sel_file, "w", encoding="utf-8") as f:
+        f.writelines(new_lines)
+    print("✓ AppSelectionActivity.kt очищено від setSelected")
+
+# ==========================================
+# 7. Fix SettingsActivity.kt (додати max до слайдерів)
+# ==========================================
+set_act_file = os.path.join(base_path, "SettingsActivity.kt")
+if os.path.exists(set_act_file):
+    with open(set_act_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    
+    # Додаємо , 200 якщо його немає після menuXOffset/menuYOffset
+    import re
+    content = re.sub(r'(addSlider\([^)]*?,\s*settings\.menu[YX]Offset,\s*-?\d+)\)', r'\1, 200)', content)
+    
+    # Видаляємо старі посилання на dockLengthDp/updateDockLength
+    content = re.sub(r'.*dockLengthDp.*\n?', '', content)
+    content = re.sub(r'.*updateDockLength.*\n?', '', content)
+    
+    with open(set_act_file, "w", encoding="utf-8") as f:
+        f.write(content)
+    print("✓ SettingsActivity.kt виправлено")
+
+print("\n🎉 ВСІ ФАЙЛИ УСПІШНО ОНОВЛЕНО ТА ГАРАНТОВАНО ЗАПИСАНО!")
