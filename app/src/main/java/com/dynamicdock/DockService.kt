@@ -434,6 +434,19 @@ class DockService : Service() {
         isHidden = true
         appContainer.animate().alpha(0f).scaleX(0.8f).scaleY(0.8f).setDuration(150).withEndAction {
             appContainer.visibility = View.GONE
+
+            val hiddenParams =
+                appContainer.layoutParams as WindowManager.LayoutParams
+
+            hiddenParams.flags =
+                hiddenParams.flags or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+
+            windowManager.updateViewLayout(
+                appContainer,
+                hiddenParams
+            )
+
             createHandle()
         }.start()
     }
@@ -443,7 +456,19 @@ class DockService : Service() {
         isHidden = false
         hideHandle?.let { try { windowManager.removeView(it) } catch(_:Exception){} }
         hideHandle = null
-        
+
+        val visibleParams =
+            appContainer.layoutParams as WindowManager.LayoutParams
+
+        visibleParams.flags =
+            visibleParams.flags and
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+
+        windowManager.updateViewLayout(
+            appContainer,
+            visibleParams
+        )
+
         appContainer.visibility = View.VISIBLE
         appContainer.alpha = 0f
         appContainer.scaleX = 0.8f
