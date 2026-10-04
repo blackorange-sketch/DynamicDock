@@ -98,127 +98,26 @@ class DockService : Service() {
     }
 
     fun updateDockPosition(position: String) {
-        val params =
-            appContainer.layoutParams as? WindowManager.LayoutParams
-                ?: return
-
+        val params = appContainer.layoutParams as? WindowManager.LayoutParams ?: return
         val settings = DockSettings(this)
         val isVertical = position == "left" || position == "right"
 
-        val oldLocation = IntArray(2)
-        appContainer.getLocationOnScreen(oldLocation)
-
-        appContainer.animate().cancel()
-        appContainer.translationX = 0f
-        appContainer.translationY = 0f
-
-        appContainer.orientation =
-            if (isVertical) {
-                LinearLayout.VERTICAL
-            } else {
-                LinearLayout.HORIZONTAL
-            }
-
+        appContainer.orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        
         if (isVertical) {
             params.width = dp(settings.dockHeightDp)
             params.height = WindowManager.LayoutParams.WRAP_CONTENT
+            params.gravity = if (position == "left") Gravity.TOP or Gravity.LEFT else Gravity.TOP or Gravity.RIGHT
         } else {
             params.width = WindowManager.LayoutParams.WRAP_CONTENT
             params.height = dp(settings.dockHeightDp)
+            params.gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            params.y = 0
         }
-
+        
+        windowManager.updateViewLayout(appContainer, params)
         rebuildDock()
-
-        appContainer.measure(
-            View.MeasureSpec.makeMeasureSpec(
-                resources.displayMetrics.widthPixels,
-                View.MeasureSpec.AT_MOST
-            ),
-            View.MeasureSpec.makeMeasureSpec(
-                resources.displayMetrics.heightPixels,
-                View.MeasureSpec.AT_MOST
-            )
-        )
-
-        val newWidth = appContainer.measuredWidth
-        val newHeight = appContainer.measuredHeight
-
-        val screenWidth = resources.displayMetrics.widthPixels
-        val screenHeight = resources.displayMetrics.heightPixels
-
-        val maxY =
-            (screenHeight - newHeight)
-                .coerceAtLeast(0)
-
-        val targetY =
-            if (isVertical) {
-                (
-                    maxY *
-                        settings.verticalPositionPercent
-                            .coerceIn(0, 100) /
-                        100f
-                ).toInt()
-            } else {
-                0
-            }
-
-        val targetLeft =
-            if (isVertical) {
-                if (position == "left") {
-                    0
-                } else {
-                    screenWidth - newWidth
-                }
-            } else {
-                (screenWidth - newWidth) / 2
-            }
-
-        val targetTop =
-            if (isVertical) {
-                targetY
-            } else {
-                screenHeight - newHeight
-            }
-
-        val offsetX =
-            oldLocation[0] - targetLeft
-
-        val offsetY =
-            oldLocation[1] - targetTop
-
-        params.gravity =
-            if (isVertical) {
-                if (position == "left") {
-                    Gravity.TOP or Gravity.LEFT
-                } else {
-                    Gravity.TOP or Gravity.RIGHT
-                }
-            } else {
-                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            }
-
-        params.x = 0
-        params.y = targetY
-
-        appContainer.translationX = offsetX.toFloat()
-        appContainer.translationY = offsetY.toFloat()
-
-        windowManager.updateViewLayout(
-            appContainer,
-            params
-        )
-
-        appContainer.animate()
-            .translationX(0f)
-            .translationY(0f)
-            .setDuration(300L)
-            .setInterpolator(
-                android.view.animation.DecelerateInterpolator()
-            )
-            .withEndAction {
-                adjustPosition()
-            }
-            .start()
+        adjustPosition()
     }
 
     fun updateVerticalPosition(percent: Int) {
