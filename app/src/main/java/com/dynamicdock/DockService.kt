@@ -94,7 +94,6 @@ class DockService : Service() {
         } else {
             params.height = dp(heightDp)
         }
-        windowManager.updateViewLayout(appContainer, params)
         rebuildDock()
     }
 
@@ -171,8 +170,19 @@ class DockService : Service() {
             val screenWidth = resources.displayMetrics.widthPixels
             val screenHeight = resources.displayMetrics.heightPixels
 
-            val newWidth = appContainer.width
-            val newHeight = appContainer.height
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    resources.displayMetrics.widthPixels,
+                    View.MeasureSpec.AT_MOST
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    resources.displayMetrics.heightPixels,
+                    View.MeasureSpec.AT_MOST
+                )
+            )
+
+            val newWidth = appContainer.measuredWidth
+            val newHeight = appContainer.measuredHeight
 
             val targetGravity =
                 if (isVertical) {
