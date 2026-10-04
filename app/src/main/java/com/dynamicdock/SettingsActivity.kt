@@ -332,7 +332,7 @@ class SettingsActivity : Activity() {
         title: String,
         value: Int,
         min: Int,
-        max: Int,
+        max: Int = 200,
         suffix: String = " dp",
         onChanged: (Int) -> Unit
     ): TextView {
