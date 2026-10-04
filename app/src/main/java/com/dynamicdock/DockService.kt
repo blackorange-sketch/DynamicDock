@@ -114,10 +114,6 @@ class DockService : Service() {
 
         appContainer.animate().cancel()
 
-        // Current position on screen before changing the dock layout.
-        val oldLocation = IntArray(2)
-        appContainer.getLocationOnScreen(oldLocation)
-
         // Change only the internal layout first.
         // WindowManager gravity remains untouched during the animation.
         appContainer.orientation =
@@ -182,11 +178,14 @@ class DockService : Service() {
                 }
             }
 
+            val currentLocation = IntArray(2)
+            appContainer.getLocationOnScreen(currentLocation)
+
             val dx =
-                (targetX - oldLocation[0]).toFloat()
+                (targetX - currentLocation[0]).toFloat()
 
             val dy =
-                (targetY - oldLocation[1]).toFloat()
+                (targetY - currentLocation[1]).toFloat()
 
             if (dx == 0f && dy == 0f) {
                 applyDockPosition(position, params, targetY)
