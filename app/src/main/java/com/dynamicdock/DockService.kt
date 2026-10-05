@@ -82,7 +82,7 @@ class DockService : Service() {
             if (!dockWindowAttached) return@post
 
             if (isHidden) {
-                createHandle()
+                appContainer.postDelayed({ if (!dockWindowAttached || !isHidden) return@postDelayed; createHandle() }, 300)
             } else {
                 rebuildDock()
 
