@@ -461,6 +461,7 @@ class DockService : Service() {
                                 dragging = false
                                 currentPinnedIndex = -1
                             }
+                        }
                         return true
                     }
 
@@ -509,10 +510,6 @@ class DockService : Service() {
                             if (pointer >= center) {
                                 targetPinnedIndex++
                             }
-                        }
-
-                        if (targetPinnedIndex > currentPinnedIndex) {
-                            targetPinnedIndex++
                         }
 
                         val pinnedCount = pinnedViews.size + 1
