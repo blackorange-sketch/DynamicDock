@@ -75,6 +75,21 @@ class DockService : Service() {
         refreshDock()
     }
 
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        appContainer.post {
+            if (!dockWindowAttached) return@post
+
+            if (isHidden) {
+                createHandle()
+            } else {
+                rebuildDock()
+                applyDockSettingsLayout()
+            }
+        }
+    }
+
     fun reloadPinnedApps() {
         registry.reloadPinnedApps()
         refreshDock()

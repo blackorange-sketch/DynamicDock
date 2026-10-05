@@ -39,7 +39,8 @@
 
         <service
             android:name=".DockService"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize|smallestScreenSize" />
 
         <service
             android:name=".DockAccessibilityService"
