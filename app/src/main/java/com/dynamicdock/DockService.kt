@@ -445,20 +445,22 @@ class DockService : Service() {
                                 if (dragging) {
                                     handleDrop(v, e)
                                 } else {
-                                    v.performClick()
-                                }
                                     val dx = e.rawX - xStart
                                     val dy = e.rawY - yStart
+
                                     if (
                                         !app.pinned &&
                                         dx * dx + dy * dy > removeThresholdSquared
                                     ) {
                                         removeDynamicPackage(app.packageName)
+                                    } else {
+                                        v.performClick()
                                     }
                                 }
+
                                 dragging = false
+                                currentPinnedIndex = -1
                             }
-                        }
                         return true
                     }
 
@@ -507,6 +509,10 @@ class DockService : Service() {
                             if (pointer >= center) {
                                 targetPinnedIndex++
                             }
+                        }
+
+                        if (targetPinnedIndex > currentPinnedIndex) {
+                            targetPinnedIndex++
                         }
 
                         val pinnedCount = pinnedViews.size + 1
