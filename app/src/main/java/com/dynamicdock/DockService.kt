@@ -93,11 +93,10 @@ class DockService : Service() {
             addAction(android.content.Intent.ACTION_USER_UNLOCKED)
         }
 
-        androidx.core.content.ContextCompat.registerReceiver(
-            this,
+        registerReceiver(
             unlockReceiver,
             filter,
-            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+            android.content.Context.RECEIVER_NOT_EXPORTED
         )
 
         setupContainer()
