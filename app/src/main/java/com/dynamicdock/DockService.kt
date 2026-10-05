@@ -403,6 +403,8 @@ class DockService : Service() {
                     private var oy = 0f
                     private var dragging = false
                     private var currentPinnedIndex = -1
+                    private var dragPinnedViews = emptyList<View>()
+                    private var dragPinnedCenters = emptyList<Float>()
 
                     override fun onTouch(v: View, e: MotionEvent): Boolean {
                         when (e.actionMasked) {
@@ -414,6 +416,44 @@ class DockService : Service() {
                                 oy = v.y
                                 dragging = false
                                 currentPinnedIndex = -1
+                                dragPinnedViews = emptyList()
+                                dragPinnedCenters = emptyList()
+
+                                if (app.pinned) {
+                                    val views = mutableListOf<View>()
+                                    val centers = mutableListOf<Float>()
+
+                                    for (i in 0 until appContainer.childCount) {
+                                        val child = appContainer.getChildAt(i)
+
+                                        if (
+                                            child.tag is RunningApp &&
+                                            (child.tag as RunningApp).pinned
+                                        ) {
+                                            val loc = IntArray(2)
+                                            child.getLocationOnScreen(loc)
+
+                                            val center =
+                                                if (
+                                                    settings.dockPosition == "left" ||
+                                                    settings.dockPosition == "right"
+                                                ) {
+                                                    loc[1] + child.height / 2f
+                                                } else {
+                                                    loc[0] + child.width / 2f
+                                                }
+
+                                            views.add(child)
+                                            centers.add(center)
+                                        }
+                                    }
+
+                                    dragPinnedViews = views
+                                    dragPinnedCenters = centers
+
+                                    currentPinnedIndex =
+                                        views.indexOfFirst { it === v }
+                                }
                             }
                             MotionEvent.ACTION_MOVE -> {
                                 val dx = e.rawX - xStart
@@ -443,7 +483,10 @@ class DockService : Service() {
                             }
                             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                                 if (dragging) {
-                                    handleDrop(v, e)
+                                    handleDrop(
+                                        v,
+                                        e.actionMasked == MotionEvent.ACTION_CANCEL
+                                    )
                                 } else {
                                     val dx = e.rawX - xStart
                                     val dy = e.rawY - yStart
@@ -460,6 +503,8 @@ class DockService : Service() {
 
                                 dragging = false
                                 currentPinnedIndex = -1
+                                dragPinnedViews = emptyList()
+                                dragPinnedCenters = emptyList()
                             }
                         }
                         return true
@@ -470,83 +515,120 @@ class DockService : Service() {
                         draggedApp: RunningApp,
                         e: MotionEvent
                     ) {
-                        if (appContainer.indexOfChild(dragged) == -1) return
+                        if (
+                            dragPinnedViews.isEmpty() ||
+                            dragPinnedCenters.isEmpty() ||
+                            currentPinnedIndex == -1
+                        ) {
+                            return
+                        }
 
                         val isVertical =
                             settings.dockPosition == "left" ||
                             settings.dockPosition == "right"
 
-                        val pointer = if (isVertical) e.rawY else e.rawX
+                        val pointer =
+                            if (isVertical) e.rawY else e.rawX
 
-                        val pinnedViews = mutableListOf<View>()
+                        var targetIndex = currentPinnedIndex
 
-                        for (i in 0 until appContainer.childCount) {
-                            val child = appContainer.getChildAt(i)
+                        for (i in dragPinnedCenters.indices) {
+                            if (i == currentPinnedIndex) continue
 
-                            if (
-                                child !== dragged &&
-                                child.tag is RunningApp &&
-                                (child.tag as RunningApp).pinned
-                            ) {
-                                pinnedViews.add(child)
+                            if (i < currentPinnedIndex) {
+                                val boundary =
+                                    (dragPinnedCenters[i] + dragPinnedCenters[i + 1]) / 2f
+
+                                if (pointer < boundary) {
+                                    targetIndex = i
+                                }
+                            } else {
+                                val boundary =
+                                    (dragPinnedCenters[i - 1] + dragPinnedCenters[i]) / 2f
+
+                                if (pointer > boundary) {
+                                    targetIndex = i
+                                }
                             }
                         }
 
-                        if (pinnedViews.isEmpty()) return
-
-                        var targetPinnedIndex = 0
-
-                        for (target in pinnedViews) {
-                            val loc = IntArray(2)
-                            target.getLocationOnScreen(loc)
-
-                            val center =
-                                if (isVertical) {
-                                    loc[1] + target.height / 2f
-                                } else {
-                                    loc[0] + target.width / 2f
-                                }
-
-                            if (pointer >= center) {
-                                targetPinnedIndex++
-                            }
-                        }
-
-                        val pinnedCount = pinnedViews.size + 1
-                        targetPinnedIndex =
-                            targetPinnedIndex.coerceIn(0, pinnedCount - 1)
-
-                        if (currentPinnedIndex == targetPinnedIndex) return
-
-                        val firstPinnedIndex =
-                            (0 until appContainer.childCount)
-                                .firstOrNull {
-                                    val child = appContainer.getChildAt(it)
-                                    child.tag is RunningApp &&
-                                        (child.tag as RunningApp).pinned
-                                }
-                                ?: return
-
-                        appContainer.removeView(dragged)
-
-                        val insertIndex =
-                            (firstPinnedIndex + targetPinnedIndex)
-                                .coerceIn(
-                                    firstPinnedIndex,
-                                    appContainer.childCount
-                                )
-
-                        appContainer.addView(dragged, insertIndex)
-
-                        registry.movePinnedToIndex(
-                            draggedApp.packageName,
-                            targetPinnedIndex
+                        targetIndex = targetIndex.coerceIn(
+                            0,
+                            dragPinnedViews.lastIndex
                         )
 
-                        currentPinnedIndex = targetPinnedIndex
+                        if (targetIndex == currentPinnedIndex) {
+                            for (i in dragPinnedViews.indices) {
+                                if (dragPinnedViews[i] !== dragged) {
+                                    dragPinnedViews[i].animate()
+                                        .translationX(0f)
+                                        .translationY(0f)
+                                        .setDuration(80)
+                                        .start()
+                                }
+                            }
+                            return
+                        }
+
+                        val from = currentPinnedIndex
+
+                        for (i in dragPinnedViews.indices) {
+                            val view = dragPinnedViews[i]
+
+                            if (view === dragged) continue
+
+                            var targetSlot = i
+
+                            if (from < targetIndex && i > from && i <= targetIndex) {
+                                targetSlot = i - 1
+                            } else if (from > targetIndex && i >= targetIndex && i < from) {
+                                targetSlot = i + 1
+                            }
+
+                            val delta =
+                                dragPinnedCenters[targetSlot] -
+                                    dragPinnedCenters[i]
+
+                            if (isVertical) {
+                                view.animate()
+                                    .translationX(0f)
+                                    .translationY(delta)
+                                    .setDuration(100)
+                                    .start()
+                            } else {
+                                view.animate()
+                                    .translationX(delta)
+                                    .translationY(0f)
+                                    .setDuration(100)
+                                    .start()
+                            }
+                        }
+
+                        currentPinnedIndex = targetIndex
                     }
 
-                    private fun handleDrop(dragged: View, e: MotionEvent) {
+                    private fun handleDrop(
+                        dragged: View,
+                        canceled: Boolean
+                    ) {
+                        val targetIndex = currentPinnedIndex
+                        val originalIndex =
+                            dragPinnedViews.indexOf(dragged)
+
+                        if (
+                            !canceled &&
+                            originalIndex != -1 &&
+                            targetIndex != -1 &&
+                            targetIndex != originalIndex
+                        ) {
+                            registry.movePinnedToIndex(
+                                dragged.tag.let {
+                                    (it as RunningApp).packageName
+                                },
+                                targetIndex
+                            )
+                        }
+
                         dragged.animate()
                             .translationX(0f)
                             .translationY(0f)
@@ -554,8 +636,24 @@ class DockService : Service() {
                             .scaleX(1f)
                             .scaleY(1f)
                             .setDuration(120)
+                            .withEndAction {
+                                for (view in dragPinnedViews) {
+                                    view.animate().cancel()
+                                    view.translationX = 0f
+                                    view.translationY = 0f
+                                }
+
+                                if (
+                                    !canceled &&
+                                    originalIndex != -1 &&
+                                    targetIndex != originalIndex
+                                ) {
+                                    rebuildDock()
+                                }
+                            }
                             .start()
                     }
+
                 })
             }
 
