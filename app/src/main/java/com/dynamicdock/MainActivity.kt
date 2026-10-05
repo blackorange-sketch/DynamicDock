@@ -61,6 +61,18 @@ class MainActivity : Activity() {
             }
         }
 
+        val logsButton = Button(this).apply {
+            text = "Логи"
+            setOnClickListener {
+                startActivity(
+                    Intent(
+                        this@MainActivity,
+                        LogActivity::class.java
+                    )
+                )
+            }
+        }
+
         layout.addView(title)
         layout.addView(overlayButton)
         layout.addView(settingsButton)
