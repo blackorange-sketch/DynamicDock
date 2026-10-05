@@ -596,7 +596,6 @@ class DockService : Service() {
     }
 
     private fun configureDockLayout(
-        position: String,
         params: WindowManager.LayoutParams
     ) {
         val settings = DockSettings(this)
@@ -650,7 +649,7 @@ class DockService : Service() {
                 as? WindowManager.LayoutParams
                 ?: return
 
-        configureDockLayout(settings.dockPosition, params)
+        configureDockLayout(params)
 
         if (!attachDockWindow()) {
             createHandle()
