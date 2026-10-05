@@ -37,6 +37,7 @@ class DockService : Service() {
     private lateinit var windowManager: WindowManager
     private lateinit var appContainer: LinearLayout
     private lateinit var registry: RunningAppRegistry
+    private lateinit var appInfoRepository: AppInfoRepository
     private lateinit var vibrator: Vibrator
     private lateinit var contextMenu: DockContextMenu
     
@@ -58,6 +59,7 @@ class DockService : Service() {
 
         registry = RunningAppRegistry(this)
         registry.restorePinned(this)
+        appInfoRepository = AppInfoRepository(this)
         
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
@@ -951,7 +953,7 @@ class DockService : Service() {
             pkg == "com.google.android.permissioncontroller"
         ) return
         activePackageName = pkg
-        val info = AppInfoRepository(this).getAppInfo(pkg)
+        val info = appInfoRepository.getAppInfo(pkg)
         val dockOrderChanged =
             registry.activate(RunningApp(info.packageName, info.appName, info.icon))
 
