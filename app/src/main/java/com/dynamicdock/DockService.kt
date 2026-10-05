@@ -270,31 +270,96 @@ class DockService : Service() {
 
     private fun setupContainer() {
         val settings = DockSettings(this)
-        val isVertical = settings.dockPosition == "left" || settings.dockPosition == "right"
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
 
         appContainer = LinearLayout(this).apply {
-            orientation = if (isVertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+            orientation =
+                if (isVertical)
+                    LinearLayout.VERTICAL
+                else
+                    LinearLayout.HORIZONTAL
+
             gravity = Gravity.CENTER
             setBackgroundResource(R.drawable.dock_background)
             visibility = View.INVISIBLE
         }
 
         val lp = WindowManager.LayoutParams(
-            if (isVertical) dp(settings.dockHeightDp) else WindowManager.LayoutParams.WRAP_CONTENT,
-            if (isVertical) WindowManager.LayoutParams.WRAP_CONTENT else dp(settings.dockHeightDp),
+            if (isVertical)
+                dp(settings.dockHeightDp)
+            else
+                WindowManager.LayoutParams.WRAP_CONTENT,
+
+            if (isVertical)
+                WindowManager.LayoutParams.WRAP_CONTENT
+            else
+                dp(settings.dockHeightDp),
+
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             PixelFormat.TRANSLUCENT
         )
-        
-        lp.gravity = when (settings.dockPosition) {
-            "left" -> Gravity.TOP or Gravity.LEFT
-            "right" -> Gravity.TOP or Gravity.RIGHT
-            else -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+
+        lp.gravity =
+            when (settings.dockPosition) {
+                "left" ->
+                    Gravity.TOP or Gravity.LEFT
+
+                "right" ->
+                    Gravity.TOP or Gravity.RIGHT
+
+                else ->
+                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            }
+
+        if (isVertical) {
+            rebuildDock()
+
+            val width =
+                dp(settings.dockHeightDp)
+
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    width,
+                    View.MeasureSpec.EXACTLY
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                )
+            )
+
+            val dockHeight =
+                appContainer.measuredHeight
+
+            val screenHeight =
+                resources.displayMetrics.heightPixels
+
+            val maxY =
+                (screenHeight - dockHeight)
+                    .coerceAtLeast(0)
+
+            lp.y =
+                (
+                    maxY *
+                        settings.verticalPositionPercent
+                            .coerceIn(0, 100) /
+                        100f
+                )
+                    .toInt()
+                    .coerceIn(0, maxY)
+        } else {
+            lp.y = 0
         }
 
         try {
-            windowManager.addView(appContainer, lp)
+            windowManager.addView(
+                appContainer,
+                lp
+            )
+
             dockWindowAttached = true
         } catch (_: Exception) {
             dockWindowAttached = false
