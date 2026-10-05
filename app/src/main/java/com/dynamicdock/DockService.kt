@@ -83,7 +83,11 @@ class DockService : Service() {
 
             if (isHidden) {
                 if (!dockWindowAttached) return@post
-                updateHandlePosition()
+
+                appContainer.post {
+                    if (!dockWindowAttached || !isHidden) return@post
+                    updateHandlePosition()
+                }
             } else {
                 rebuildDock()
 
@@ -720,8 +724,17 @@ class DockService : Service() {
         val margin =
             dp(settings.hideHandleMarginDp)
 
+        val metrics =
+            resources.displayMetrics
+
         val screenHeight =
-            windowManager.currentWindowMetrics.bounds.height()
+            if (resources.configuration.orientation ==
+                android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            ) {
+                minOf(metrics.widthPixels, metrics.heightPixels)
+            } else {
+                maxOf(metrics.widthPixels, metrics.heightPixels)
+            }
 
         val maxY =
             (screenHeight - handleLength)
