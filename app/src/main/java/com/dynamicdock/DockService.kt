@@ -635,7 +635,10 @@ class DockService : Service() {
                             .alpha(1f)
                             .scaleX(1f)
                             .scaleY(1f)
-                            .setDuration(120)
+                            .setDuration(180)
+                            .setInterpolator(
+                                android.view.animation.OvershootInterpolator(1.5f)
+                            )
                             .withEndAction {
                                 for (view in dragPinnedViews) {
                                     view.animate().cancel()
