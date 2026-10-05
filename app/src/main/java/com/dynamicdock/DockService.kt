@@ -934,8 +934,6 @@ class DockService : Service() {
             return
         }
 
-        val settings = DockSettings(this)
-
         hideHandle?.let { handle ->
             try {
                 windowManager.removeView(handle)
@@ -953,20 +951,67 @@ class DockService : Service() {
 
         configureDockLayout(params)
 
+        if (params.gravity == (Gravity.TOP or Gravity.LEFT) ||
+            params.gravity == (Gravity.TOP or Gravity.RIGHT)
+        ) {
+            rebuildDock()
+
+            val width =
+                dp(DockSettings(this).dockHeightDp)
+
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    width,
+                    View.MeasureSpec.EXACTLY
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                )
+            )
+
+            val dockHeight =
+                appContainer.measuredHeight
+
+            val screenHeight =
+                resources.displayMetrics.heightPixels
+
+            val maxY =
+                (screenHeight - dockHeight)
+                    .coerceAtLeast(0)
+
+            val percent =
+                DockSettings(this)
+                    .verticalPositionPercent
+                    .coerceIn(0, 100)
+
+            params.y =
+                (
+                    maxY *
+                        percent /
+                        100f
+                )
+                    .toInt()
+                    .coerceIn(0, maxY)
+        } else {
+            params.y = 0
+        }
+
+        appContainer.visibility = View.INVISIBLE
+
         if (!attachDockWindow()) {
             createHandle()
             return
         }
 
-        appContainer.visibility = View.INVISIBLE
-
         appContainer.post {
             if (!dockWindowAttached) return@post
 
-            applyDockSettingsLayout()
+            val dockWidth =
+                appContainer.width.toFloat()
 
-            val dockWidth = appContainer.width.toFloat()
-            val dockHeight = appContainer.height.toFloat()
+            val dockHeight =
+                appContainer.height.toFloat()
 
             if (dockWidth <= 0f || dockHeight <= 0f) {
                 appContainer.scaleX = 1f
@@ -992,8 +1037,12 @@ class DockService : Service() {
                         .DecelerateInterpolator()
                 )
                 .withEndAction {
-                    appContainer.pivotX = dockWidth / 2f
-                    appContainer.pivotY = dockHeight / 2f
+                    appContainer.pivotX =
+                        dockWidth / 2f
+
+                    appContainer.pivotY =
+                        dockHeight / 2f
+
                     scheduleAutoHide()
                 }
                 .start()
