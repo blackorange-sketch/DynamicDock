@@ -848,10 +848,16 @@ class DockService : Service() {
             hideHandle = container
             hideHandleParams = params
 
-            windowManager.addView(
-                container,
-                params
-            )
+            try {
+                windowManager.addView(
+                    container,
+                    params
+                )
+            } catch (_: Exception) {
+                hideHandle = null
+                hideHandleParams = null
+                return
+            }
 
         } else {
             val containerHeight =
@@ -886,10 +892,16 @@ class DockService : Service() {
             hideHandle = container
             hideHandleParams = params
 
-            windowManager.addView(
-                container,
-                params
-            )
+            try {
+                windowManager.addView(
+                    container,
+                    params
+                )
+            } catch (_: Exception) {
+                hideHandle = null
+                hideHandleParams = null
+                return
+            }
         }
 
         container.alpha = 0f
