@@ -132,11 +132,7 @@ class DockService : Service() {
 
         appContainer.post {
             if (!dockWindowAttached || isHidden) return@post
-            rebuildDock()
-            appContainer.post {
-                if (!dockWindowAttached || isHidden) return@post
-                applyDockSettingsLayout()
-            }
+            applyDockSettingsLayout()
         }
     }
 
