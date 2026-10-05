@@ -778,18 +778,26 @@ class DockService : Service() {
                 }
             )
 
-            val displayBounds =
-                windowManager.currentWindowMetrics.bounds
+            val realMetrics =
+                android.util.DisplayMetrics()
+
+            @Suppress("DEPRECATION")
+            windowManager.defaultDisplay.getRealMetrics(realMetrics)
+
+            android.util.Log.d(
+                "DynamicDock",
+                "HANDLE GEOMETRY: width=${realMetrics.widthPixels}, height=${realMetrics.heightPixels}, rotation=${windowManager.defaultDisplay.rotation}, percent=${settings.verticalPositionPercent}"
+            )
 
             /*
-             * Always use the current physical display bounds.
+             * Use the actual current display dimensions after rotation.
              *
              * 0%   = top
              * 50%  = center
              * 100% = bottom
              */
             val screenHeight =
-                displayBounds.height()
+                realMetrics.heightPixels
 
             val availableHeight =
                 (screenHeight - handleLength)
