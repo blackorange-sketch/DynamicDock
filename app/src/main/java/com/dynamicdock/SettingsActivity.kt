@@ -140,7 +140,7 @@ class SettingsActivity : Activity() {
             settings.iconSizeDp = progress
 
             DockService.instance
-                ?.updateIconSize(progress)
+                ?.updateIconSize()
         }
 
         addSlider(

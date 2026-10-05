@@ -307,7 +307,7 @@ class DockService : Service() {
         
         val apps = registry.getApps()
         val settings = DockSettings(this)
-        val position = position
+        val position = settings.dockPosition
         val isVertical = position == "left" || position == "right"
 
         appContainer.setPadding(
