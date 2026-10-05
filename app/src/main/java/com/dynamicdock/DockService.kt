@@ -403,6 +403,7 @@ class DockService : Service() {
                     private var oy = 0f
                     private var dragging = false
                     private var currentPinnedIndex = -1
+                    private var originalPinnedIndex = -1
                     private var dragPinnedViews = emptyList<View>()
                     private var dragPinnedCenters = emptyList<Float>()
 
@@ -416,6 +417,7 @@ class DockService : Service() {
                                 oy = v.y
                                 dragging = false
                                 currentPinnedIndex = -1
+                                originalPinnedIndex = -1
                                 dragPinnedViews = emptyList()
                                 dragPinnedCenters = emptyList()
 
@@ -451,8 +453,9 @@ class DockService : Service() {
                                     dragPinnedViews = views
                                     dragPinnedCenters = centers
 
-                                    currentPinnedIndex =
+                                    originalPinnedIndex =
                                         views.indexOfFirst { it === v }
+                                    currentPinnedIndex = originalPinnedIndex
                                 }
                             }
                             MotionEvent.ACTION_MOVE -> {
@@ -518,7 +521,7 @@ class DockService : Service() {
                         if (
                             dragPinnedViews.isEmpty() ||
                             dragPinnedCenters.isEmpty() ||
-                            currentPinnedIndex == -1
+                            originalPinnedIndex == -1
                         ) {
                             return
                         }
@@ -530,21 +533,27 @@ class DockService : Service() {
                         val pointer =
                             if (isVertical) e.rawY else e.rawX
 
-                        var targetIndex = currentPinnedIndex
+                        var targetIndex = originalPinnedIndex
 
                         for (i in dragPinnedCenters.indices) {
-                            if (i == currentPinnedIndex) continue
+                            if (i == originalPinnedIndex) continue
 
-                            if (i < currentPinnedIndex) {
+                            if (i < originalPinnedIndex) {
                                 val boundary =
-                                    (dragPinnedCenters[i] + dragPinnedCenters[i + 1]) / 2f
+                                    if (i + 1 <= originalPinnedIndex) {
+                                        (dragPinnedCenters[i] +
+                                            dragPinnedCenters[i + 1]) / 2f
+                                    } else {
+                                        dragPinnedCenters[i]
+                                    }
 
                                 if (pointer < boundary) {
                                     targetIndex = i
                                 }
                             } else {
                                 val boundary =
-                                    (dragPinnedCenters[i - 1] + dragPinnedCenters[i]) / 2f
+                                    (dragPinnedCenters[i - 1] +
+                                        dragPinnedCenters[i]) / 2f
 
                                 if (pointer > boundary) {
                                     targetIndex = i
@@ -557,50 +566,35 @@ class DockService : Service() {
                             dragPinnedViews.lastIndex
                         )
 
-                        if (targetIndex == currentPinnedIndex) {
-                            for (i in dragPinnedViews.indices) {
-                                if (dragPinnedViews[i] !== dragged) {
-                                    dragPinnedViews[i].animate()
-                                        .translationX(0f)
-                                        .translationY(0f)
-                                        .setDuration(80)
-                                        .start()
-                                }
-                            }
-                            return
-                        }
-
-                        val from = currentPinnedIndex
-
                         for (i in dragPinnedViews.indices) {
                             val view = dragPinnedViews[i]
 
                             if (view === dragged) continue
 
-                            var targetSlot = i
+                            val targetSlot = when {
+                                originalPinnedIndex < targetIndex &&
+                                    i > originalPinnedIndex &&
+                                    i <= targetIndex -> i - 1
 
-                            if (from < targetIndex && i > from && i <= targetIndex) {
-                                targetSlot = i - 1
-                            } else if (from > targetIndex && i >= targetIndex && i < from) {
-                                targetSlot = i + 1
+                                originalPinnedIndex > targetIndex &&
+                                    i >= targetIndex &&
+                                    i < originalPinnedIndex -> i + 1
+
+                                else -> i
                             }
 
                             val delta =
                                 dragPinnedCenters[targetSlot] -
                                     dragPinnedCenters[i]
 
+                            view.animate().cancel()
+
                             if (isVertical) {
-                                view.animate()
-                                    .translationX(0f)
-                                    .translationY(delta)
-                                    .setDuration(100)
-                                    .start()
+                                view.translationX = 0f
+                                view.translationY = delta
                             } else {
-                                view.animate()
-                                    .translationX(delta)
-                                    .translationY(0f)
-                                    .setDuration(100)
-                                    .start()
+                                view.translationX = delta
+                                view.translationY = 0f
                             }
                         }
 
