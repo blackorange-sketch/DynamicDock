@@ -307,7 +307,7 @@ class DockService : Service() {
         
         val apps = registry.getApps()
         val settings = DockSettings(this)
-        val position = settings.dockPosition
+        val position = position
         val isVertical = position == "left" || position == "right"
 
         appContainer.setPadding(
@@ -519,20 +519,74 @@ class DockService : Service() {
                                 targetApp.packageName
                             )
 
-
                             return
                         }
                     }
 
                     private fun handleDrop(dragged: View, e: MotionEvent) {
-        dragged.animate()
-            .translationX(0f)
-            .translationY(0f)
-            .alpha(1f)
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(120)
-            .start()
+                        dragged.animate()
+                            .translationX(0f)
+                            .translationY(0f)
+                            .alpha(1f)
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(120)
+                            .start()
+                    }
+                })
+            }
+
+            iconImg = ImageView(this).apply {
+                setImageDrawable(app.icon)
+                contentDescription = app.appName
+            }
+            
+            
+            val frame = FrameLayout(this)
+            frame.addView(iconImg, FrameLayout.LayoutParams(iconSizePx, iconSizePx).apply { gravity = Gravity.CENTER })
+
+            val ind = View(this).apply {
+                background = GradientDrawable().apply {
+                    setColor(Color.WHITE)
+                    cornerRadius = dp(100).toFloat()
+                }
+                alpha = if (app.packageName == activePackageName) 1f else 0f
+            }
+            
+            val indLp = if (isVertical) {
+                FrameLayout.LayoutParams(dp(3), indicatorLengthPx).apply {
+                    gravity = Gravity.CENTER_VERTICAL or (if (position=="left") Gravity.END else Gravity.START)
+                }
+            } else {
+                FrameLayout.LayoutParams(indicatorLengthPx, dp(3)).apply {
+                    gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
+                }
+            }
+            frame.addView(ind, indLp)
+            indicators[app.packageName] = ind
+
+            item.addView(frame, LinearLayout.LayoutParams(iconContainerWidth, iconContainerHeight))
+
+            if (showLabels) {
+                val tv = TextView(this).apply {
+                    text = app.appName
+                    textSize = 10f
+                    setTextColor(Color.WHITE)
+                    gravity = Gravity.CENTER
+                    maxLines = 1
+                }
+                item.addView(tv, LinearLayout.LayoutParams(dp(40), dp(24)))
+            }
+
+            val itemLp = if (isVertical) 
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            else 
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            
+            if (isVertical) itemLp.topMargin = verticalPaddingPx else itemLp.leftMargin = horizontalPaddingPx
+            
+            appContainer.addView(item, itemLp)
+        }
     }
 
     private fun swapAnim(src: View, tgt: View, sApp: RunningApp, tApp: RunningApp) {
