@@ -78,6 +78,12 @@ class DockService : Service() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
 
+        val dm = resources.displayMetrics
+        android.util.Log.d(
+            "DynamicDock",
+            "ROTATION: orientation=${newConfig.orientation} width=${dm.widthPixels} height=${dm.heightPixels}"
+        )
+
         appContainer.post {
             if (!dockWindowAttached) return@post
 
