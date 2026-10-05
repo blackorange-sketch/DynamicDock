@@ -874,8 +874,31 @@ class DockService : Service() {
                 ?: return false
 
         return try {
+            android.util.Log.d(
+                "DynamicDock",
+                "ATTACH BEFORE: x=${params.x} y=${params.y} " +
+                    "w=${params.width} h=${params.height} " +
+                    "gravity=${params.gravity}"
+            )
+
             windowManager.addView(appContainer, params)
             dockWindowAttached = true
+
+            android.util.Log.d(
+                "DynamicDock",
+                "ATTACH AFTER: x=${params.x} y=${params.y} " +
+                    "viewY=${appContainer.y} " +
+                    "top=${appContainer.top} bottom=${appContainer.bottom}"
+            )
+
+            appContainer.post {
+                android.util.Log.d(
+                    "DynamicDock",
+                    "ATTACH FRAME: viewY=${appContainer.y} " +
+                        "top=${appContainer.top} bottom=${appContainer.bottom}"
+                )
+            }
+
             true
         } catch (_: Exception) {
             false
