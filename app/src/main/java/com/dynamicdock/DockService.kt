@@ -981,6 +981,7 @@ class DockService : Service() {
     
     override fun onDestroy() {
         instance = null
+        handler.removeCallbacks(autoHideRunnable)
 
         if (dockWindowAttached) {
             try {
