@@ -423,8 +423,8 @@ class DockService : Service() {
                                     System.currentTimeMillis() - tStart > 300
                                 ) {
                                     dragging = true
-                                    v.x = ox + dx
-                                    v.y = oy + dy
+                                    v.translationX = dx
+                                    v.translationY = dy
                                     v.alpha = 0.7f
                                     v.scaleX = 1.1f
                                     v.scaleY = 1.1f
@@ -525,80 +525,14 @@ class DockService : Service() {
                     }
 
                     private fun handleDrop(dragged: View, e: MotionEvent) {
-                        var swapped = false
-                        for (i in 0 until appContainer.childCount) {
-                            val child = appContainer.getChildAt(i)
-                            if (child != dragged && child.tag is RunningApp) {
-                                val target = child.tag as RunningApp
-                                if (target.pinned) {
-                                    val loc = IntArray(2)
-                                    child.getLocationOnScreen(loc)
-                                    if (e.rawX >= loc[0] && e.rawX <= loc[0]+child.width && e.rawY >= loc[1] && e.rawY <= loc[1]+child.height) {
-                                        swapAnim(dragged, child, app, target)
-                                        swapped = true
-                                        break
-                                    }
-                                }
-                            }
-                        }
-                        if (!swapped) {
-                            dragged.animate().x(ox).y(oy).alpha(1f).scaleX(1f).scaleY(1f).setDuration(200).start()
-                        }
-                    }
-                })
-            }
-
-            iconImg = ImageView(this).apply {
-                setImageDrawable(app.icon)
-                contentDescription = app.appName
-            }
-            
-            
-            val frame = FrameLayout(this)
-            frame.addView(iconImg, FrameLayout.LayoutParams(iconSizePx, iconSizePx).apply { gravity = Gravity.CENTER })
-
-            val ind = View(this).apply {
-                background = GradientDrawable().apply {
-                    setColor(Color.WHITE)
-                    cornerRadius = dp(100).toFloat()
-                }
-                alpha = if (app.packageName == activePackageName) 1f else 0f
-            }
-            
-            val indLp = if (isVertical) {
-                FrameLayout.LayoutParams(dp(3), indicatorLengthPx).apply {
-                    gravity = Gravity.CENTER_VERTICAL or (if (position=="left") Gravity.END else Gravity.START)
-                }
-            } else {
-                FrameLayout.LayoutParams(indicatorLengthPx, dp(3)).apply {
-                    gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
-                }
-            }
-            frame.addView(ind, indLp)
-            indicators[app.packageName] = ind
-
-            item.addView(frame, LinearLayout.LayoutParams(iconContainerWidth, iconContainerHeight))
-
-            if (showLabels) {
-                val tv = TextView(this).apply {
-                    text = app.appName
-                    textSize = 10f
-                    setTextColor(Color.WHITE)
-                    gravity = Gravity.CENTER
-                    maxLines = 1
-                }
-                item.addView(tv, LinearLayout.LayoutParams(dp(40), dp(24)))
-            }
-
-            val itemLp = if (isVertical) 
-                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            else 
-                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            
-            if (isVertical) itemLp.topMargin = verticalPaddingPx else itemLp.leftMargin = horizontalPaddingPx
-            
-            appContainer.addView(item, itemLp)
-        }
+        dragged.animate()
+            .translationX(0f)
+            .translationY(0f)
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(120)
+            .start()
     }
 
     private fun swapAnim(src: View, tgt: View, sApp: RunningApp, tApp: RunningApp) {
