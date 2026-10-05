@@ -81,7 +81,17 @@ class DockService : Service() {
         if (!dockWindowAttached) return
 
         if (isHidden) {
-            handler.post {
+            hideHandle?.let { handle ->
+                try {
+                    windowManager.removeViewImmediate(handle)
+                } catch (_: Exception) {
+                }
+            }
+
+            hideHandle = null
+            hideHandleParams = null
+
+            appContainer.post {
                 if (!isHidden) return@post
                 recreateHandle()
             }
