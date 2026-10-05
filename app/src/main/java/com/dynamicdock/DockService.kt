@@ -78,41 +78,37 @@ class DockService : Service() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        if (!dockWindowAttached) return
-
         android.util.Log.d(
             "DynamicDock",
-            "ROTATION: orientation=${newConfig.orientation} screen=${newConfig.screenWidthDp}x${newConfig.screenHeightDp} metrics=${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}"
+            "ROTATION: orientation=${newConfig.orientation} " +
+                "screen=${newConfig.screenWidthDp}x${newConfig.screenHeightDp} " +
+                "metrics=${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels} " +
+                "hidden=$isHidden attached=$dockWindowAttached"
         )
 
         if (isHidden) {
-            hideHandle?.let { handle ->
-                try {
-                    windowManager.removeViewImmediate(handle)
-                } catch (_: Exception) {
-                }
-            }
-
-            hideHandle = null
-            hideHandleParams = null
-
-            appContainer.post {
+            handler.post {
                 if (!isHidden) return@post
 
                 android.util.Log.d(
                     "DynamicDock",
-                    "ROTATION POST: metrics=${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}"
+                    "ROTATION HIDDEN: recreating handle " +
+                        "metrics=${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}"
                 )
 
                 recreateHandle()
             }
-        } else {
-            rebuildDock()
 
-            appContainer.post {
-                if (!dockWindowAttached || isHidden) return@post
-                applyDockSettingsLayout()
-            }
+            return
+        }
+
+        if (!dockWindowAttached) return
+
+        rebuildDock()
+
+        appContainer.post {
+            if (!dockWindowAttached || isHidden) return@post
+            applyDockSettingsLayout()
         }
     }
 
