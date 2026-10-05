@@ -445,6 +445,8 @@ class DockService : Service() {
                                 if (dragging) {
                                     handleDrop(v, e)
                                 } else {
+                                    v.performClick()
+                                }
                                     val dx = e.rawX - xStart
                                     val dy = e.rawY - yStart
                                     if (
@@ -471,6 +473,8 @@ class DockService : Service() {
                             settings.dockPosition == "left" ||
                             settings.dockPosition == "right"
 
+                        val pointer = if (isVertical) e.rawY else e.rawX
+
                         val pinnedViews = mutableListOf<View>()
 
                         for (i in 0 until appContainer.childCount) {
@@ -487,12 +491,9 @@ class DockService : Service() {
 
                         if (pinnedViews.isEmpty()) return
 
-                        val pointer = if (isVertical) e.rawY else e.rawX
+                        var targetPinnedIndex = 0
 
-                        var targetPinnedIndex = pinnedViews.size
-
-                        for (i in pinnedViews.indices) {
-                            val target = pinnedViews[i]
+                        for (target in pinnedViews) {
                             val loc = IntArray(2)
                             target.getLocationOnScreen(loc)
 
@@ -503,17 +504,16 @@ class DockService : Service() {
                                     loc[0] + target.width / 2f
                                 }
 
-                            if (pointer < center) {
-                                targetPinnedIndex = i
-                                break
+                            if (pointer >= center) {
+                                targetPinnedIndex++
                             }
                         }
 
-                        if (currentPinnedIndex == -1 ||
-                            currentPinnedIndex == targetPinnedIndex
-                        ) {
-                            return
-                        }
+                        val pinnedCount = pinnedViews.size + 1
+                        targetPinnedIndex =
+                            targetPinnedIndex.coerceIn(0, pinnedCount - 1)
+
+                        if (currentPinnedIndex == targetPinnedIndex) return
 
                         val firstPinnedIndex =
                             (0 until appContainer.childCount)
@@ -528,7 +528,10 @@ class DockService : Service() {
 
                         val insertIndex =
                             (firstPinnedIndex + targetPinnedIndex)
-                                .coerceAtMost(appContainer.childCount)
+                                .coerceIn(
+                                    firstPinnedIndex,
+                                    appContainer.childCount
+                                )
 
                         appContainer.addView(dragged, insertIndex)
 
