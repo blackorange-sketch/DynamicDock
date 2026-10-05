@@ -593,13 +593,13 @@ class DockService : Service() {
                                 view.animate()
                                     .translationX(0f)
                                     .translationY(delta)
-                                    .setDuration(90)
+                                    .setDuration(45)
                                     .start()
                             } else {
                                 view.animate()
                                     .translationX(delta)
                                     .translationY(0f)
-                                    .setDuration(90)
+                                    .setDuration(45)
                                     .start()
                             }
                         }
