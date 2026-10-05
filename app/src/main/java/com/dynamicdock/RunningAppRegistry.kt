@@ -176,13 +176,16 @@ class RunningAppRegistry(private val context: Context) {
         val limit = settings.maxDynamicApps
 
         var dynamicCount = 0
+        val iterator = apps.listIterator(apps.size)
 
-        for (i in apps.indices.reversed()) {
-            if (!apps[i].pinned) {
+        while (iterator.hasPrevious()) {
+            val app = iterator.previous()
+
+            if (!app.pinned) {
                 dynamicCount++
 
                 if (dynamicCount > limit) {
-                    apps.removeAt(i)
+                    iterator.remove()
                 }
             }
         }
