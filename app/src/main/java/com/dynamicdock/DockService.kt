@@ -81,7 +81,12 @@ class DockService : Service() {
         if (!dockWindowAttached) return
 
         if (isHidden) {
-            recreateHandle()
+            val heightPx =
+                (newConfig.screenHeightDp *
+                    resources.displayMetrics.density)
+                    .toInt()
+
+            recreateHandle(heightPx)
         } else {
             rebuildDock()
 
@@ -699,7 +704,7 @@ class DockService : Service() {
         }
     }
 
-    private fun recreateHandle() {
+    private fun recreateHandle(screenHeightPx: Int? = null) {
         if (!isHidden) return
 
         hideHandle?.let { handle ->
@@ -712,10 +717,10 @@ class DockService : Service() {
         hideHandle = null
         hideHandleParams = null
 
-        createHandle()
+        createHandle(screenHeightPx)
     }
 
-    private fun createHandle() {
+    private fun createHandle(screenHeightPx: Int? = null) {
         val settings = DockSettings(this)
 
         val isVertical =
@@ -778,26 +783,17 @@ class DockService : Service() {
                 }
             )
 
-            val realMetrics =
-                android.util.DisplayMetrics()
-
-            @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getRealMetrics(realMetrics)
+            val screenHeight =
+                screenHeightPx
+                    ?: (
+                        resources.configuration.screenHeightDp *
+                            resources.displayMetrics.density
+                    ).toInt()
 
             android.util.Log.d(
                 "DynamicDock",
-                "HANDLE GEOMETRY: width=${realMetrics.widthPixels}, height=${realMetrics.heightPixels}, rotation=${windowManager.defaultDisplay.rotation}, percent=${settings.verticalPositionPercent}"
+                "HANDLE GEOMETRY: height=$screenHeight, percent=${settings.verticalPositionPercent}"
             )
-
-            /*
-             * Use the actual current display dimensions after rotation.
-             *
-             * 0%   = top
-             * 50%  = center
-             * 100% = bottom
-             */
-            val screenHeight =
-                realMetrics.heightPixels
 
             val availableHeight =
                 (screenHeight - handleLength)
