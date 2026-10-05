@@ -676,16 +676,6 @@ class DockService : Service() {
                 return@post
             }
 
-            val handleLength =
-                dp(settings.hideHandleLengthDp).toFloat()
-
-            val handleThickness =
-                dp(settings.hideHandleThicknessDp).toFloat()
-
-            val isVertical =
-                settings.dockPosition == "left" ||
-                settings.dockPosition == "right"
-
             appContainer.scaleX = 1f
             appContainer.scaleY = 1f
             appContainer.alpha = 0f
