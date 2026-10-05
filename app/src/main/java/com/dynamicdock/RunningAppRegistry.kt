@@ -6,6 +6,19 @@ import org.json.JSONException
 
 class RunningAppRegistry(private val context: Context) {
 
+    companion object {
+        private val BLACKLIST = setOf(
+            "com.google.android.packageinstaller",
+            "com.google.android.permissioncontroller",
+            "com.android.packageinstaller",
+            "com.android.permissioncontroller",
+            "com.android.systemui",
+            "com.google.android.inputmethod.latin",
+            "com.google.android.googlequicksearchbox",
+            "com.zte.mifavor.launcher"
+        )
+    }
+
     private val prefs =
         context.getSharedPreferences("dynamic_dock_registry", Context.MODE_PRIVATE)
 
@@ -49,6 +62,11 @@ class RunningAppRegistry(private val context: Context) {
     }
 
     fun activate(app: RunningApp): Boolean {
+        if (app.packageName in BLACKLIST) {
+            apps.removeAll { it.packageName == app.packageName && !it.pinned }
+            return false
+        }
+
         val existingIndex =
             apps.indexOfFirst { it.packageName == app.packageName }
 
@@ -260,6 +278,16 @@ class RunningAppRegistry(private val context: Context) {
         loadPinnedApps()
     }
 
+    private fun cleanupBlacklistedApps() {
+        val removed = apps.removeAll {
+            it.packageName in BLACKLIST && !it.pinned
+        }
+
+        if (removed) {
+            saveState()
+        }
+    }
+
     private fun loadPinnedApps() {
         val jsonStr =
             prefs.getString("pinned_apps_json", "[]") ?: "[]"
@@ -303,6 +331,8 @@ class RunningAppRegistry(private val context: Context) {
             apps.clear()
             apps.addAll(newPinned)
             apps.addAll(dynamic)
+
+            cleanupBlacklistedApps()
 
         } catch (e: JSONException) {
             e.printStackTrace()
