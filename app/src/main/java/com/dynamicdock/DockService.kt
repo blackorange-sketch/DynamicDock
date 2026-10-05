@@ -957,6 +957,10 @@ class DockService : Service() {
     }
 
     private fun showDock() {
+    DockLogger.log(
+        this,
+        "SHOW DOCK: isHidden=$isHidden attached=$dockWindowAttached"
+    )
         if (!isHidden) {
             resetAutoHide()
             return
