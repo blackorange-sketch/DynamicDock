@@ -64,6 +64,7 @@ class MainActivity : Activity() {
         layout.addView(title)
         layout.addView(overlayButton)
         layout.addView(settingsButton)
+        layout.addView(logsButton)
 
         setContentView(layout)
 
