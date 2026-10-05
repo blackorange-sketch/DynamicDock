@@ -402,6 +402,7 @@ class DockService : Service() {
                     private var ox = 0f
                     private var oy = 0f
                     private var dragging = false
+                    private var currentPinnedIndex = -1
 
                     override fun onTouch(v: View, e: MotionEvent): Boolean {
                         when (e.actionMasked) {
@@ -412,6 +413,7 @@ class DockService : Service() {
                                 ox = v.x
                                 oy = v.y
                                 dragging = false
+                                currentPinnedIndex = -1
                             }
                             MotionEvent.ACTION_MOVE -> {
                                 val dx = e.rawX - xStart
@@ -423,6 +425,14 @@ class DockService : Service() {
                                     System.currentTimeMillis() - tStart > 300
                                 ) {
                                     dragging = true
+
+                                    if (currentPinnedIndex == -1) {
+                                        currentPinnedIndex = registry.getPinnedApps()
+                                            .indexOfFirst {
+                                                it.packageName == app.packageName
+                                            }
+                                    }
+
                                     v.translationX = dx
                                     v.translationY = dy
                                     v.alpha = 0.7f
@@ -447,7 +457,7 @@ class DockService : Service() {
                                 dragging = false
                             }
                         }
-                        return false
+                        return true
                     }
 
                     private fun reorderPinnedWhileDragging(
@@ -499,12 +509,6 @@ class DockService : Service() {
                             }
                         }
 
-                        val currentPinnedIndex =
-                            registry.getPinnedApps()
-                                .indexOfFirst {
-                                    it.packageName == draggedApp.packageName
-                                }
-
                         if (currentPinnedIndex == -1 ||
                             currentPinnedIndex == targetPinnedIndex
                         ) {
@@ -528,25 +532,12 @@ class DockService : Service() {
 
                         appContainer.addView(dragged, insertIndex)
 
-                        registry.getPinnedApps()
-                            .firstOrNull {
-                                it.packageName == draggedApp.packageName
-                            }
-                            ?.let {
-                                val targetApp =
-                                    registry.getPinnedApps()
-                                        .getOrNull(targetPinnedIndex)
+                        registry.movePinnedToIndex(
+                            draggedApp.packageName,
+                            targetPinnedIndex
+                        )
 
-                                if (
-                                    targetApp != null &&
-                                    targetApp.packageName != draggedApp.packageName
-                                ) {
-                                    registry.movePinnedApps(
-                                        draggedApp.packageName,
-                                        targetApp.packageName
-                                    )
-                                }
-                            }
+                        currentPinnedIndex = targetPinnedIndex
                     }
 
                     private fun handleDrop(dragged: View, e: MotionEvent) {
