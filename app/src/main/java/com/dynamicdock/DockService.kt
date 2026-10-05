@@ -82,10 +82,8 @@ class DockService : Service() {
             if (!dockWindowAttached) return@post
 
             if (isHidden) {
-                appContainer.postDelayed({
-                    if (!dockWindowAttached || !isHidden) return@postDelayed
-                    updateHandlePosition()
-                }, 300)
+                if (!dockWindowAttached) return@post
+                updateHandlePosition()
             } else {
                 rebuildDock()
 
@@ -703,18 +701,33 @@ class DockService : Service() {
         if (!isHidden) return
 
         val handle = hideHandle ?: return
-        val params = hideHandleParams ?: return
-
         val settings = DockSettings(this)
 
-        val screenHeight = resources.displayMetrics.heightPixels
-        val handleLength = params.height
+        val isVertical =
+            settings.dockPosition == "left" ||
+            settings.dockPosition == "right"
+
+        if (!isVertical) return
+
+        val handleLength =
+            dp(settings.hideHandleLengthDp)
+
+        val handleThickness =
+            dp(settings.hideHandleThicknessDp)
+
+        val touchSize = dp(24)
+
+        val margin =
+            dp(settings.hideHandleMarginDp)
+
+        val screenHeight =
+            windowManager.currentWindowMetrics.bounds.height()
 
         val maxY =
             (screenHeight - handleLength)
                 .coerceAtLeast(0)
 
-        params.y =
+        val newY =
             (
                 maxY *
                     settings.verticalPositionPercent
@@ -723,8 +736,31 @@ class DockService : Service() {
             ).toInt()
                 .coerceIn(0, maxY)
 
+        val params =
+            WindowManager.LayoutParams(
+                margin + touchSize,
+                handleLength,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity =
+                    if (settings.dockPosition == "right") {
+                        Gravity.TOP or Gravity.RIGHT
+                    } else {
+                        Gravity.TOP or Gravity.LEFT
+                    }
+
+                y = newY
+            }
+
+        hideHandleParams = params
+
         try {
-            windowManager.updateViewLayout(handle, params)
+            windowManager.updateViewLayout(
+                handle,
+                params
+            )
         } catch (_: Exception) {
         }
     }
