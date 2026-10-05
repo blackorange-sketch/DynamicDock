@@ -720,7 +720,7 @@ class DockService : Service() {
         }
     }
 
-    private fun recreateHandle(screenHeightPx: Int? = null) {
+    private fun recreateHandle() {
         if (!isHidden) return
 
         hideHandle?.let { handle ->
@@ -733,10 +733,10 @@ class DockService : Service() {
         hideHandle = null
         hideHandleParams = null
 
-        createHandle(screenHeightPx)
+        createHandle()
     }
 
-    private fun createHandle(screenHeightPx: Int? = null) {
+    private fun createHandle() {
         val settings = DockSettings(this)
 
         val isVertical =
