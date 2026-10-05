@@ -310,8 +310,12 @@ class DockService : Service() {
             else -> Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
         }
 
-        windowManager.addView(appContainer, lp)
-        dockWindowAttached = true
+        try {
+            windowManager.addView(appContainer, lp)
+            dockWindowAttached = true
+        } catch (_: Exception) {
+            dockWindowAttached = false
+        }
     }
 
     private fun rebuildDock() {
