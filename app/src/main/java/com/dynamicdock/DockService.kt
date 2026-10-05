@@ -939,6 +939,13 @@ class DockService : Service() {
         }
     }
 
+    private fun updateActiveIndicator(packageName: String?) {
+        indicators.forEach { (pkg, indicator) ->
+            indicator.animate().cancel()
+            indicator.alpha = if (pkg == packageName) 1f else 0f
+        }
+    }
+
     private fun updatePackage(pkg: String) {
         if (
             pkg == packageName ||
@@ -951,9 +958,16 @@ class DockService : Service() {
         ) return
         activePackageName = pkg
         val info = AppInfoRepository(this).getAppInfo(pkg)
-        registry.activate(RunningApp(info.packageName, info.appName, info.icon))
+        val dockOrderChanged =
+            registry.activate(RunningApp(info.packageName, info.appName, info.icon))
+
         appContainer.post {
-            rebuildDock()
+            if (dockOrderChanged) {
+                rebuildDock()
+            } else {
+                updateActiveIndicator(pkg)
+            }
+
             scheduleAutoHide()
         }
     }

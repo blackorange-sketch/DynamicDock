@@ -48,7 +48,9 @@ class RunningAppRegistry(private val context: Context) {
         return true
     }
 
-    fun activate(app: RunningApp) {
+    fun activate(app: RunningApp): Boolean {
+        val before = apps.map { it.packageName }
+
         val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
 
         if (existingIndex != -1) {
@@ -83,6 +85,10 @@ class RunningAppRegistry(private val context: Context) {
 
         trimDynamicAppsToLimit()
         saveState()
+
+        val after = apps.map { it.packageName }
+
+        return before != after
     }
 
     fun pin(packageName: String) {
