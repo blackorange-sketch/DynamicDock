@@ -228,9 +228,27 @@ class DockService : Service() {
             params.y = 0
         }
 
+        DockLogger.log(
+            this,
+            "UPDATE BEFORE: x=${params.x} y=${params.y} " +
+                "viewY=${appContainer.y} " +
+                "top=${appContainer.top} bottom=${appContainer.bottom}"
+        )
+
         try {
             windowManager.updateViewLayout(appContainer, params)
-        } catch (_: Exception) {
+
+            DockLogger.log(
+                this,
+                "UPDATE AFTER: x=${params.x} y=${params.y} " +
+                    "viewY=${appContainer.y} " +
+                    "top=${appContainer.top} bottom=${appContainer.bottom}"
+            )
+        } catch (e: Exception) {
+            DockLogger.log(
+                this,
+                "UPDATE ERROR: ${e.javaClass.simpleName}: ${e.message}"
+            )
         }
     }
 
