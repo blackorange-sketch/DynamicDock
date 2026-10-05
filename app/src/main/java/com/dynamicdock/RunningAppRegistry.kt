@@ -102,7 +102,6 @@ class RunningAppRegistry(private val context: Context) {
             orderChanged = true
         }
 
-        saveState()
 
         return orderChanged
     }

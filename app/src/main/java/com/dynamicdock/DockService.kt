@@ -23,7 +23,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import kotlin.math.sqrt
 
 class DockService : Service() {
 
@@ -135,10 +134,7 @@ class DockService : Service() {
 
         if (!dockWindowAttached || isHidden) return
 
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-        }
+        applyDockSettingsLayout()
     }
 
     fun updateDockPosition(position: String) {
@@ -152,12 +148,6 @@ class DockService : Service() {
         appContainer.animate().cancel()
         appContainer.translationX = 0f
         appContainer.translationY = 0f
-
-        appContainer.orientation =
-            if (position == "left" || position == "right")
-                LinearLayout.VERTICAL
-            else
-                LinearLayout.HORIZONTAL
 
         rebuildDock()
 
@@ -253,21 +243,15 @@ class DockService : Service() {
 
         if (!dockWindowAttached) return
 
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-        }
+        applyDockSettingsLayout()
     }
 
-    fun updateIconSize(sizeDp: Int) {
+    fun updateIconSize() {
         rebuildDock()
 
         if (!dockWindowAttached || isHidden) return
 
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-        }
+        applyDockSettingsLayout()
     }
 
     fun updatePadding() {
@@ -275,10 +259,7 @@ class DockService : Service() {
 
         if (!dockWindowAttached || isHidden) return
 
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-        }
+        applyDockSettingsLayout()
     }
 
     fun refreshHideHandle() {
@@ -326,7 +307,8 @@ class DockService : Service() {
         
         val apps = registry.getApps()
         val settings = DockSettings(this)
-        val isVertical = settings.dockPosition == "left" || settings.dockPosition == "right"
+        val position = position
+        val isVertical = position == "left" || position == "right"
 
         appContainer.setPadding(
             if (isVertical) 0 else dp(settings.horizontalPaddingDp),
@@ -348,6 +330,25 @@ class DockService : Service() {
             setOnClickListener { hideDock() }
         }
         appContainer.addView(closeBtn, LinearLayout.LayoutParams(dp(28), dp(28)))
+
+        val dragThresholdSquared = run {
+            val threshold = dp(10)
+            threshold * threshold
+        }
+
+        val removeThreshold = dp(80)
+        val removeThresholdSquared = removeThreshold * removeThreshold
+
+        val iconSizeDp = settings.iconSizeDp
+        val showLabels = settings.showAppLabels
+        val iconSizePx = dp(iconSizeDp)
+        val indicatorLengthPx = (iconSizePx * 0.8f).toInt()
+        val horizontalPaddingPx = dp(settings.horizontalPaddingDp)
+        val verticalPaddingPx = dp(settings.verticalPaddingDp)
+        val iconContainerWidth =
+            if (isVertical) dp(iconSizeDp + 6) else iconSizePx
+        val iconContainerHeight =
+            if (isVertical) iconSizePx else dp(iconSizeDp + 6)
 
         apps.forEachIndexed { idx, app ->
             if (idx > 0 && apps[idx-1].pinned && !app.pinned) {
@@ -387,7 +388,7 @@ class DockService : Service() {
                     val act = if (app.pinned) DockContextMenu.Action.UNPIN else DockContextMenu.Action.PIN
 
                     iconImg.postDelayed({
-                        contextMenu.show(iconImg, app, act, settings.dockPosition)
+                        contextMenu.show(iconImg, app, act, position)
                     }, if (wasHidden) 260L else 0L)
 
                     resetAutoHide()
@@ -415,8 +416,12 @@ class DockService : Service() {
                             MotionEvent.ACTION_MOVE -> {
                                 val dx = e.rawX - xStart
                                 val dy = e.rawY - yStart
-                                val dist = sqrt(dx*dx + dy*dy)
-                                if (dist > dp(10) && app.pinned && System.currentTimeMillis() - tStart > 300) {
+                                val distanceSquared = dx * dx + dy * dy
+                                if (
+                                    distanceSquared > dragThresholdSquared &&
+                                    app.pinned &&
+                                    System.currentTimeMillis() - tStart > 300
+                                ) {
                                     dragging = true
                                     v.x = ox + dx
                                     v.y = oy + dy
@@ -431,7 +436,10 @@ class DockService : Service() {
                                 } else {
                                     val dx = e.rawX - xStart
                                     val dy = e.rawY - yStart
-                                    if (!app.pinned && sqrt(dx*dx + dy*dy) > dp(80)) {
+                                    if (
+                                        !app.pinned &&
+                                        dx * dx + dy * dy > removeThresholdSquared
+                                    ) {
                                         removeDynamicPackage(app.packageName)
                                     }
                                 }
@@ -470,12 +478,9 @@ class DockService : Service() {
                 contentDescription = app.appName
             }
             
-            val size = settings.iconSizeDp
-            val contW = if (isVertical) dp(size+6) else dp(size)
-            val contH = if (isVertical) dp(size) else dp(size+6)
             
             val frame = FrameLayout(this)
-            frame.addView(iconImg, FrameLayout.LayoutParams(dp(size), dp(size)).apply { gravity = Gravity.CENTER })
+            frame.addView(iconImg, FrameLayout.LayoutParams(iconSizePx, iconSizePx).apply { gravity = Gravity.CENTER })
 
             val ind = View(this).apply {
                 background = GradientDrawable().apply {
@@ -486,20 +491,20 @@ class DockService : Service() {
             }
             
             val indLp = if (isVertical) {
-                FrameLayout.LayoutParams(dp(3), dp((size*0.8f).toInt())).apply {
-                    gravity = Gravity.CENTER_VERTICAL or (if (settings.dockPosition=="left") Gravity.END else Gravity.START)
+                FrameLayout.LayoutParams(dp(3), indicatorLengthPx).apply {
+                    gravity = Gravity.CENTER_VERTICAL or (if (position=="left") Gravity.END else Gravity.START)
                 }
             } else {
-                FrameLayout.LayoutParams(dp((size*0.8f).toInt()), dp(3)).apply {
+                FrameLayout.LayoutParams(indicatorLengthPx, dp(3)).apply {
                     gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
                 }
             }
             frame.addView(ind, indLp)
             indicators[app.packageName] = ind
 
-            item.addView(frame, LinearLayout.LayoutParams(contW, contH))
+            item.addView(frame, LinearLayout.LayoutParams(iconContainerWidth, iconContainerHeight))
 
-            if (settings.showAppLabels) {
+            if (showLabels) {
                 val tv = TextView(this).apply {
                     text = app.appName
                     textSize = 10f
@@ -515,7 +520,7 @@ class DockService : Service() {
             else 
                 LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             
-            if (isVertical) itemLp.topMargin = dp(settings.verticalPaddingDp) else itemLp.leftMargin = dp(settings.horizontalPaddingDp)
+            if (isVertical) itemLp.topMargin = verticalPaddingPx else itemLp.leftMargin = horizontalPaddingPx
             
             appContainer.addView(item, itemLp)
         }
@@ -936,10 +941,19 @@ class DockService : Service() {
     }
 
     private fun updateActiveIndicator(packageName: String?) {
-        indicators.forEach { (pkg, indicator) ->
-            indicator.animate().cancel()
-            indicator.alpha = if (pkg == packageName) 1f else 0f
+        if (activePackageName == packageName) return
+
+        indicators[activePackageName]?.let {
+            it.animate().cancel()
+            it.alpha = 0f
         }
+
+        indicators[packageName]?.let {
+            it.animate().cancel()
+            it.alpha = 1f
+        }
+
+        activePackageName = packageName
     }
 
     private fun updatePackage(pkg: String) {
@@ -952,7 +966,6 @@ class DockService : Service() {
             pkg == "com.google.android.packageinstaller" ||
             pkg == "com.google.android.permissioncontroller"
         ) return
-        activePackageName = pkg
         val info = appInfoRepository.getAppInfo(pkg)
         val dockOrderChanged =
             registry.activate(RunningApp(info.packageName, info.appName, info.icon))
