@@ -78,23 +78,16 @@ class DockService : Service() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        appContainer.post {
-            if (!dockWindowAttached) return@post
+        if (!dockWindowAttached) return
 
-            if (isHidden) {
-                if (!dockWindowAttached) return@post
+        if (isHidden) {
+            recreateHandle()
+        } else {
+            rebuildDock()
 
-                appContainer.post {
-                    if (!dockWindowAttached || !isHidden) return@post
-                    updateHandlePosition()
-                }
-            } else {
-                rebuildDock()
-
-                appContainer.post {
-                    if (!dockWindowAttached || isHidden) return@post
-                    applyDockSettingsLayout()
-                }
+            appContainer.post {
+                if (!dockWindowAttached || isHidden) return@post
+                applyDockSettingsLayout()
             }
         }
     }
@@ -232,7 +225,12 @@ class DockService : Service() {
         settings.verticalPositionPercent =
             percent.coerceIn(0, 100)
 
-        if (!dockWindowAttached || isHidden) return
+        if (isHidden) {
+            recreateHandle()
+            return
+        }
+
+        if (!dockWindowAttached) return
 
         appContainer.post {
             if (!dockWindowAttached || isHidden) return@post
@@ -701,91 +699,23 @@ class DockService : Service() {
         }
     }
 
-    private fun updateHandlePosition() {
+    private fun recreateHandle() {
         if (!isHidden) return
 
-        val handle = hideHandle ?: return
-        val settings = DockSettings(this)
-
-        val isVertical =
-            settings.dockPosition == "left" ||
-            settings.dockPosition == "right"
-
-        if (!isVertical) return
-
-        val handleLength =
-            dp(settings.hideHandleLengthDp)
-
-        val handleThickness =
-            dp(settings.hideHandleThicknessDp)
-
-        val touchSize = dp(24)
-
-        val margin =
-            dp(settings.hideHandleMarginDp)
-
-        val metrics =
-            resources.displayMetrics
-
-        val screenHeight =
-            if (resources.configuration.orientation ==
-                android.content.res.Configuration.ORIENTATION_LANDSCAPE
-            ) {
-                minOf(metrics.widthPixels, metrics.heightPixels)
-            } else {
-                maxOf(metrics.widthPixels, metrics.heightPixels)
-            }
-
-        val maxY =
-            (screenHeight - handleLength)
-                .coerceAtLeast(0)
-
-        val newY =
-            (
-                maxY *
-                    settings.verticalPositionPercent
-                        .coerceIn(0, 100) /
-                    100f
-            ).toInt()
-                .coerceIn(0, maxY)
-
-        val params =
-            WindowManager.LayoutParams(
-                margin + touchSize,
-                handleLength,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            ).apply {
-                gravity =
-                    if (settings.dockPosition == "right") {
-                        Gravity.TOP or Gravity.RIGHT
-                    } else {
-                        Gravity.TOP or Gravity.LEFT
-                    }
-
-                y = newY
-            }
-
-        hideHandleParams = params
-
-        try {
-            windowManager.updateViewLayout(
-                handle,
-                params
-            )
-        } catch (_: Exception) {
-        }
-    }
-
-    private fun createHandle() {
         hideHandle?.let { handle ->
             try {
-                windowManager.removeView(handle)
+                windowManager.removeViewImmediate(handle)
             } catch (_: Exception) {
             }
         }
 
+        hideHandle = null
+        hideHandleParams = null
+
+        createHandle()
+    }
+
+    private fun createHandle() {
         val settings = DockSettings(this)
 
         val isVertical =
@@ -798,7 +728,8 @@ class DockService : Service() {
         val handleThickness =
             dp(settings.hideHandleThicknessDp)
 
-        val touchSize = dp(24)
+        val touchSize =
+            dp(24)
 
         val margin =
             dp(settings.hideHandleMarginDp)
@@ -826,18 +757,17 @@ class DockService : Service() {
             val containerWidth =
                 margin + touchSize
 
-            val visibleParams =
+            container.addView(
+                visibleHandle,
                 FrameLayout.LayoutParams(
                     handleThickness,
                     handleLength
                 ).apply {
                     gravity =
                         if (settings.dockPosition == "left") {
-                            Gravity.START or
-                                Gravity.CENTER_VERTICAL
+                            Gravity.START or Gravity.CENTER_VERTICAL
                         } else {
-                            Gravity.END or
-                                Gravity.CENTER_VERTICAL
+                            Gravity.END or Gravity.CENTER_VERTICAL
                         }
 
                     if (settings.dockPosition == "left") {
@@ -846,20 +776,42 @@ class DockService : Service() {
                         rightMargin = margin
                     }
                 }
-
-            container.addView(
-                visibleHandle,
-                visibleParams
             )
 
-            hideHandle = container
+            val displayBounds =
+                windowManager.currentWindowMetrics.bounds
 
-            val handleParams =
+            /*
+             * Always use the current physical display bounds.
+             *
+             * 0%   = top
+             * 50%  = center
+             * 100% = bottom
+             */
+            val screenHeight =
+                displayBounds.height()
+
+            val availableHeight =
+                (screenHeight - handleLength)
+                    .coerceAtLeast(0)
+
+            val percent =
+                settings.verticalPositionPercent
+                    .coerceIn(0, 100)
+
+            val y =
+                (
+                    availableHeight * percent / 100f
+                ).toInt()
+                    .coerceIn(0, availableHeight)
+
+            val params =
                 WindowManager.LayoutParams(
                     containerWidth,
                     handleLength,
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                     PixelFormat.TRANSLUCENT
                 ).apply {
                     gravity =
@@ -869,68 +821,35 @@ class DockService : Service() {
                             Gravity.TOP or Gravity.LEFT
                         }
 
-                    val screenHeight =
-                        resources.displayMetrics.heightPixels
-
-                    val maxY =
-                        (screenHeight - handleLength)
-                            .coerceAtLeast(0)
-
-                    y =
-                        (
-                            maxY *
-                                settings.verticalPositionPercent
-                                    .coerceIn(0, 100) /
-                                100f
-                        ).toInt()
+                    this.y = y
                 }
 
-            hideHandleParams = handleParams
+            hideHandle = container
+            hideHandleParams = params
 
             windowManager.addView(
                 container,
-                handleParams
+                params
             )
-
-            container.alpha = 0f
-            container.scaleX = 0.7f
-            container.scaleY = 0.7f
-
-            container.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(160)
-                .setInterpolator(
-                    android.view.animation
-                        .DecelerateInterpolator()
-                )
-                .start()
 
         } else {
             val containerHeight =
                 margin + touchSize
 
-            val visibleParams =
+            container.addView(
+                visibleHandle,
                 FrameLayout.LayoutParams(
                     handleLength,
                     handleThickness
                 ).apply {
                     gravity =
-                        Gravity.CENTER_HORIZONTAL or
-                            Gravity.BOTTOM
+                        Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
 
                     bottomMargin = margin
                 }
-
-            container.addView(
-                visibleHandle,
-                visibleParams
             )
 
-            hideHandle = container
-
-            val handleParams =
+            val params =
                 WindowManager.LayoutParams(
                     handleLength,
                     containerHeight,
@@ -943,28 +862,28 @@ class DockService : Service() {
                             Gravity.CENTER_HORIZONTAL
                 }
 
-            hideHandleParams = handleParams
+            hideHandle = container
+            hideHandleParams = params
 
             windowManager.addView(
                 container,
-                handleParams
+                params
             )
-
-            container.alpha = 0f
-            container.scaleX = 0.7f
-            container.scaleY = 0.7f
-
-            container.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(160)
-                .setInterpolator(
-                    android.view.animation
-                        .DecelerateInterpolator()
-                )
-                .start()
         }
+
+        container.alpha = 0f
+        container.scaleX = 0.7f
+        container.scaleY = 0.7f
+
+        container.animate()
+            .alpha(1f)
+            .scaleX(1f)
+            .scaleY(1f)
+            .setDuration(160)
+            .setInterpolator(
+                android.view.animation.DecelerateInterpolator()
+            )
+            .start()
     }
 
     private fun scheduleAutoHide() {
