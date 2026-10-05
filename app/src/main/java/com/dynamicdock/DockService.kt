@@ -655,89 +655,25 @@ class DockService : Service() {
                 settings.dockPosition == "left" ||
                 settings.dockPosition == "right"
 
-            if (isVertical) {
-                val pivotX =
-                    if (settings.dockPosition == "left") {
-                        dp(settings.hideHandleMarginDp).toFloat() +
-                            handleThickness / 2f
-                    } else {
-                        dockWidth -
-                            dp(settings.hideHandleMarginDp).toFloat() -
-                            handleThickness / 2f
-                    }
+            appContainer.scaleX = 1f
+            appContainer.scaleY = 1f
+            appContainer.alpha = 0f
+            appContainer.visibility = View.VISIBLE
+            isHidden = false
 
-                appContainer.pivotX =
-                    pivotX.coerceIn(0f, dockWidth)
-
-                appContainer.pivotY =
-                    dockHeight / 2f
-
-                val startScaleX =
-                    (handleThickness / dockWidth)
-                        .coerceAtLeast(0.02f)
-
-                val startScaleY =
-                    (handleLength / dockHeight)
-                        .coerceAtLeast(0.02f)
-
-                appContainer.scaleX = startScaleX
-                appContainer.scaleY = startScaleY
-                appContainer.alpha = 1f
-                appContainer.visibility = View.VISIBLE
-                isHidden = false
-
-                appContainer.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(240)
-                    .setInterpolator(
-                        android.view.animation
-                            .AccelerateDecelerateInterpolator()
-                    )
-                    .withEndAction {
-                        appContainer.pivotX = dockWidth / 2f
-                        appContainer.pivotY = dockHeight / 2f
-                        scheduleAutoHide()
-                    }
-                    .start()
-            } else {
-                appContainer.pivotX =
-                    dockWidth / 2f
-
-                appContainer.pivotY =
-                    dockHeight -
-                        dp(settings.hideHandleMarginDp).toFloat() -
-                        handleThickness / 2f
-
-                val startScaleX =
-                    (handleLength / dockWidth)
-                        .coerceAtLeast(0.02f)
-
-                val startScaleY =
-                    (handleThickness / dockHeight)
-                        .coerceAtLeast(0.02f)
-
-                appContainer.scaleX = startScaleX
-                appContainer.scaleY = startScaleY
-                appContainer.alpha = 1f
-                appContainer.visibility = View.VISIBLE
-                isHidden = false
-
-                appContainer.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(240)
-                    .setInterpolator(
-                        android.view.animation
-                            .AccelerateDecelerateInterpolator()
-                    )
-                    .withEndAction {
-                        appContainer.pivotX = dockWidth / 2f
-                        appContainer.pivotY = dockHeight / 2f
-                        scheduleAutoHide()
-                    }
-                    .start()
-            }
+            appContainer.animate()
+                .alpha(1f)
+                .setDuration(160)
+                .setInterpolator(
+                    android.view.animation
+                        .DecelerateInterpolator()
+                )
+                .withEndAction {
+                    appContainer.pivotX = dockWidth / 2f
+                    appContainer.pivotY = dockHeight / 2f
+                    scheduleAutoHide()
+                }
+                .start()
         }
     }
 
@@ -780,7 +716,7 @@ class DockService : Service() {
             View(this).apply {
                 background =
                     GradientDrawable().apply {
-                        setColor(Color.WHITE)
+                        setColor(Color.argb(140, 255, 255, 255))
                         cornerRadius = dp(100).toFloat()
                     }
             }
