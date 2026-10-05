@@ -82,7 +82,10 @@ class DockService : Service() {
             if (!dockWindowAttached) return@post
 
             if (isHidden) {
-                appContainer.postDelayed({ if (!dockWindowAttached || !isHidden) return@postDelayed; createHandle() }, 300)
+                appContainer.postDelayed({
+                    if (!dockWindowAttached || !isHidden) return@postDelayed
+                    updateHandlePosition()
+                }, 300)
             } else {
                 rebuildDock()
 
@@ -693,6 +696,36 @@ class DockService : Service() {
                     scheduleAutoHide()
                 }
                 .start()
+        }
+    }
+
+    private fun updateHandlePosition() {
+        if (!isHidden) return
+
+        val handle = hideHandle ?: return
+        val params = hideHandleParams ?: return
+
+        val settings = DockSettings(this)
+
+        val screenHeight = resources.displayMetrics.heightPixels
+        val handleLength = params.height
+
+        val maxY =
+            (screenHeight - handleLength)
+                .coerceAtLeast(0)
+
+        params.y =
+            (
+                maxY *
+                    settings.verticalPositionPercent
+                        .coerceIn(0, 100) /
+                    100f
+            ).toInt()
+                .coerceIn(0, maxY)
+
+        try {
+            windowManager.updateViewLayout(handle, params)
+        } catch (_: Exception) {
         }
     }
 
