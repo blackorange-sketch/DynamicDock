@@ -106,6 +106,26 @@ class RunningAppRegistry(private val context: Context) {
         return orderChanged
     }
 
+    fun movePinnedApps(packageName1: String, packageName2: String): Boolean {
+        val index1 = apps.indexOfFirst {
+            it.pinned && it.packageName == packageName1
+        }
+        val index2 = apps.indexOfFirst {
+            it.pinned && it.packageName == packageName2
+        }
+
+        if (index1 == -1 || index2 == -1) {
+            return false
+        }
+
+        val temp = apps[index1]
+        apps[index1] = apps[index2]
+        apps[index2] = temp
+
+        saveState()
+        return true
+    }
+
     fun pin(packageName: String) {
         val index = apps.indexOfFirst { it.packageName == packageName }
 

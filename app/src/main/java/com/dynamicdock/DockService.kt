@@ -428,6 +428,7 @@ class DockService : Service() {
                                     v.alpha = 0.7f
                                     v.scaleX = 1.1f
                                     v.scaleY = 1.1f
+                                    reorderPinnedWhileDragging(v, app, e)
                                 }
                             }
                             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -447,6 +448,80 @@ class DockService : Service() {
                             }
                         }
                         return false
+                    }
+
+                    private fun reorderPinnedWhileDragging(
+                        dragged: View,
+                        draggedApp: RunningApp,
+                        e: MotionEvent
+                    ) {
+                        val draggedIndex = appContainer.indexOfChild(dragged)
+                        if (draggedIndex == -1) return
+
+                        val isVertical =
+                            settings.dockPosition == "left" ||
+                            settings.dockPosition == "right"
+
+                        for (i in 0 until appContainer.childCount) {
+                            val targetView = appContainer.getChildAt(i)
+
+                            if (
+                                targetView === dragged ||
+                                targetView.tag !is RunningApp
+                            ) {
+                                continue
+                            }
+
+                            val targetApp = targetView.tag as RunningApp
+                            if (!targetApp.pinned) continue
+
+                            val loc = IntArray(2)
+                            targetView.getLocationOnScreen(loc)
+
+                            val targetCenter =
+                                if (isVertical) {
+                                    loc[1] + targetView.height / 2f
+                                } else {
+                                    loc[0] + targetView.width / 2f
+                                }
+
+                            val pointer =
+                                if (isVertical) e.rawY else e.rawX
+
+                            val targetIndex =
+                                appContainer.indexOfChild(targetView)
+
+                            val crossed =
+                                if (draggedIndex < targetIndex) {
+                                    pointer > targetCenter
+                                } else {
+                                    pointer < targetCenter
+                                }
+
+                            if (!crossed) continue
+
+                            appContainer.removeView(dragged)
+
+                            val newTargetIndex =
+                                appContainer.indexOfChild(targetView)
+
+                            val insertIndex =
+                                if (draggedIndex < targetIndex) {
+                                    newTargetIndex + 1
+                                } else {
+                                    newTargetIndex
+                                }
+
+                            appContainer.addView(dragged, insertIndex)
+
+                            registry.movePinnedApps(
+                                draggedApp.packageName,
+                                targetApp.packageName
+                            )
+
+
+                            return
+                        }
                     }
 
                     private fun handleDrop(dragged: View, e: MotionEvent) {
