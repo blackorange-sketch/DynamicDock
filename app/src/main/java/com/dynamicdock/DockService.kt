@@ -590,11 +590,17 @@ class DockService : Service() {
                             view.animate().cancel()
 
                             if (isVertical) {
-                                view.translationX = 0f
-                                view.translationY = delta
+                                view.animate()
+                                    .translationX(0f)
+                                    .translationY(delta)
+                                    .setDuration(90)
+                                    .start()
                             } else {
-                                view.translationX = delta
-                                view.translationY = 0f
+                                view.animate()
+                                    .translationX(delta)
+                                    .translationY(0f)
+                                    .setDuration(90)
+                                    .start()
                             }
                         }
 
