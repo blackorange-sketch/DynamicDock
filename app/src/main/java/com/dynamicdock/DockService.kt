@@ -550,77 +550,18 @@ class DockService : Service() {
     private fun hideDock() {
         if (isHidden) return
 
-        val settings = DockSettings(this)
-        val isVertical =
-            settings.dockPosition == "left" ||
-            settings.dockPosition == "right"
-
         appContainer.animate().cancel()
 
-        appContainer.post {
-            val dockWidth = appContainer.width.toFloat()
-            val dockHeight = appContainer.height.toFloat()
-            val isVertical =
-                settings.dockPosition == "left" ||
-                settings.dockPosition == "right"
-
-            if (dockWidth <= 0f || dockHeight <= 0f) {
+        appContainer.animate()
+            .alpha(0f)
+            .setDuration(120)
+            .withEndAction {
                 appContainer.visibility = View.GONE
                 detachDockWindow()
                 isHidden = true
                 createHandle()
-                return@post
             }
-
-            val handleLength =
-                dp(settings.hideHandleLengthDp).toFloat()
-
-            val handleThickness =
-                dp(settings.hideHandleThicknessDp).toFloat()
-
-            appContainer.pivotX = dockWidth / 2f
-            appContainer.pivotY = dockHeight / 2f
-
-            if (isVertical) {
-                val targetScaleX =
-                    handleThickness / dockWidth
-
-                val targetScaleY =
-                    handleLength / dockHeight
-
-                appContainer.animate()
-                    .scaleX(targetScaleX)
-                    .scaleY(targetScaleY)
-                    .alpha(0f)
-                    .setDuration(180)
-                    .withEndAction {
-                        appContainer.visibility = View.GONE
-                        detachDockWindow()
-                        isHidden = true
-                        createHandle()
-                    }
-                    .start()
-            } else {
-                val targetScaleX =
-                    handleLength / dockWidth
-
-                val targetScaleY =
-                    handleThickness / dockHeight
-
-                appContainer.animate()
-                    .scaleX(targetScaleX)
-                    .scaleY(targetScaleY)
-                    .alpha(0f)
-                    .setDuration(180)
-                    .withEndAction {
-                        appContainer.visibility = View.GONE
-                        detachDockWindow()
-                        isHidden = true
-                        createHandle()
-                    }
-                    .start()
-            }
-        }
+            .start()
     }
 
     private fun configureDockLayout(
