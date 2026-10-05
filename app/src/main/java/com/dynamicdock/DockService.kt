@@ -1009,7 +1009,9 @@ class DockService : Service() {
             pkg == "com.android.systemui" ||
             pkg == "com.google.android.inputmethod.latin" ||
             pkg == "com.google.android.googlequicksearchbox" ||
-            pkg == "com.zte.mifavor.launcher"
+            pkg == "com.zte.mifavor.launcher" ||
+            pkg == "com.google.android.packageinstaller" ||
+            pkg == "com.google.android.permissioncontroller"
         ) return
         activePackageName = pkg
         val info = AppInfoRepository(this).getAppInfo(pkg)

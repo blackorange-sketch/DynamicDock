@@ -62,6 +62,15 @@ class DockAccessibilityService : AccessibilityService() {
             return
         }
 
+        if (
+            packageName ==
+            "com.google.android.packageinstaller" ||
+            packageName ==
+            "com.google.android.permissioncontroller"
+        ) {
+            return
+        }
+
         if (packageName == lastAppPackage) {
             return
         }
