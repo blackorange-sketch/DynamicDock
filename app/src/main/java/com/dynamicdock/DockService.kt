@@ -161,6 +161,12 @@ class DockService : Service() {
         val position = settings.dockPosition
         val isVertical = position == "left" || position == "right"
 
+        appContainer.layoutTransition = LayoutTransition().apply {
+            setDuration(LayoutTransition.CHANGING, 180L)
+            setDuration(LayoutTransition.CHANGE_APPEARING, 180L)
+            setDuration(LayoutTransition.CHANGE_DISAPPEARING, 180L)
+        }
+
         val params =
             appContainer.layoutParams as? WindowManager.LayoutParams
                 ?: return
@@ -455,72 +461,98 @@ class DockService : Service() {
                         draggedApp: RunningApp,
                         e: MotionEvent
                     ) {
-                        val draggedIndex = appContainer.indexOfChild(dragged)
-                        if (draggedIndex == -1) return
+                        if (appContainer.indexOfChild(dragged) == -1) return
 
                         val isVertical =
                             settings.dockPosition == "left" ||
                             settings.dockPosition == "right"
 
+                        val pinnedViews = mutableListOf<View>()
+
                         for (i in 0 until appContainer.childCount) {
-                            val targetView = appContainer.getChildAt(i)
+                            val child = appContainer.getChildAt(i)
 
                             if (
-                                targetView === dragged ||
-                                targetView.tag !is RunningApp
+                                child !== dragged &&
+                                child.tag is RunningApp &&
+                                (child.tag as RunningApp).pinned
                             ) {
-                                continue
+                                pinnedViews.add(child)
                             }
+                        }
 
-                            val targetApp = targetView.tag as RunningApp
-                            if (!targetApp.pinned) continue
+                        if (pinnedViews.isEmpty()) return
 
+                        val pointer = if (isVertical) e.rawY else e.rawX
+
+                        var targetPinnedIndex = pinnedViews.size
+
+                        for (i in pinnedViews.indices) {
+                            val target = pinnedViews[i]
                             val loc = IntArray(2)
-                            targetView.getLocationOnScreen(loc)
+                            target.getLocationOnScreen(loc)
 
-                            val targetCenter =
+                            val center =
                                 if (isVertical) {
-                                    loc[1] + targetView.height / 2f
+                                    loc[1] + target.height / 2f
                                 } else {
-                                    loc[0] + targetView.width / 2f
+                                    loc[0] + target.width / 2f
                                 }
 
-                            val pointer =
-                                if (isVertical) e.rawY else e.rawX
+                            if (pointer < center) {
+                                targetPinnedIndex = i
+                                break
+                            }
+                        }
 
-                            val targetIndex =
-                                appContainer.indexOfChild(targetView)
-
-                            val crossed =
-                                if (draggedIndex < targetIndex) {
-                                    pointer > targetCenter
-                                } else {
-                                    pointer < targetCenter
+                        val currentPinnedIndex =
+                            registry.getPinnedApps()
+                                .indexOfFirst {
+                                    it.packageName == draggedApp.packageName
                                 }
 
-                            if (!crossed) continue
-
-                            appContainer.removeView(dragged)
-
-                            val newTargetIndex =
-                                appContainer.indexOfChild(targetView)
-
-                            val insertIndex =
-                                if (draggedIndex < targetIndex) {
-                                    newTargetIndex + 1
-                                } else {
-                                    newTargetIndex
-                                }
-
-                            appContainer.addView(dragged, insertIndex)
-
-                            registry.movePinnedApps(
-                                draggedApp.packageName,
-                                targetApp.packageName
-                            )
-
+                        if (currentPinnedIndex == -1 ||
+                            currentPinnedIndex == targetPinnedIndex
+                        ) {
                             return
                         }
+
+                        val firstPinnedIndex =
+                            (0 until appContainer.childCount)
+                                .firstOrNull {
+                                    val child = appContainer.getChildAt(it)
+                                    child.tag is RunningApp &&
+                                        (child.tag as RunningApp).pinned
+                                }
+                                ?: return
+
+                        appContainer.removeView(dragged)
+
+                        val insertIndex =
+                            (firstPinnedIndex + targetPinnedIndex)
+                                .coerceAtMost(appContainer.childCount)
+
+                        appContainer.addView(dragged, insertIndex)
+
+                        registry.getPinnedApps()
+                            .firstOrNull {
+                                it.packageName == draggedApp.packageName
+                            }
+                            ?.let {
+                                val targetApp =
+                                    registry.getPinnedApps()
+                                        .getOrNull(targetPinnedIndex)
+
+                                if (
+                                    targetApp != null &&
+                                    targetApp.packageName != draggedApp.packageName
+                                ) {
+                                    registry.movePinnedApps(
+                                        draggedApp.packageName,
+                                        targetApp.packageName
+                                    )
+                                }
+                            }
                     }
 
                     private fun handleDrop(dragged: View, e: MotionEvent) {
