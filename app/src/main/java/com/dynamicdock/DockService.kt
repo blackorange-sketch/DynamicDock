@@ -63,6 +63,24 @@ class DockService : Service() {
                         "viewY=${appContainer.y} " +
                         "top=${appContainer.top} bottom=${appContainer.bottom}"
                 )
+
+                if (
+                    intent?.action ==
+                        android.content.Intent.ACTION_SCREEN_ON &&
+                    !isHidden &&
+                    dockWindowAttached
+                ) {
+                    appContainer.animate().cancel()
+                    appContainer.translationX = 0f
+                    appContainer.translationY = 0f
+                    appContainer.alpha = 1f
+
+                    handler.post {
+                        if (!isHidden && dockWindowAttached) {
+                            applyDockSettingsLayout()
+                        }
+                    }
+                }
             }
         }
 
