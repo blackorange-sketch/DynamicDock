@@ -49,9 +49,10 @@ class RunningAppRegistry(private val context: Context) {
     }
 
     fun activate(app: RunningApp): Boolean {
-        val before = apps.map { it.packageName }
+        val existingIndex =
+            apps.indexOfFirst { it.packageName == app.packageName }
 
-        val existingIndex = apps.indexOfFirst { it.packageName == app.packageName }
+        var orderChanged = false
 
         if (existingIndex != -1) {
             val current = apps[existingIndex]
@@ -70,25 +71,40 @@ class RunningAppRegistry(private val context: Context) {
                         app.copy(pinned = false)
                     )
                 }
+
+                orderChanged =
+                    existingIndex != firstUnpinnedIndex
             } else {
-                apps[existingIndex] = app.copy(pinned = true)
+                apps[existingIndex] =
+                    app.copy(pinned = true)
             }
         } else {
-            val firstUnpinnedIndex = apps.indexOfFirst { !it.pinned }
+            val firstUnpinnedIndex =
+                apps.indexOfFirst { !it.pinned }
 
             if (firstUnpinnedIndex == -1) {
                 apps.add(app.copy(pinned = false))
             } else {
-                apps.add(firstUnpinnedIndex, app.copy(pinned = false))
+                apps.add(
+                    firstUnpinnedIndex,
+                    app.copy(pinned = false)
+                )
             }
+
+            orderChanged = true
         }
 
+        val beforeTrimSize = apps.size
+
         trimDynamicAppsToLimit()
+
+        if (apps.size != beforeTrimSize) {
+            orderChanged = true
+        }
+
         saveState()
 
-        val after = apps.map { it.packageName }
-
-        return before != after
+        return orderChanged
     }
 
     fun pin(packageName: String) {
