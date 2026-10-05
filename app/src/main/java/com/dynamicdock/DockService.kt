@@ -78,6 +78,24 @@ class DockService : Service() {
                     handler.post {
                         if (isHidden || !dockWindowAttached) return@post
 
+                        rebuildDock()
+
+                        DockLogger.log(
+                            this@DockService,
+                            "SCREEN AFTER REBUILD: " +
+                                "measured=${appContainer.measuredWidth}x${appContainer.measuredHeight} " +
+                                "size=${appContainer.width}x${appContainer.height} " +
+                                "top=${appContainer.top} bottom=${appContainer.bottom}"
+                        )
+
+                        DockLogger.log(
+                            this@DockService,
+                            "SCREEN BEFORE DETACH: " +
+                                "measured=${appContainer.measuredWidth}x${appContainer.measuredHeight} " +
+                                "size=${appContainer.width}x${appContainer.height} " +
+                                "top=${appContainer.top} bottom=${appContainer.bottom}"
+                        )
+
                         detachDockWindow()
 
                         val params =
