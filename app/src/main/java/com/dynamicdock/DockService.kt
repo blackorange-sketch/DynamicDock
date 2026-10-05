@@ -78,12 +78,6 @@ class DockService : Service() {
     override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        val dm = resources.displayMetrics
-        android.util.Log.d(
-            "DynamicDock",
-            "ROTATION: orientation=${newConfig.orientation} width=${dm.widthPixels} height=${dm.heightPixels}"
-        )
-
         appContainer.post {
             if (!dockWindowAttached) return@post
 
@@ -91,7 +85,11 @@ class DockService : Service() {
                 createHandle()
             } else {
                 rebuildDock()
-                applyDockSettingsLayout()
+
+                appContainer.post {
+                    if (!dockWindowAttached || isHidden) return@post
+                    applyDockSettingsLayout()
+                }
             }
         }
     }
@@ -796,25 +794,13 @@ class DockService : Service() {
                         (screenHeight - handleLength)
                             .coerceAtLeast(0)
 
-                    val positionPercent =
-                        settings.verticalPositionPercent
-                            .coerceIn(0, 100)
-
-                    val calculatedY =
+                    y =
                         (
                             maxY *
-                                positionPercent /
+                                settings.verticalPositionPercent
+                                    .coerceIn(0, 100) /
                                 100f
                         ).toInt()
-
-                    android.util.Log.d(
-                        "DynamicDock",
-                        "HANDLE: height=$screenHeight " +
-                            "handle=$handleLength maxY=$maxY " +
-                            "percent=$positionPercent y=$calculatedY"
-                    )
-
-                    y = calculatedY
                 }
 
             hideHandleParams = handleParams
