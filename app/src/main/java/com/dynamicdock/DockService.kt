@@ -796,13 +796,25 @@ class DockService : Service() {
                         (screenHeight - handleLength)
                             .coerceAtLeast(0)
 
-                    y =
+                    val positionPercent =
+                        settings.verticalPositionPercent
+                            .coerceIn(0, 100)
+
+                    val calculatedY =
                         (
                             maxY *
-                                settings.verticalPositionPercent
-                                    .coerceIn(0, 100) /
+                                positionPercent /
                                 100f
                         ).toInt()
+
+                    android.util.Log.d(
+                        "DynamicDock",
+                        "HANDLE: width=$screenWidth height=$screenHeight " +
+                            "handle=$handleLength maxY=$maxY " +
+                            "percent=$positionPercent y=$calculatedY"
+                    )
+
+                    y = calculatedY
                 }
 
             hideHandleParams = handleParams
