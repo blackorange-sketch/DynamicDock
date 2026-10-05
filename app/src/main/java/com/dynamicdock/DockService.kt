@@ -302,6 +302,8 @@ class DockService : Service() {
             PixelFormat.TRANSLUCENT
         )
 
+        lp.windowAnimations = 0
+
         lp.gravity =
             when (settings.dockPosition) {
                 "left" ->
