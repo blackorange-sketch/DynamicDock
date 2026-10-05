@@ -118,7 +118,18 @@ class DockService : Service() {
     }
 
     fun refreshDock() {
+        DockLogger.log(
+            this,
+            "REFRESH DOCK: hidden=$isHidden attached=$dockWindowAttached"
+        )
+
         appContainer.post {
+            DockLogger.log(
+                this,
+                "REFRESH POST: hidden=$isHidden attached=$dockWindowAttached " +
+                    "visibility=${appContainer.visibility} " +
+                    "x=${appContainer.x} y=${appContainer.y}"
+            )
             rebuildDock()
 
             if (!dockWindowAttached || isHidden) return@post
