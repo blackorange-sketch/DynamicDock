@@ -651,9 +651,8 @@ class DockService : Service() {
             params.height = dp(settings.dockHeightDp)
             params.gravity =
                 Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
+            params.y = 0
         }
-
-        params.y = 0
     }
 
     private fun showDock() {
