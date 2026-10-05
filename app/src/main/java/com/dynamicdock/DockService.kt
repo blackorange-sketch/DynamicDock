@@ -81,12 +81,10 @@ class DockService : Service() {
         if (!dockWindowAttached) return
 
         if (isHidden) {
-            val heightPx =
-                (newConfig.screenHeightDp *
-                    resources.displayMetrics.density)
-                    .toInt()
-
-            recreateHandle(heightPx)
+            handler.post {
+                if (!isHidden) return@post
+                recreateHandle()
+            }
         } else {
             rebuildDock()
 
@@ -784,11 +782,7 @@ class DockService : Service() {
             )
 
             val screenHeight =
-                screenHeightPx
-                    ?: (
-                        resources.configuration.screenHeightDp *
-                            resources.displayMetrics.density
-                    ).toInt()
+                resources.displayMetrics.heightPixels
 
             android.util.Log.d(
                 "DynamicDock",
