@@ -810,6 +810,11 @@ class DockService : Service() {
                 handleParams
             )
 
+            windowManager.updateViewLayout(
+                container,
+                handleParams
+            )
+
             container.alpha = 0f
             container.scaleX = 0.7f
             container.scaleY = 0.7f
