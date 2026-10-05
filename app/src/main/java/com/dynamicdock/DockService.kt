@@ -80,6 +80,11 @@ class DockService : Service() {
 
         if (!dockWindowAttached) return
 
+        android.util.Log.d(
+            "DynamicDock",
+            "ROTATION: orientation=${newConfig.orientation} screen=${newConfig.screenWidthDp}x${newConfig.screenHeightDp} metrics=${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}"
+        )
+
         if (isHidden) {
             hideHandle?.let { handle ->
                 try {
@@ -93,6 +98,12 @@ class DockService : Service() {
 
             appContainer.post {
                 if (!isHidden) return@post
+
+                android.util.Log.d(
+                    "DynamicDock",
+                    "ROTATION POST: metrics=${resources.displayMetrics.widthPixels}x${resources.displayMetrics.heightPixels}"
+                )
+
                 recreateHandle()
             }
         } else {
