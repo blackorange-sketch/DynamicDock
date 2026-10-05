@@ -615,46 +615,85 @@ class DockService : Service() {
                         val originalIndex =
                             dragPinnedViews.indexOf(dragged)
 
-                        if (
-                            !canceled &&
-                            originalIndex != -1 &&
-                            targetIndex != -1 &&
-                            targetIndex != originalIndex
-                        ) {
-                            registry.movePinnedToIndex(
-                                dragged.tag.let {
-                                    (it as RunningApp).packageName
-                                },
-                                targetIndex
-                            )
-                        }
+                        if (canceled) {
+                            dragged.animate()
+                                .translationX(0f)
+                                .translationY(0f)
+                                .alpha(1f)
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(120)
+                                .start()
 
-                        dragged.animate()
-                            .translationX(0f)
-                            .translationY(0f)
-                            .alpha(1f)
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(220)
-                            .setInterpolator(
-                                android.view.animation.DecelerateInterpolator(1.5f)
-                            )
-                            .withEndAction {
-                                for (view in dragPinnedViews) {
+                            for (view in dragPinnedViews) {
+                                if (view !== dragged) {
                                     view.animate().cancel()
                                     view.translationX = 0f
                                     view.translationY = 0f
                                 }
-
-                                if (
-                                    !canceled &&
-                                    originalIndex != -1 &&
-                                    targetIndex != originalIndex
-                                ) {
-                                    rebuildDock()
-                                }
                             }
-                            .start()
+
+                            return
+                        }
+
+                        if (
+                            originalIndex == -1 ||
+                            targetIndex == -1
+                        ) {
+                            return
+                        }
+
+                        val packageName =
+                            (dragged.tag as RunningApp).packageName
+
+                        if (targetIndex != originalIndex) {
+                            registry.movePinnedToIndex(
+                                packageName,
+                                targetIndex
+                            )
+                        }
+
+                        // Не даємо перетягуваній іконці "летіти"
+                        // назад до нового місця.
+                        dragged.animate().cancel()
+                        dragged.alpha = 0f
+                        dragged.scaleX = 0.9f
+                        dragged.scaleY = 0.9f
+                        dragged.translationX = 0f
+                        dragged.translationY = 0f
+
+                        for (view in dragPinnedViews) {
+                            view.animate().cancel()
+                            view.translationX = 0f
+                            view.translationY = 0f
+                        }
+
+                        rebuildDock()
+
+                        // Після перебудови показуємо іконку
+                        // вже безпосередньо в новому слоті.
+                        for (i in 0 until appContainer.childCount) {
+                            val view = appContainer.getChildAt(i)
+                            val app = view.tag as? RunningApp
+
+                            if (app?.packageName == packageName) {
+                                view.alpha = 0f
+                                view.scaleX = 0.9f
+                                view.scaleY = 0.9f
+
+                                view.animate()
+                                    .alpha(1f)
+                                    .scaleX(1f)
+                                    .scaleY(1f)
+                                    .setDuration(180)
+                                    .setInterpolator(
+                                        android.view.animation.DecelerateInterpolator(1.5f)
+                                    )
+                                    .start()
+
+                                break
+                            }
+                        }
                     }
 
                 })
