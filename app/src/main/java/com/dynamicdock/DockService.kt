@@ -292,7 +292,7 @@ class DockService : Service() {
 
     fun refreshHideHandle() {
         if (isHidden) {
-            createHandle()
+            recreateHandle()
         }
     }
 
