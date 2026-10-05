@@ -107,7 +107,7 @@ class DockService : Service() {
         val settings = DockSettings(this)
         settings.dockPosition = position
 
-        if (isHidden || !dockWindowAttached) {
+        if (!dockWindowAttached || isHidden) {
             return
         }
 
@@ -123,25 +123,18 @@ class DockService : Service() {
 
         rebuildDock()
 
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-        }
+        applyDockSettingsLayout()
     }
 
-
-
     private fun applyDockSettingsLayout() {
-        if (!dockWindowAttached) return
+        if (!dockWindowAttached || isHidden) return
 
         val settings = DockSettings(this)
         val position = settings.dockPosition
-        val isVertical =
-            position == "left" || position == "right"
+        val isVertical = position == "left" || position == "right"
 
         val params =
-            appContainer.layoutParams
-                as? WindowManager.LayoutParams
+            appContainer.layoutParams as? WindowManager.LayoutParams
                 ?: return
 
         appContainer.orientation =
@@ -151,45 +144,53 @@ class DockService : Service() {
                 LinearLayout.HORIZONTAL
 
         if (isVertical) {
-            params.width = dp(settings.dockHeightDp)
-            params.height = WindowManager.LayoutParams.WRAP_CONTENT
+            val width = dp(settings.dockHeightDp)
 
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+            )
+
+            val dockHeight = appContainer.measuredHeight
+            val screenHeight =
+                resources.displayMetrics.heightPixels
+
+            val maxY =
+                (screenHeight - dockHeight).coerceAtLeast(0)
+
+            params.width = width
+            params.height = WindowManager.LayoutParams.WRAP_CONTENT
             params.gravity =
                 if (position == "left")
                     Gravity.TOP or Gravity.LEFT
                 else
                     Gravity.TOP or Gravity.RIGHT
 
-            val maxY =
-                (resources.displayMetrics.heightPixels -
-                    appContainer.height)
-                    .coerceAtLeast(0)
-
             params.y =
                 (
                     maxY *
-                        settings.verticalPositionPercent
-                            .coerceIn(0, 100) /
+                        settings.verticalPositionPercent.coerceIn(0, 100) /
                         100f
-                ).toInt()
+                ).toInt().coerceIn(0, maxY)
+
         } else {
-            params.width =
-                WindowManager.LayoutParams.WRAP_CONTENT
-            params.height =
-                dp(settings.dockHeightDp)
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(
+                    dp(settings.dockHeightDp),
+                    View.MeasureSpec.EXACTLY
+                )
+            )
 
+            params.width = WindowManager.LayoutParams.WRAP_CONTENT
+            params.height = dp(settings.dockHeightDp)
             params.gravity =
-                Gravity.BOTTOM or
-                    Gravity.CENTER_HORIZONTAL
-
+                Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
             params.y = 0
         }
 
         try {
-            windowManager.updateViewLayout(
-                appContainer,
-                params
-            )
+            windowManager.updateViewLayout(appContainer, params)
         } catch (_: Exception) {
         }
     }
