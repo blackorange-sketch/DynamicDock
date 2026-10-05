@@ -791,27 +791,50 @@ class DockService : Service() {
                 }
             )
 
+            val dockWidth = dp(settings.dockHeightDp)
+
+            appContainer.orientation = LinearLayout.VERTICAL
+
+            appContainer.measure(
+                View.MeasureSpec.makeMeasureSpec(
+                    dockWidth,
+                    View.MeasureSpec.EXACTLY
+                ),
+                View.MeasureSpec.makeMeasureSpec(
+                    0,
+                    View.MeasureSpec.UNSPECIFIED
+                )
+            )
+
+            val dockHeight = appContainer.measuredHeight
             val screenHeight =
                 resources.displayMetrics.heightPixels
 
-            android.util.Log.d(
-                "DynamicDock",
-                "HANDLE GEOMETRY: height=$screenHeight, percent=${settings.verticalPositionPercent}"
-            )
-
-            val availableHeight =
-                (screenHeight - handleLength)
+            val maxY =
+                (screenHeight - dockHeight)
                     .coerceAtLeast(0)
 
             val percent =
                 settings.verticalPositionPercent
                     .coerceIn(0, 100)
 
-            val y =
+            val dockY =
                 (
-                    availableHeight * percent / 100f
+                    maxY * percent / 100f
                 ).toInt()
-                    .coerceIn(0, availableHeight)
+                    .coerceIn(0, maxY)
+
+            val handleOffset =
+                ((dockHeight - handleLength) / 2)
+                    .coerceAtLeast(0)
+
+            val y =
+                dockY + handleOffset
+
+            android.util.Log.d(
+                "DynamicDock",
+                "HANDLE GEOMETRY: screen=$screenHeight dock=$dockHeight maxY=$maxY dockY=$dockY handleY=$y percent=$percent"
+            )
 
             val params =
                 WindowManager.LayoutParams(
