@@ -120,7 +120,11 @@ class DockService : Service() {
     fun refreshDock() {
         appContainer.post {
             rebuildDock()
-            adjustPosition()
+
+            if (!dockWindowAttached || isHidden) return@post
+
+            applyDockSettingsLayout()
+            appContainer.visibility = View.VISIBLE
         }
     }
 
