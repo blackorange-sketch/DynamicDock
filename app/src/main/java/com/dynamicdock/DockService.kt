@@ -161,12 +161,6 @@ class DockService : Service() {
         val position = settings.dockPosition
         val isVertical = position == "left" || position == "right"
 
-        appContainer.layoutTransition = LayoutTransition().apply {
-            setDuration(LayoutTransition.CHANGING, 180L)
-            setDuration(LayoutTransition.CHANGE_APPEARING, 180L)
-            setDuration(LayoutTransition.CHANGE_DISAPPEARING, 180L)
-        }
-
         val params =
             appContainer.layoutParams as? WindowManager.LayoutParams
                 ?: return
