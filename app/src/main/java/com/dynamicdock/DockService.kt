@@ -50,6 +50,22 @@ class DockService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val autoHideRunnable = Runnable { hideDock() }
 
+    private val unlockReceiver =
+        object : android.content.BroadcastReceiver() {
+            override fun onReceive(
+                context: android.content.Context?,
+                intent: android.content.Intent?
+            ) {
+                DockLogger.log(
+                    this@DockService,
+                    "SCREEN EVENT: ${intent?.action} " +
+                        "hidden=$isHidden attached=$dockWindowAttached " +
+                        "viewY=${appContainer.y} " +
+                        "top=${appContainer.top} bottom=${appContainer.bottom}"
+                )
+            }
+        }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -71,6 +87,18 @@ class DockService : Service() {
             rebuildDock()
             resetAutoHide()
         }
+
+        val filter = android.content.IntentFilter().apply {
+            addAction(android.content.Intent.ACTION_SCREEN_ON)
+            addAction(android.content.Intent.ACTION_USER_UNLOCKED)
+        }
+
+        androidx.core.content.ContextCompat.registerReceiver(
+            this,
+            unlockReceiver,
+            filter,
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         setupContainer()
         refreshDock()
@@ -1405,6 +1433,11 @@ class DockService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
     
     override fun onDestroy() {
+        try {
+            unregisterReceiver(unlockReceiver)
+        } catch (_: Exception) {
+        }
+
         instance = null
         handler.removeCallbacks(autoHideRunnable)
 
