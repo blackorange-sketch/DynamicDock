@@ -106,10 +106,9 @@ class DockService : Service() {
 
         rebuildDock()
 
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-        }
+        if (!dockWindowAttached || isHidden) return
+
+        applyDockSettingsLayout()
     }
 
     fun reloadPinnedApps() {
