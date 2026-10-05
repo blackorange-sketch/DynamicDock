@@ -257,16 +257,6 @@ class DockService : Service() {
         }
     }
 
-    private fun adjustPosition() {
-        if (!dockWindowAttached || isHidden) return
-
-        appContainer.post {
-            if (!dockWindowAttached || isHidden) return@post
-            applyDockSettingsLayout()
-            appContainer.visibility = View.VISIBLE
-        }
-    }
-
     fun updateIconSize(sizeDp: Int) {
         rebuildDock()
 
