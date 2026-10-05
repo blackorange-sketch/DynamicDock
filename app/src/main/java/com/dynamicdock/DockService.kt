@@ -664,6 +664,7 @@ class DockService : Service() {
         configureDockLayout(settings.dockPosition, params)
 
         if (!attachDockWindow()) {
+            createHandle()
             return
         }
 
