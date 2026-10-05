@@ -76,9 +76,50 @@ class DockService : Service() {
                     appContainer.alpha = 1f
 
                     handler.post {
-                        if (!isHidden && dockWindowAttached) {
-                            applyDockSettingsLayout()
-                        }
+                        if (isHidden || !dockWindowAttached) return@post
+
+                        detachDockWindow()
+
+                        val params =
+                            appContainer.layoutParams
+                                as WindowManager.LayoutParams
+
+                        configureDockLayout(params)
+
+                        val settings = DockSettings(this@DockService)
+
+                        appContainer.measure(
+                            View.MeasureSpec.makeMeasureSpec(
+                                dp(settings.dockHeightDp),
+                                View.MeasureSpec.EXACTLY
+                            ),
+                            View.MeasureSpec.makeMeasureSpec(
+                                0,
+                                View.MeasureSpec.UNSPECIFIED
+                            )
+                        )
+
+                        val dockHeight =
+                            appContainer.measuredHeight
+
+                        val screenHeight =
+                            resources.displayMetrics.heightPixels
+
+                        val maxY =
+                            (screenHeight - dockHeight)
+                                .coerceAtLeast(0)
+
+                        params.y =
+                            (
+                                maxY *
+                                    settings.verticalPositionPercent
+                                        .coerceIn(0, 100) /
+                                    100f
+                            )
+                                .toInt()
+                                .coerceIn(0, maxY)
+
+                        attachDockWindow()
                     }
                 }
             }
