@@ -809,7 +809,7 @@ class DockService : Service() {
 
                     android.util.Log.d(
                         "DynamicDock",
-                        "HANDLE: width=$screenWidth height=$screenHeight " +
+                        "HANDLE: height=$screenHeight " +
                             "handle=$handleLength maxY=$maxY " +
                             "percent=$positionPercent y=$calculatedY"
                     )
