@@ -90,6 +90,15 @@ class DockService : Service() {
 
                         detachDockWindow()
 
+                        appContainer.layoutParams =
+                            WindowManager.LayoutParams(
+                                dp(DockSettings(this@DockService).dockHeightDp),
+                                WindowManager.LayoutParams.WRAP_CONTENT,
+                                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                                PixelFormat.TRANSLUCENT
+                            )
+
                         val params =
                             appContainer.layoutParams
                                 as WindowManager.LayoutParams
