@@ -78,6 +78,12 @@ class DockService : Service() {
                     handler.post {
                         if (isHidden || !dockWindowAttached) return@post
 
+                        appContainer.animate().cancel()
+                        appContainer.visibility = View.INVISIBLE
+                        appContainer.alpha = 1f
+                        appContainer.translationX = 0f
+                        appContainer.translationY = 0f
+
                         rebuildDock()
 
                         DockLogger.log(
@@ -164,6 +170,10 @@ class DockService : Service() {
                                 .coerceIn(0, maxY)
 
                         attachDockWindow()
+
+                        if (dockWindowAttached && !isHidden) {
+                            appContainer.visibility = View.VISIBLE
+                        }
                     }
                 }
             }
