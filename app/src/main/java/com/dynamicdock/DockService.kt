@@ -141,7 +141,6 @@ class DockService : Service() {
                             "MEASURE CONTAINER " +
                                 "measured=${appContainer.measuredWidth}x${appContainer.measuredHeight} " +
                                 "minH=${appContainer.minimumHeight} " +
-                                "suggestedMinH=${appContainer.suggestedMinimumHeight} " +
                                 "padding=${appContainer.paddingTop},${appContainer.paddingBottom} " +
                                 "lpW=${appContainer.layoutParams?.width} " +
                                 "lpH=${appContainer.layoutParams?.height}"
