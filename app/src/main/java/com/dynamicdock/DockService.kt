@@ -576,6 +576,17 @@ class DockService : Service() {
         val iconContainerHeight =
             if (isVertical) iconSizePx else dp(iconSizeDp + 6)
 
+        DockLogger.log(
+            this,
+            "DOCK SIZES: iconDp=$iconSizeDp " +
+                "iconPx=$iconSizePx " +
+                "containerW=$iconContainerWidth " +
+                "containerH=$iconContainerHeight " +
+                "verticalPadding=$verticalPaddingPx " +
+                "apps=${apps.size} " +
+                "vertical=$isVertical"
+        )
+
         apps.forEachIndexed { idx, app ->
             if (idx > 0 && apps[idx-1].pinned && !app.pinned) {
                 val sep = View(this).apply { setBackgroundColor(Color.argb(90, 255, 255, 255)) }
