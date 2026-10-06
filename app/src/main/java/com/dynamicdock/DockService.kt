@@ -90,10 +90,29 @@ class DockService : Service() {
 
                         DockLogger.log(
                             this@DockService,
-                            "SCREEN BEFORE DETACH: " +
+                            "SCREEN BEFORE MEASURE: " +
                                 "measured=${appContainer.measuredWidth}x${appContainer.measuredHeight} " +
-                                "size=${appContainer.width}x${appContainer.height} " +
-                                "top=${appContainer.top} bottom=${appContainer.bottom}"
+                                "size=${appContainer.width}x${appContainer.height}"
+                        )
+
+                        val settings = DockSettings(this@DockService)
+
+                        appContainer.measure(
+                            View.MeasureSpec.makeMeasureSpec(
+                                dp(settings.dockHeightDp),
+                                View.MeasureSpec.EXACTLY
+                            ),
+                            View.MeasureSpec.makeMeasureSpec(
+                                0,
+                                View.MeasureSpec.UNSPECIFIED
+                            )
+                        )
+
+                        DockLogger.log(
+                            this@DockService,
+                            "SCREEN AFTER MEASURE: " +
+                                "measured=${appContainer.measuredWidth}x${appContainer.measuredHeight} " +
+                                "size=${appContainer.width}x${appContainer.height}"
                         )
 
                         detachDockWindow()
