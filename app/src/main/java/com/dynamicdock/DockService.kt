@@ -121,6 +121,32 @@ class DockService : Service() {
                         val dockHeight =
                             appContainer.measuredHeight
 
+                        for (i in 0 until appContainer.childCount) {
+                            val child = appContainer.getChildAt(i)
+
+                            DockLogger.log(
+                                this@DockService,
+                                "MEASURE CHILD[$i] " +
+                                    "class=${child.javaClass.simpleName} " +
+                                    "measured=${child.measuredWidth}x${child.measuredHeight} " +
+                                    "size=${child.width}x${child.height} " +
+                                    "lpW=${child.layoutParams?.width} " +
+                                    "lpH=${child.layoutParams?.height} " +
+                                    "top=${child.top} bottom=${child.bottom}"
+                            )
+                        }
+
+                        DockLogger.log(
+                            this@DockService,
+                            "MEASURE CONTAINER " +
+                                "measured=${appContainer.measuredWidth}x${appContainer.measuredHeight} " +
+                                "minH=${appContainer.minimumHeight} " +
+                                "suggestedMinH=${appContainer.suggestedMinimumHeight} " +
+                                "padding=${appContainer.paddingTop},${appContainer.paddingBottom} " +
+                                "lpW=${appContainer.layoutParams?.width} " +
+                                "lpH=${appContainer.layoutParams?.height}"
+                        )
+
                         val screenHeight =
                             resources.displayMetrics.heightPixels
 
