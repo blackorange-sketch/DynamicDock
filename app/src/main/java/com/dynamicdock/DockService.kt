@@ -110,6 +110,7 @@ class DockService : Service() {
                                 as WindowManager.LayoutParams
 
                         configureDockLayout(params)
+                        params.windowAnimations = 0
 
                         val settings = DockSettings(this@DockService)
 
