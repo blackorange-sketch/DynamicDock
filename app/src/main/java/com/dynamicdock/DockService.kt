@@ -1484,19 +1484,10 @@ class DockService : Service() {
             }
         }
 
-        container.alpha = 0f
-        container.scaleX = 0.7f
-        container.scaleY = 0.7f
-
-        container.animate()
-            .alpha(1f)
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(160)
-            .setInterpolator(
-                android.view.animation.DecelerateInterpolator()
-            )
-            .start()
+        container.animate().cancel()
+        container.alpha = 1f
+        container.scaleX = 1f
+        container.scaleY = 1f
     }
 
     private fun scheduleAutoHide() {
