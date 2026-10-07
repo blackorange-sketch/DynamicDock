@@ -74,6 +74,19 @@ class SettingsActivity : Activity() {
                 ?.updateDockHeight(progress)
         }
 
+        addSlider(
+            layout,
+            "Прозорість Dock",
+            settings.dockTransparencyPercent,
+            0,
+            80,
+            suffix = "%"
+        ) { progress ->
+            settings.dockTransparencyPercent = progress
+            DockService.instance
+                ?.updateDockTransparency(progress)
+        }
+
         addSpinner(
             layout,
             "Положення Dock",

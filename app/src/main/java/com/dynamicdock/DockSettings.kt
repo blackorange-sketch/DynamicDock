@@ -55,6 +55,14 @@ class DockSettings(context: Context) {
         get() = preferences.getInt("vertical_position_percent", 50)
         set(value) { preferences.edit().putInt("vertical_position_percent", value).apply() }
 
+    var dockTransparencyPercent: Int
+        get() = preferences.getInt("dock_transparency_percent", 0)
+        set(value) {
+            preferences.edit()
+                .putInt("dock_transparency_percent", value.coerceIn(0, 80))
+                .apply()
+        }
+
     var maxDynamicApps: Int
         get() = preferences.getInt("max_dynamic_apps", 5)
         set(value) { preferences.edit().putInt("max_dynamic_apps", value).apply() }

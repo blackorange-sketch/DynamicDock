@@ -1089,6 +1089,19 @@ class DockService : Service() {
         }
     }
 
+    fun updateDockTransparency(percent: Int) {
+        val transparency =
+            percent.coerceIn(0, 80) / 100f
+
+        val alpha =
+            1f - transparency
+
+        if (!isHidden && dockWindowAttached) {
+            appContainer.animate().cancel()
+            appContainer.alpha = alpha
+        }
+    }
+
     private fun hideDock() {
         if (isHidden) return
 
@@ -1138,6 +1151,13 @@ class DockService : Service() {
     }
 
     private fun showDock() {
+        val targetAlpha =
+            1f - (
+                DockSettings(this)
+                    .dockTransparencyPercent
+                    .coerceIn(0, 80) / 100f
+            )
+
     DockLogger.log(
         this,
         "SHOW DOCK: isHidden=$isHidden attached=$dockWindowAttached"
@@ -1229,7 +1249,7 @@ class DockService : Service() {
             if (dockWidth <= 0f || dockHeight <= 0f) {
                 appContainer.scaleX = 1f
                 appContainer.scaleY = 1f
-                appContainer.alpha = 1f
+                appContainer.alpha = targetAlpha
                 appContainer.visibility = View.VISIBLE
                 isHidden = false
                 scheduleAutoHide()
@@ -1243,7 +1263,7 @@ class DockService : Service() {
             isHidden = false
 
             appContainer.animate()
-                .alpha(1f)
+                .alpha(targetAlpha)
                 .setDuration(160)
                 .setInterpolator(
                     android.view.animation
