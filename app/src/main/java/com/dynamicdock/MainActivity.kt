@@ -1,6 +1,5 @@
 package com.dynamicdock
 
-import androidx.core.content.ContextCompat
 
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity
@@ -41,8 +40,7 @@ class MainActivity : Activity() {
                     )
                     startActivity(intent)
                 } else {
-                    ContextCompat.startForegroundService(
-                        this@MainActivity,
+                    startForegroundService(
                         Intent(this@MainActivity, DockService::class.java)
                     )
 
