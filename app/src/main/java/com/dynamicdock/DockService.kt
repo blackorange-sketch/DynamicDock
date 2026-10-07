@@ -5,6 +5,9 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 
 import android.app.Service
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -25,6 +28,35 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 class DockService : Service() {
+
+    private fun startForegroundServiceNotification() {
+        val channelId = "dynamicdock_service"
+
+        val notificationManager =
+            getSystemService(NotificationManager::class.java)
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Dynamic Dock",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Dynamic Dock background service"
+            }
+
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = Notification.Builder(this, channelId)
+            .setContentTitle("Dynamic Dock")
+            .setContentText("Dock працює у фоні")
+            .setSmallIcon(android.R.drawable.ic_menu_view)
+            .setOngoing(true)
+            .build()
+
+        startForeground(1001, notification)
+    }
+
 
     companion object {
         @Volatile var instance: DockService? = null
@@ -73,14 +105,24 @@ class DockService : Service() {
                     appContainer.animate().cancel()
                     appContainer.translationX = 0f
                     appContainer.translationY = 0f
-                    appContainer.alpha = 1f
+                    appContainer.alpha =
+                        1f - (
+                            DockSettings(this@DockService)
+                                .dockTransparencyPercent
+                                .coerceIn(0, 80) / 100f
+                        )
 
                     handler.post {
                         if (isHidden || !dockWindowAttached) return@post
 
                         appContainer.animate().cancel()
                         appContainer.visibility = View.INVISIBLE
-                        appContainer.alpha = 1f
+                        appContainer.alpha =
+                        1f - (
+                            DockSettings(this@DockService)
+                                .dockTransparencyPercent
+                                .coerceIn(0, 80) / 100f
+                        )
                         appContainer.translationX = 0f
                         appContainer.translationY = 0f
 
@@ -180,9 +222,18 @@ class DockService : Service() {
             }
         }
 
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
+        return START_STICKY
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
+        startForegroundServiceNotification()
         
         if (!Settings.canDrawOverlays(this)) { stopSelf(); return }
 
@@ -276,6 +327,15 @@ class DockService : Service() {
             if (!dockWindowAttached || isHidden) return@post
 
             applyDockSettingsLayout()
+
+            val transparency =
+                DockSettings(this)
+                    .dockTransparencyPercent
+                    .coerceIn(0, 80)
+
+            appContainer.alpha =
+                1f - (transparency / 100f)
+
             appContainer.visibility = View.VISIBLE
         }
     }

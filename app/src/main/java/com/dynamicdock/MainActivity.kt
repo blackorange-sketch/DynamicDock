@@ -1,5 +1,7 @@
 package com.dynamicdock
 
+import androidx.core.content.ContextCompat
+
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Activity
 import android.app.AlertDialog
@@ -39,7 +41,8 @@ class MainActivity : Activity() {
                     )
                     startActivity(intent)
                 } else {
-                    startService(
+                    ContextCompat.startForegroundService(
+                        this@MainActivity,
                         Intent(this@MainActivity, DockService::class.java)
                     )
 
