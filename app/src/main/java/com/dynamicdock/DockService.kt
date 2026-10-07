@@ -1392,9 +1392,10 @@ class DockService : Service() {
                 background =
                     GradientDrawable().apply {
                         setColor(Color.argb(190, 255, 255, 255))
-                        setStroke(dp(1), Color.argb(220, 0, 0, 0))
+                        setStroke(dp(2), Color.argb(190, 0, 0, 0))
                         cornerRadius = dp(100).toFloat()
                     }
+                elevation = dp(4).toFloat()
             }
 
         if (isVertical) {
